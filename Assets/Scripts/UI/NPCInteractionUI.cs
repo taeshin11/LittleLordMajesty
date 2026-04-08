@@ -256,4 +256,16 @@ public class NPCInteractionUI : MonoBehaviour
         gameObject.SetActive(false);
         UIManager.Instance?.CloseDialogue();
     }
+
+    private void OnDestroy()
+    {
+        if (_sendButton != null) _sendButton.onClick.RemoveAllListeners();
+        if (_closeButton != null) _closeButton.onClick.RemoveAllListeners();
+        if (_commandInput != null)
+        {
+            _commandInput.onSubmit.RemoveAllListeners();
+            _commandInput.onValueChanged.RemoveAllListeners();
+        }
+        if (_ttsToggle != null) _ttsToggle.onValueChanged.RemoveAllListeners();
+    }
 }

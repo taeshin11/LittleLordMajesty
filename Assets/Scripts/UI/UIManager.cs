@@ -189,7 +189,7 @@ public class UIManager : MonoBehaviour
     private void UpdateResourceUI(TextMeshProUGUI text, Slider bar, int value, int max, string icon)
     {
         if (text != null) text.text = $"{icon} {value:N0}";
-        if (bar != null) bar.value = (float)value / max;
+        if (bar != null) bar.value = max > 0 ? (float)value / max : 0f;
     }
 
     private void OnDayChanged(int day)
@@ -362,10 +362,18 @@ public class UIManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (GameManager.Instance != null)
+        var gm = GameManager.Instance;
+        if (gm != null)
         {
-            GameManager.Instance.OnGameStateChanged -= OnGameStateChanged;
-            GameManager.Instance.OnDayChanged -= OnDayChanged;
+            gm.OnGameStateChanged -= OnGameStateChanged;
+            gm.OnDayChanged -= OnDayChanged;
+            if (gm.ResourceManager != null)
+                gm.ResourceManager.OnResourceChanged -= OnResourceChanged;
+            if (gm.EventManager != null)
+            {
+                gm.EventManager.OnNewEvent -= OnNewEvent;
+                gm.EventManager.OnEventResolved -= OnEventResolved;
+            }
         }
     }
 }

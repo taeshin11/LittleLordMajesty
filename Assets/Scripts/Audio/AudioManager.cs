@@ -226,6 +226,12 @@ public class AudioManager : MonoBehaviour
         PlayerPrefs.SetFloat("SFXVolume", _sfxVolume);
     }
 
+    private void OnDestroy()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.OnGameStateChanged -= OnGameStateChanged;
+    }
+
     public void StopMusic() => _musicSource?.Stop();
     public void PauseMusic() => _musicSource?.Pause();
     public void ResumeMusic() => _musicSource?.UnPause();

@@ -229,4 +229,10 @@ public class NationUI : MonoBehaviour
             targetNation.LeaderId, message, proposal,
             () => ToastNotification.Show($"Diplomatic message sent to [{targetNation.Tag}]"));
     }
+
+    private void OnDestroy()
+    {
+        if (LordNetManager.Instance != null)
+            LordNetManager.Instance.OnNationUpdated -= RefreshNationPanel;
+    }
 }

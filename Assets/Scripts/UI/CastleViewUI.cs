@@ -219,6 +219,15 @@ public class CastleViewUI : MonoBehaviour
         ShowNotification(LocalizationManager.Instance?.Get("game_saved") ?? "Game Saved");
     }
 
+    private void OnDestroy()
+    {
+        var gm = GameManager.Instance;
+        if (gm?.ResourceManager != null)
+            gm.ResourceManager.OnResourceChanged -= OnResourceChanged;
+        if (gm != null)
+            gm.OnDayChanged -= _ => UpdateLordInfo();
+    }
+
     // Called by KeyboardShortcuts on PC
     public void ToggleBuildingMenuFromKeyboard() => ToggleBuildingMenu();
     public void ToggleNPCListFromKeyboard() => ToggleNPCList();
