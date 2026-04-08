@@ -1,0 +1,46 @@
+{
+  "app_name": "小领主陛下",
+  "btn_new_game": "新游戏",
+  "btn_continue": "继续",
+  "btn_settings": "设置",
+  "btn_quit": "退出",
+
+  "hud_wood": "木材",
+  "hud_food": "食物",
+  "hud_gold": "金币",
+  "hud_population": "人口",
+
+  "npc_idle": "空闲",
+  "npc_opened_conversation": "您走近了{0}...",
+  "npc_no_response": "现在...我无法回答，我的领主。",
+
+  "profession_vassal": "家臣",
+  "profession_soldier": "士兵",
+  "profession_merchant": "商人",
+  "profession_farmer": "农民",
+
+  "event_orc_raid_title": "兽人袭击！",
+  "event_conflict_title": "冲突",
+  "event_visitor_title": "神秘访客",
+  "event_famine_title": "粮食短缺！",
+  "event_fire_title": "火灾！",
+
+  "territory_yours": "我方领土",
+  "territory_neutral": "中立地区",
+  "territory_hostile": "敌方领土",
+  "btn_scout": "侦察（10金币）",
+  "btn_attack": "进攻",
+
+  "battle_victory": "胜利！",
+  "battle_defeat": "失败...",
+
+  "title_little_lord": "小领主",
+  "title_baron": "男爵",
+  "title_lord": "领主",
+  "title_high_lord": "大领主",
+  "title_majesty": "陛下",
+
+  "day_format": "第{0}年第{1}天",
+  "yes": "是",
+  "no": "否"
+}

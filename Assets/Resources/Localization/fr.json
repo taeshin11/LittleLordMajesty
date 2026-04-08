@@ -1,0 +1,34 @@
+{
+  "app_name": "Petit Seigneur Majesté",
+  "btn_new_game": "Nouvelle Partie",
+  "btn_continue": "Continuer",
+  "btn_settings": "Paramètres",
+  "btn_quit": "Quitter",
+
+  "hud_wood": "Bois",
+  "hud_food": "Nourriture",
+  "hud_gold": "Or",
+  "hud_population": "Population",
+
+  "npc_idle": "Inactif",
+  "npc_no_response": "Je... ne peux pas répondre pour l'instant, mon seigneur.",
+
+  "event_orc_raid_title": "Raid d'Orcs!",
+  "event_conflict_title": "Conflit",
+  "event_famine_title": "Pénurie alimentaire!",
+  "event_fire_title": "Incendie!",
+
+  "territory_yours": "Votre territoire",
+  "territory_neutral": "Neutre",
+  "battle_victory": "VICTOIRE!",
+  "battle_defeat": "DÉFAITE...",
+
+  "title_little_lord": "Petit Seigneur",
+  "title_baron": "Baron",
+  "title_lord": "Seigneur",
+  "title_high_lord": "Grand Seigneur",
+  "title_majesty": "Majesté",
+
+  "yes": "Oui",
+  "no": "Non"
+}

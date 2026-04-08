@@ -1,0 +1,63 @@
+{
+  "app_name": "リトルロードマジェスティ",
+  "btn_new_game": "新しいゲーム",
+  "btn_continue": "続ける",
+  "btn_settings": "設定",
+  "btn_quit": "終了",
+
+  "hud_wood": "木材",
+  "hud_food": "食料",
+  "hud_gold": "金貨",
+  "hud_population": "人口",
+
+  "npc_idle": "待機中",
+  "npc_opened_conversation": "{0}に近づきます...",
+  "npc_no_response": "今は...お答えできません、領主様。",
+
+  "profession_vassal": "家臣",
+  "profession_soldier": "兵士",
+  "profession_merchant": "商人",
+  "profession_farmer": "農民",
+  "profession_blacksmith": "鍛冶師",
+  "profession_healer": "癒し手",
+  "profession_scout": "斥候",
+  "profession_guard": "衛兵",
+  "profession_builder": "建築家",
+  "profession_mage": "魔法使い",
+  "profession_mysteriousvisitor": "謎の訪問者",
+
+  "event_orc_raid_title": "オーク襲撃!",
+  "event_conflict_title": "争い",
+  "event_visitor_title": "謎の訪問者",
+  "event_famine_title": "食料不足!",
+  "event_fire_title": "火事!",
+  "event_resolve_placeholder": "命令をお下しください、領主様...",
+  "event_outcome_good": "見事な判断です！状況は収拾されました。",
+  "event_outcome_bad": "状況が悪化しました...",
+
+  "territory_yours": "我が領土",
+  "territory_neutral": "中立地帯",
+  "territory_hostile": "敵の領土",
+  "btn_scout": "偵察 (金貨10)",
+  "btn_attack": "攻撃",
+  "btn_send_army": "攻城戦開始",
+
+  "battle_commencing": "{0}の攻城戦が始まります！",
+  "battle_victory": "勝利!",
+  "battle_defeat": "敗北...",
+
+  "tts_on": "音声ON",
+  "tts_off": "音声OFF",
+
+  "title_little_lord": "小領主",
+  "title_baron": "男爵",
+  "title_lord": "領主",
+  "title_high_lord": "大領主",
+  "title_majesty": "陛下",
+
+  "day_format": "{0}年{1}日",
+  "game_saved": "ゲーム保存完了",
+  "game_loaded": "ゲーム読み込み完了",
+  "yes": "はい",
+  "no": "いいえ"
+}

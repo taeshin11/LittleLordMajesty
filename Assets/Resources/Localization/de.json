@@ -1,0 +1,34 @@
+{
+  "app_name": "Kleiner Lord Majestät",
+  "btn_new_game": "Neues Spiel",
+  "btn_continue": "Fortfahren",
+  "btn_settings": "Einstellungen",
+  "btn_quit": "Beenden",
+
+  "hud_wood": "Holz",
+  "hud_food": "Nahrung",
+  "hud_gold": "Gold",
+  "hud_population": "Bevölkerung",
+
+  "npc_idle": "Untätig",
+  "npc_no_response": "Ich... kann jetzt nicht antworten, mein Herr.",
+
+  "event_orc_raid_title": "Ork-Überfall!",
+  "event_conflict_title": "Konflikt",
+  "event_famine_title": "Nahrungsmangel!",
+  "event_fire_title": "Feuer!",
+
+  "territory_yours": "Ihr Gebiet",
+  "territory_neutral": "Neutral",
+  "battle_victory": "SIEG!",
+  "battle_defeat": "NIEDERLAGE...",
+
+  "title_little_lord": "Kleiner Lord",
+  "title_baron": "Baron",
+  "title_lord": "Lord",
+  "title_high_lord": "Hochlord",
+  "title_majesty": "Majestät",
+
+  "yes": "Ja",
+  "no": "Nein"
+}

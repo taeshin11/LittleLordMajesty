@@ -1,0 +1,34 @@
+{
+  "app_name": "Pequeño Señor Majestad",
+  "btn_new_game": "Nueva Partida",
+  "btn_continue": "Continuar",
+  "btn_settings": "Ajustes",
+  "btn_quit": "Salir",
+
+  "hud_wood": "Madera",
+  "hud_food": "Comida",
+  "hud_gold": "Oro",
+  "hud_population": "Población",
+
+  "npc_idle": "Inactivo",
+  "npc_no_response": "No... puedo responder ahora mismo, mi señor.",
+
+  "event_orc_raid_title": "¡Ataque Orco!",
+  "event_conflict_title": "Conflicto",
+  "event_famine_title": "¡Escasez de alimentos!",
+  "event_fire_title": "¡Fuego!",
+
+  "territory_yours": "Tu Territorio",
+  "territory_neutral": "Neutral",
+  "battle_victory": "¡VICTORIA!",
+  "battle_defeat": "DERROTA...",
+
+  "title_little_lord": "Pequeño Señor",
+  "title_baron": "Barón",
+  "title_lord": "Señor",
+  "title_high_lord": "Gran Señor",
+  "title_majesty": "Majestad",
+
+  "yes": "Sí",
+  "no": "No"
+}
