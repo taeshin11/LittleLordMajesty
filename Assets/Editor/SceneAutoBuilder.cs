@@ -456,8 +456,12 @@ public static class SceneAutoBuilder
         soCastle.FindProperty("_notificationText").objectReferenceValue     = notifText.GetComponent<TextMeshProUGUI>();
         soCastle.FindProperty("_npcListPanel").objectReferenceValue         = npcListPanel;
         soCastle.FindProperty("_npcListContent").objectReferenceValue       = npcListContent;
+        soCastle.FindProperty("_npcListItemPrefab").objectReferenceValue    =
+            AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Prefabs/NPCListItem.prefab");
         soCastle.FindProperty("_buildingMenuPanel").objectReferenceValue    = buildMenuPanel;
         soCastle.FindProperty("_buildingMenuContent").objectReferenceValue  = buildMenuContent;
+        soCastle.FindProperty("_buildingMenuItemPrefab").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Prefabs/BuildingMenuItem.prefab");
         soCastle.ApplyModifiedProperties();
 
         return panel;
@@ -616,7 +620,14 @@ public static class SceneAutoBuilder
         soNPC.FindProperty("_quickCommandsParent").objectReferenceValue = quickCmdsGO.transform;
         soNPC.FindProperty("_ttsToggle").objectReferenceValue       = ttsToggle;
         soNPC.FindProperty("_ttsLabel").objectReferenceValue        = ttsLabel.GetComponent<TextMeshProUGUI>();
-        soNPC.FindProperty("_thinkingBubblePrefab").objectReferenceValue = null; // Will use PlaceholderPrefabs
+        soNPC.FindProperty("_playerMessagePrefab").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Prefabs/PlayerMessage.prefab");
+        soNPC.FindProperty("_npcMessagePrefab").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Prefabs/NPCMessage.prefab");
+        soNPC.FindProperty("_thinkingBubblePrefab").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Prefabs/ThinkingBubble.prefab");
+        soNPC.FindProperty("_quickCommandButtonPrefab").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Prefabs/QuickCommandButton.prefab");
         soNPC.ApplyModifiedProperties();
 
         return panel;
