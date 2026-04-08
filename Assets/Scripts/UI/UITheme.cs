@@ -3,135 +3,176 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Central UI theme/color palette for consistent modern pixel-art medieval aesthetic.
-/// Apply via UIThemeApplier component on UI elements.
+/// Warm medieval charm palette.
+/// Inspired by cozy tavern + Stardew Valley + modern mobile game aesthetics.
+/// Dark but warm — candlelit parchment, amber gold, sage green.
 /// </summary>
 [CreateAssetMenu(fileName = "UITheme", menuName = "LLM/UI Theme")]
 public class UITheme : ScriptableObject
 {
-    [Header("Background Colors")]
-    public Color BackgroundDeep = new Color(0.13f, 0.09f, 0.20f, 1f);     // #211733 deep purple-black
-    public Color BackgroundPanel = new Color(0.18f, 0.13f, 0.27f, 0.95f); // panel bg
-    public Color BackgroundCard = new Color(0.22f, 0.16f, 0.33f, 1f);     // card bg
+    [Header("Backgrounds — Warm Candlelit Dark")]
+    public Color BackgroundDeep  = new Color(0.10f, 0.07f, 0.04f, 1.00f); // #1A120A near-black warm brown
+    public Color BackgroundPanel = new Color(0.17f, 0.11f, 0.06f, 0.97f); // #2C1D0F dark parchment
+    public Color BackgroundCard  = new Color(0.22f, 0.15f, 0.08f, 1.00f); // #391E0D rich leather
 
-    [Header("Brand Colors")]
-    public Color PrimaryPurple = new Color(0.48f, 0.37f, 0.65f, 1f);  // #7B5EA7 royal purple
-    public Color AccentGold = new Color(0.94f, 0.75f, 0.25f, 1f);     // #F0C040 gold
-    public Color AccentSilver = new Color(0.75f, 0.78f, 0.82f, 1f);   // silver
+    [Header("Primary Accent — Amber Gold")]
+    public Color PrimaryGold     = new Color(0.96f, 0.72f, 0.16f, 1.00f); // #F5B829 warm amber
+    public Color PrimaryGoldDim  = new Color(0.70f, 0.52f, 0.12f, 1.00f); // dimmed gold
+    public Color AccentCream     = new Color(0.96f, 0.91f, 0.78f, 1.00f); // #F5E7C6 parchment cream
 
-    [Header("Status Colors")]
-    public Color SuccessGreen = new Color(0.24f, 0.74f, 0.39f, 1f);   // #3EBD63
-    public Color DangerRed = new Color(0.88f, 0.19f, 0.19f, 1f);      // #E03030
-    public Color WarningOrange = new Color(0.95f, 0.55f, 0.10f, 1f);  // warning
-    public Color InfoBlue = new Color(0.25f, 0.55f, 0.90f, 1f);       // info
+    [Header("Secondary Accents")]
+    public Color AccentSage      = new Color(0.44f, 0.64f, 0.37f, 1.00f); // #71A35E sage green
+    public Color AccentSkyBlue   = new Color(0.38f, 0.66f, 0.82f, 1.00f); // #61A8D1 sky blue
+    public Color AccentRose      = new Color(0.85f, 0.42f, 0.42f, 1.00f); // #D96B6B muted rose
+    public Color AccentLavender  = new Color(0.62f, 0.50f, 0.78f, 1.00f); // #9E80C7 soft purple
 
-    [Header("Text Colors")]
-    public Color TextPrimary = new Color(0.95f, 0.93f, 0.88f, 1f);    // warm white
-    public Color TextSecondary = new Color(0.65f, 0.62f, 0.70f, 1f);  // muted
-    public Color TextDisabled = new Color(0.40f, 0.38f, 0.45f, 1f);   // disabled
+    [Header("Status")]
+    public Color SuccessGreen    = new Color(0.38f, 0.76f, 0.38f, 1.00f); // #62C262
+    public Color DangerRed       = new Color(0.86f, 0.25f, 0.25f, 1.00f); // #DB4040
+    public Color WarningAmber    = new Color(0.96f, 0.65f, 0.10f, 1.00f); // #F5A61A
+    public Color InfoBlue        = new Color(0.30f, 0.60f, 0.92f, 1.00f); // #4D99EB
 
-    [Header("Resource Colors")]
-    public Color WoodColor = new Color(0.65f, 0.45f, 0.25f, 1f);      // brown
-    public Color FoodColor = new Color(0.40f, 0.75f, 0.25f, 1f);      // green
-    public Color GoldColor = new Color(0.94f, 0.75f, 0.25f, 1f);      // gold
-    public Color PopColor = new Color(0.40f, 0.70f, 0.90f, 1f);       // blue
+    [Header("Text")]
+    public Color TextPrimary     = new Color(0.96f, 0.91f, 0.80f, 1.00f); // warm white cream
+    public Color TextSecondary   = new Color(0.70f, 0.64f, 0.52f, 1.00f); // aged parchment
+    public Color TextDisabled    = new Color(0.42f, 0.38f, 0.30f, 1.00f); // faded ink
+    public Color TextGold        = new Color(0.96f, 0.78f, 0.28f, 1.00f); // title gold
 
-    [Header("Button Styles")]
-    public Color ButtonPrimary = new Color(0.48f, 0.37f, 0.65f, 1f);
-    public Color ButtonPrimaryHover = new Color(0.58f, 0.47f, 0.75f, 1f);
-    public Color ButtonDanger = new Color(0.70f, 0.15f, 0.15f, 1f);
-    public Color ButtonDisabled = new Color(0.30f, 0.28f, 0.35f, 1f);
+    [Header("Resources")]
+    public Color WoodColor       = new Color(0.67f, 0.48f, 0.25f, 1.00f); // warm oak
+    public Color FoodColor       = new Color(0.50f, 0.80f, 0.30f, 1.00f); // fresh green
+    public Color GoldColor       = new Color(0.96f, 0.72f, 0.16f, 1.00f); // coin gold
+    public Color PopColor        = new Color(0.45f, 0.72f, 0.92f, 1.00f); // blue
 
-    [Header("Border/Separator")]
-    public Color BorderColor = new Color(0.48f, 0.37f, 0.65f, 0.4f);
-    public Color SeparatorColor = new Color(1f, 1f, 1f, 0.08f);
+    [Header("Buttons")]
+    public Color ButtonPrimary      = new Color(0.55f, 0.38f, 0.14f, 1.00f); // warm brown
+    public Color ButtonPrimaryHover = new Color(0.68f, 0.50f, 0.22f, 1.00f);
+    public Color ButtonSuccess      = new Color(0.28f, 0.56f, 0.24f, 1.00f); // forest green
+    public Color ButtonDanger       = new Color(0.62f, 0.16f, 0.16f, 1.00f); // dark crimson
+    public Color ButtonDisabled     = new Color(0.28f, 0.22f, 0.14f, 1.00f);
+    public Color ButtonGold         = new Color(0.70f, 0.52f, 0.10f, 1.00f); // golden CTA
 
-    [Header("Severity Colors")]
-    public Color SeverityMinor = new Color(0.80f, 0.80f, 0.30f, 1f);
-    public Color SeverityModerate = new Color(1.00f, 0.60f, 0.20f, 1f);
-    public Color SeveritySevere = new Color(1.00f, 0.30f, 0.10f, 1f);
-    public Color SeverityCritical = new Color(1.00f, 0.00f, 0.00f, 1f);
+    [Header("Borders & Decorations")]
+    public Color BorderGold      = new Color(0.75f, 0.55f, 0.18f, 0.60f); // subtle gold border
+    public Color BorderSoft      = new Color(1.00f, 0.90f, 0.70f, 0.12f); // very faint cream
+    public Color SeparatorColor  = new Color(1.00f, 0.85f, 0.60f, 0.10f);
+    public Color ShadowColor     = new Color(0.00f, 0.00f, 0.00f, 0.45f);
+
+    [Header("Severity")]
+    public Color SeverityMinor    = new Color(0.85f, 0.80f, 0.25f, 1.00f);
+    public Color SeverityModerate = new Color(0.96f, 0.58f, 0.15f, 1.00f);
+    public Color SeveritySevere   = new Color(0.90f, 0.28f, 0.12f, 1.00f);
+    public Color SeverityCritical = new Color(0.95f, 0.05f, 0.05f, 1.00f);
 
     [Header("Fonts")]
-    public TMP_FontAsset PixelFont;    // Retro pixel font for titles
-    public TMP_FontAsset UIFont;       // Clean sans-serif for body text
+    public TMP_FontAsset TitleFont;  // Display/title — bold, medieval-ish
+    public TMP_FontAsset BodyFont;   // Readable body text
+    public TMP_FontAsset AccentFont; // Small caps, UI labels
 
-    [Header("Pixel Art Settings")]
-    public FilterMode SpriteFilterMode = FilterMode.Point; // Crisp pixel art
-    public int PixelsPerUnit = 32;
+    [Header("Corner Radius (for shader/9-slice)")]
+    public float CornerRadiusSmall  = 6f;
+    public float CornerRadiusMedium = 12f;
+    public float CornerRadiusLarge  = 20f;
 
-    public static UITheme Load()
+    // ─────────────────────────────────────────────────────────────
+
+    public static UITheme Load() => Resources.Load<UITheme>("Config/UITheme");
+
+    public Color GetSeverityColor(EventManager.EventSeverity s) => s switch
     {
-        return Resources.Load<UITheme>("UI/UITheme");
-    }
-
-    public Color GetSeverityColor(EventManager.EventSeverity severity) => severity switch
-    {
-        EventManager.EventSeverity.Minor => SeverityMinor,
+        EventManager.EventSeverity.Minor    => SeverityMinor,
         EventManager.EventSeverity.Moderate => SeverityModerate,
-        EventManager.EventSeverity.Severe => SeveritySevere,
+        EventManager.EventSeverity.Severe   => SeveritySevere,
         EventManager.EventSeverity.Critical => SeverityCritical,
         _ => TextPrimary
     };
 
-    public Color GetResourceColor(ResourceManager.ResourceType type) => type switch
+    public Color GetResourceColor(ResourceManager.ResourceType t) => t switch
     {
-        ResourceManager.ResourceType.Wood => WoodColor,
-        ResourceManager.ResourceType.Food => FoodColor,
-        ResourceManager.ResourceType.Gold => GoldColor,
+        ResourceManager.ResourceType.Wood       => WoodColor,
+        ResourceManager.ResourceType.Food       => FoodColor,
+        ResourceManager.ResourceType.Gold       => GoldColor,
         ResourceManager.ResourceType.Population => PopColor,
         _ => TextPrimary
+    };
+
+    public Color GetProfessionColor(NPCPersona.NPCProfession p) => p switch
+    {
+        NPCPersona.NPCProfession.Soldier  => AccentRose,
+        NPCPersona.NPCProfession.Farmer   => AccentSage,
+        NPCPersona.NPCProfession.Merchant => PrimaryGold,
+        NPCPersona.NPCProfession.Vassal   => AccentLavender,
+        NPCPersona.NPCProfession.Scholar  => AccentSkyBlue,
+        NPCPersona.NPCProfession.Priest   => AccentCream,
+        NPCPersona.NPCProfession.Spy      => new Color(0.25f, 0.25f, 0.30f, 1f),
+        _ => TextSecondary
     };
 }
 
 /// <summary>
-/// Applies the UITheme to a UI element. Attach to buttons, panels, text.
+/// Applies theme colors to UI elements automatically.
+/// Attach to any Image or TextMeshProUGUI.
 /// </summary>
 public class UIThemeApplier : MonoBehaviour
 {
     public enum ThemeRole
     {
-        Background, Panel, Card,
-        TextPrimary, TextSecondary, TextDisabled,
-        ButtonPrimary, ButtonDanger, ButtonDisabled,
-        AccentGold, AccentPurple,
-        Border
+        // Backgrounds
+        BgDeep, BgPanel, BgCard,
+        // Text
+        TextPrimary, TextSecondary, TextDisabled, TextGold,
+        // Buttons
+        BtnPrimary, BtnSuccess, BtnDanger, BtnDisabled, BtnGold,
+        // Accents
+        Gold, Sage, SkyBlue, Rose, Lavender, Cream,
+        // Resources
+        Wood, Food, GoldRes, Population,
+        // Borders
+        BorderGold, BorderSoft
     }
 
-    [SerializeField] private ThemeRole _role = ThemeRole.Panel;
-    [SerializeField] private bool _applyOnEnable = true;
+    [SerializeField] private ThemeRole _role = ThemeRole.BgPanel;
 
-    private void OnEnable()
-    {
-        if (_applyOnEnable) ApplyTheme();
-    }
+    private void OnEnable()  => ApplyTheme();
+    private void Start()     => ApplyTheme();
 
     public void ApplyTheme()
     {
-        var theme = UITheme.Load();
-        if (theme == null) return;
+        var t = UITheme.Load();
+        if (t == null) return;
 
-        Color color = _role switch
+        Color c = _role switch
         {
-            ThemeRole.Background => theme.BackgroundDeep,
-            ThemeRole.Panel => theme.BackgroundPanel,
-            ThemeRole.Card => theme.BackgroundCard,
-            ThemeRole.TextPrimary => theme.TextPrimary,
-            ThemeRole.TextSecondary => theme.TextSecondary,
-            ThemeRole.TextDisabled => theme.TextDisabled,
-            ThemeRole.ButtonPrimary => theme.ButtonPrimary,
-            ThemeRole.ButtonDanger => theme.ButtonDanger,
-            ThemeRole.ButtonDisabled => theme.ButtonDisabled,
-            ThemeRole.AccentGold => theme.AccentGold,
-            ThemeRole.AccentPurple => theme.PrimaryPurple,
-            ThemeRole.Border => theme.BorderColor,
+            ThemeRole.BgDeep      => t.BackgroundDeep,
+            ThemeRole.BgPanel     => t.BackgroundPanel,
+            ThemeRole.BgCard      => t.BackgroundCard,
+            ThemeRole.TextPrimary => t.TextPrimary,
+            ThemeRole.TextSecondary=> t.TextSecondary,
+            ThemeRole.TextDisabled => t.TextDisabled,
+            ThemeRole.TextGold    => t.TextGold,
+            ThemeRole.BtnPrimary  => t.ButtonPrimary,
+            ThemeRole.BtnSuccess  => t.ButtonSuccess,
+            ThemeRole.BtnDanger   => t.ButtonDanger,
+            ThemeRole.BtnDisabled => t.ButtonDisabled,
+            ThemeRole.BtnGold     => t.ButtonGold,
+            ThemeRole.Gold        => t.PrimaryGold,
+            ThemeRole.Sage        => t.AccentSage,
+            ThemeRole.SkyBlue     => t.AccentSkyBlue,
+            ThemeRole.Rose        => t.AccentRose,
+            ThemeRole.Lavender    => t.AccentLavender,
+            ThemeRole.Cream       => t.AccentCream,
+            ThemeRole.Wood        => t.WoodColor,
+            ThemeRole.Food        => t.FoodColor,
+            ThemeRole.GoldRes     => t.GoldColor,
+            ThemeRole.Population  => t.PopColor,
+            ThemeRole.BorderGold  => t.BorderGold,
+            ThemeRole.BorderSoft  => t.BorderSoft,
             _ => Color.white
         };
 
-        var image = GetComponent<Image>();
-        if (image != null) { image.color = color; return; }
-
+        var img = GetComponent<Image>();
+        if (img != null) { img.color = c; return; }
         var tmp = GetComponent<TextMeshProUGUI>();
-        if (tmp != null) tmp.color = color;
+        if (tmp != null) tmp.color = c;
     }
 }
