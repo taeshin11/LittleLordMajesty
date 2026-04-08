@@ -3,20 +3,23 @@ using UnityEngine.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
 
 /// <summary>
 /// Handles all communication with Google Gemini 1.5 Flash API.
-/// Supports streaming responses, context management, and retry logic.
+/// Supports request queueing, SHA256 caching, and retry logic.
 /// </summary>
 public class GeminiAPIClient : MonoBehaviour
 {
     public static GeminiAPIClient Instance { get; private set; }
 
-    private const string API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
-    private const int MAX_RETRIES = 3;
-    private const float RETRY_DELAY = 1f;
+    private const string API_BASE_URL    = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    private const int    MAX_RETRIES     = 3;
+    private const float  RETRY_DELAY     = 1f;
+    private const float  MIN_REQUEST_GAP = 1.0f; // Rate limiting: 1s between requests
+    private const int    MAX_CONCURRENT  = 2;
 
     [SerializeField] private string _apiKey = ""; // Set via GameConfig or environment
     [SerializeField] private int _maxOutputTokens = 512;
@@ -24,6 +27,11 @@ public class GeminiAPIClient : MonoBehaviour
 
     private int _requestCount = 0;
     private int _cachedResponses = 0;
+    private int _activeRequests = 0;
+    private float _lastRequestTime = -999f;
+    private readonly Queue<System.Func<IEnumerator>> _requestQueue = new();
+    private bool _queueRunning = false;
+
     private Dictionary<string, string> _responseCache = new();
 
     public event Action<int> OnRequestCountChanged;
@@ -112,7 +120,7 @@ public class GeminiAPIClient : MonoBehaviour
     }
 
     /// <summary>
-    /// Sends a message to Gemini with full NPC persona context.
+    /// Sends a message to Gemini. Requests are queued with rate limiting.
     /// </summary>
     public Coroutine SendMessage(
         string userMessage,
@@ -121,7 +129,54 @@ public class GeminiAPIClient : MonoBehaviour
         Action<string> onSuccess,
         Action<string> onError = null)
     {
-        return StartCoroutine(SendMessageCoroutine(userMessage, systemPrompt, conversationHistory, onSuccess, onError));
+        // Check MonetizationManager scroll limit
+        if (MonetizationManager.Instance != null && !MonetizationManager.Instance.CanUseAI)
+        {
+            MonetizationManager.Instance.RequestAIUsage(
+                () => EnqueueRequest(userMessage, systemPrompt, conversationHistory, onSuccess, onError),
+                () => onError?.Invoke("No Wisdom Scrolls remaining."));
+            return null;
+        }
+
+        return EnqueueRequest(userMessage, systemPrompt, conversationHistory, onSuccess, onError);
+    }
+
+    private Coroutine EnqueueRequest(string userMessage, string systemPrompt,
+        List<(string role, string text)> history, Action<string> onSuccess, Action<string> onError)
+    {
+        _requestQueue.Enqueue(() => SendMessageCoroutine(userMessage, systemPrompt, history, onSuccess, onError));
+        if (!_queueRunning)
+            return StartCoroutine(RunRequestQueue());
+        return null;
+    }
+
+    private IEnumerator RunRequestQueue()
+    {
+        _queueRunning = true;
+        while (_requestQueue.Count > 0)
+        {
+            // Rate limiting
+            float elapsed = Time.realtimeSinceStartup - _lastRequestTime;
+            if (elapsed < MIN_REQUEST_GAP)
+                yield return new WaitForSeconds(MIN_REQUEST_GAP - elapsed);
+
+            if (_activeRequests >= MAX_CONCURRENT)
+            {
+                yield return new WaitUntil(() => _activeRequests < MAX_CONCURRENT);
+            }
+
+            var nextRequest = _requestQueue.Dequeue();
+            _lastRequestTime = Time.realtimeSinceStartup;
+            _activeRequests++;
+            yield return StartCoroutine(WrapWithCounter(nextRequest()));
+        }
+        _queueRunning = false;
+    }
+
+    private IEnumerator WrapWithCounter(IEnumerator coroutine)
+    {
+        yield return coroutine;
+        _activeRequests = Mathf.Max(0, _activeRequests - 1);
     }
 
     private IEnumerator SendMessageCoroutine(
@@ -242,9 +297,10 @@ public class GeminiAPIClient : MonoBehaviour
 
     private string ComputeCacheKey(string systemPrompt, string userMessage)
     {
-        // Simple hash for cache lookup
-        int hash = (systemPrompt + "|" + userMessage).GetHashCode();
-        return hash.ToString();
+        // SHA256 truncated — collision-safe unlike GetHashCode()
+        using var sha = SHA256.Create();
+        byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(systemPrompt + "|" + userMessage));
+        return BitConverter.ToString(hash, 0, 8).Replace("-", ""); // 16 hex chars
     }
 
     public void ClearCache() => _responseCache.Clear();

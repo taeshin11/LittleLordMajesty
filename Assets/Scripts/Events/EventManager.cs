@@ -350,4 +350,21 @@ Is the response clever, resourceful, and appropriate? Judge fairly.";
     public List<GameEvent> GetActiveEvents() => new List<GameEvent>(_activeEvents);
     public List<GameEvent> GetEventHistory() => new List<GameEvent>(_eventHistory);
     public bool HasActiveEvents() => _activeEvents.Count > 0;
+
+    /// <summary>
+    /// Manually trigger an event from other systems (Research complete, Spy detected, etc.)
+    /// </summary>
+    public void TriggerManualEvent(string title, string description, EventSeverity severity)
+    {
+        var ev = new GameEvent
+        {
+            EventId     = System.Guid.NewGuid().ToString("N")[..8],
+            Type        = EventType.CastleSpyDetected,
+            Severity    = severity,
+            Title       = title,
+            Description = description,
+            OccurredAt  = System.DateTime.UtcNow
+        };
+        TriggerEvent(ev);
+    }
 }
