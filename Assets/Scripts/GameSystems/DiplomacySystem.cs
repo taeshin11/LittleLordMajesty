@@ -103,9 +103,9 @@ You are responding to a diplomatic message. React according to your personality:
 
 Keep responses to 2-3 sentences. Be in character. Language: {lang}";
 
-        var history = state.DialogueHistory
-            .Select((h, i) => (i % 2 == 0 ? "user" : "model", h))
-            .ToList();
+        var history = new List<(string role, string text)>();
+        for (int i = 0; i < state.DialogueHistory.Count; i++)
+            history.Add((i % 2 == 0 ? "user" : "model", state.DialogueHistory[i]));
 
         state.DialogueHistory.Add(playerMessage);
 
@@ -224,13 +224,3 @@ Keep responses to 2-3 sentences. Be in character. Language: {lang}";
     public List<DiplomaticState> GetAllRelations() => new List<DiplomaticState>(_relations.Values);
 }
 
-// Extension for LINQ
-internal static class ListExtensions
-{
-    public static List<(A, B)> Select<T, A, B>(this List<T> list, Func<T, int, (A, B)> selector)
-    {
-        var result = new List<(A, B)>();
-        for (int i = 0; i < list.Count; i++) result.Add(selector(list[i], i));
-        return result;
-    }
-}
