@@ -57,6 +57,8 @@ public class NPCManager : MonoBehaviour
     private void Start()
     {
         _gemini = GeminiAPIClient.Instance;
+        if (_gemini == null)
+            Debug.LogWarning("[NPCManager] GeminiAPIClient not found — NPC dialogue will use fallback responses.");
     }
 
     public void InitializeStartingNPCs()
@@ -150,7 +152,21 @@ public class NPCManager : MonoBehaviour
         var npc = GetNPC(npcId);
         if (npc == null) { onResponse?.Invoke("NPC not found."); return; }
 
-        var convState = _conversationStates[npcId];
+        if (_gemini == null)
+        {
+            string fallback = LocalizationManager.Instance?.Get("npc_no_response")
+                              ?? "I... cannot answer right now, my lord.";
+            onResponse?.Invoke(fallback);
+            return;
+        }
+
+        if (!_conversationStates.TryGetValue(npcId, out var convState))
+        {
+            Debug.LogError($"[NPCManager] No conversation state for NPC {npcId}");
+            onResponse?.Invoke("...");
+            return;
+        }
+
         var gm = GameManager.Instance;
 
         string systemPrompt = convState.Persona.GenerateSystemPrompt(
@@ -247,7 +263,7 @@ public class NPCManager : MonoBehaviour
                 CurrentTask = _npcs[i].CurrentTask,
                 MoodScore = _npcs[i].MoodScore,
                 LoyaltyToLord = _npcs[i].LoyaltyToLord,
-                Position = _npcs[i].Position
+                WorldPosition = _npcs[i].WorldPosition
             };
         }
         return saves;
@@ -264,7 +280,7 @@ public class NPCManager : MonoBehaviour
                 npc.CurrentTask = save.CurrentTask;
                 npc.MoodScore = save.MoodScore;
                 npc.LoyaltyToLord = save.LoyaltyToLord;
-                npc.Position = save.Position;
+                npc.WorldPosition = save.WorldPosition;
             }
         }
     }

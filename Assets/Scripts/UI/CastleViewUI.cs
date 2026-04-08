@@ -215,6 +215,10 @@ public class CastleViewUI : MonoBehaviour
         GameManager.Instance?.SaveGame();
         ShowNotification(LocalizationManager.Instance?.Get("game_saved") ?? "Game Saved");
     }
+
+    // Called by KeyboardShortcuts on PC
+    public void ToggleBuildingMenuFromKeyboard() => ToggleBuildingMenu();
+    public void ToggleNPCListFromKeyboard() => ToggleNPCList();
 }
 
 // NPCSpriteController removed — 3D NPCs are handled by NPC3DClickHandler in CastleScene3D.

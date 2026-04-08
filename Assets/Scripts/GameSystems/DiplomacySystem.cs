@@ -52,10 +52,14 @@ public class DiplomacySystem : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        InitializeDiplomacy();
     }
 
-    private void Start() => _gemini = GeminiAPIClient.Instance;
+    private void Start()
+    {
+        _gemini = GeminiAPIClient.Instance;
+        // InitializeDiplomacy must run in Start (after WorldMapManager.Start generates the map)
+        InitializeDiplomacy();
+    }
 
     private void InitializeDiplomacy()
     {

@@ -8,8 +8,9 @@ using Newtonsoft.Json;
 /// </summary>
 public static class SaveSystem
 {
-    private static readonly string SavePath = Path.Combine(Application.persistentDataPath, "save.json");
-    private static readonly string BackupPath = Path.Combine(Application.persistentDataPath, "save_backup.json");
+    // Lazy properties — evaluated at call time after engine init
+    private static string SavePath   => Path.Combine(PlatformManager.SaveDirectory, "save.json");
+    private static string BackupPath => Path.Combine(PlatformManager.SaveDirectory, "save_backup.json");
 
     [Serializable]
     public class SaveData
@@ -42,6 +43,7 @@ public static class SaveSystem
     {
         try
         {
+            PlatformManager.EnsureSaveDirectory();
             var gm = GameManager.Instance;
             var rm = gm?.ResourceManager;
             var nm = gm?.NPCManager;

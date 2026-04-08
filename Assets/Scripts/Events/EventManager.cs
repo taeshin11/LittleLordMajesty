@@ -294,7 +294,10 @@ Is the response clever, resourceful, and appropriate? Judge fairly.";
         }
         catch
         {
-            bool success = llmResponse.Contains("success") && !llmResponse.Contains("fail");
+            // Use strict JSON keyword check to avoid false positives (e.g. "no success")
+            string lower = llmResponse.ToLower();
+            bool success = lower.Contains("\"success\": true") || lower.Contains("\"success\":true")
+                           || (lower.Contains("resolved") && !lower.Contains("fail") && !lower.Contains("unsuccessful"));
             ResolveEvent(ev, success, llmResponse);
             onOutcome?.Invoke(llmResponse, success);
         }

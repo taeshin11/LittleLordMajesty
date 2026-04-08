@@ -27,6 +27,8 @@ public class GameManager : MonoBehaviour
     [Header("Game State")]
     [SerializeField] private GameState _currentState = GameState.MainMenu;
     public GameState CurrentState => _currentState;
+    private GameState _prepauseState = GameState.Castle; // Restored on unpause
+    private Coroutine _dayCycleCoroutine;
 
     [Header("Player Progress")]
     public string LordTitle = "Little Lord";
@@ -59,8 +61,13 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        // Begin day cycle
-        StartCoroutine(DayCycleCoroutine());
+        _dayCycleCoroutine = StartCoroutine(DayCycleCoroutine());
+    }
+
+    private void OnDestroy()
+    {
+        if (_dayCycleCoroutine != null)
+            StopCoroutine(_dayCycleCoroutine);
     }
 
     private void Update()
@@ -92,11 +99,12 @@ public class GameManager : MonoBehaviour
     {
         if (_currentState == GameState.Paused)
         {
-            SetGameState(GameState.Castle); // Return to previous — improve with stack later
+            SetGameState(_prepauseState);
             Time.timeScale = 1f;
         }
         else
         {
+            _prepauseState = _currentState;
             SetGameState(GameState.Paused);
             Time.timeScale = 0f;
         }

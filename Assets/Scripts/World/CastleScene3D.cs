@@ -36,6 +36,20 @@ public class CastleScene3D : MonoBehaviour
     private readonly Dictionary<string, GameObject> _npcObjects      = new();
     private readonly Dictionary<BuildingManager.BuildingType, GameObject> _buildingObjects = new();
 
+    // Cached shared material — avoids new Material() per-object
+    private static Material _sharedMaterial;
+    private static Material GetSharedMaterial()
+    {
+        if (_sharedMaterial != null) return _sharedMaterial;
+        _sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        if (_sharedMaterial.shader == null)
+            _sharedMaterial = new Material(Shader.Find("Standard"));
+        return _sharedMaterial;
+    }
+
+    // Cached UI reference
+    private NPCInteractionUI _npcInteractionUI;
+
     // ─────────────────────────────────────────────────────────────
     //  LIFECYCLE
     // ─────────────────────────────────────────────────────────────
@@ -57,11 +71,13 @@ public class CastleScene3D : MonoBehaviour
         SetupTerrain();
         SetupCastle();
 
+        _npcInteractionUI = FindObjectOfType<NPCInteractionUI>(true);
+
         if (GameManager.Instance?.NPCManager != null)
             GameManager.Instance.NPCManager.OnNPCAdded += SpawnNPC3D;
 
-        if (GameManager.Instance?.BuildingManager != null)
-            GameManager.Instance.BuildingManager.OnBuildingConstructed += SpawnBuilding3D;
+        if (BuildingManager.Instance != null)
+            BuildingManager.Instance.OnBuildingConstructed += SpawnBuilding3D;
 
         // Subscribe to input
         if (InputHandler.Instance != null)
@@ -78,6 +94,10 @@ public class CastleScene3D : MonoBehaviour
             InputHandler.Instance.OnPinchZoom -= HandleZoom;
             InputHandler.Instance.OnSwipe     -= HandlePan;
         }
+        if (GameManager.Instance?.NPCManager != null)
+            GameManager.Instance.NPCManager.OnNPCAdded -= SpawnNPC3D;
+        if (BuildingManager.Instance != null)
+            BuildingManager.Instance.OnBuildingConstructed -= SpawnBuilding3D;
     }
 
     private void LateUpdate()
@@ -426,10 +446,8 @@ public class CastleScene3D : MonoBehaviour
     {
         var renderer = go.GetComponent<Renderer>();
         if (renderer == null) return;
-
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-        if (mat.shader == null) mat = new Material(Shader.Find("Standard"));
-        mat.color = color;
+        // Instantiate from shared base to avoid per-object Shader.Find() calls
+        var mat = new Material(GetSharedMaterial()) { color = color };
         renderer.material = mat;
     }
 }
@@ -441,11 +459,18 @@ public class NPC3DClickHandler : MonoBehaviour
 {
     public string NpcId;
 
+    private NPCInteractionUI _cachedUI;
+
+    private void Awake()
+    {
+        _cachedUI = FindObjectOfType<NPCInteractionUI>(true);
+    }
+
     private void OnMouseDown()
     {
         UIManager.Instance?.OpenDialogue(NpcId);
-        var interactionUI = FindObjectOfType<NPCInteractionUI>(true);
-        interactionUI?.OpenForNPC(NpcId);
+        if (_cachedUI == null) _cachedUI = FindObjectOfType<NPCInteractionUI>(true);
+        _cachedUI?.OpenForNPC(NpcId);
     }
 }
 
