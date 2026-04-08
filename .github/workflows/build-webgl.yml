@@ -1,0 +1,140 @@
+name: Build WebGL & Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:   # 수동 실행 가능
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build WebGL
+    runs-on: ubuntu-latest
+    steps:
+
+      # ── 소스 체크아웃 ────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # ── Unity 캐시 (빌드 속도 향상) ─────────────────────────
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+            Library-
+
+      # ── Unity WebGL 빌드 ────────────────────────────────────
+      - name: Build WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE:      ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL:        ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD:     ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform:     WebGL
+          unityVersion:       2022.3.62f1
+          buildsPath:         Builds
+          buildName:          LittleLordMajesty
+          allowDirtyBuild:    true
+          customParameters:   -nographics
+
+      # ── index.html 생성 (GitHub Pages용) ────────────────────
+      - name: Prepare Pages
+        run: |
+          mkdir -p pages
+          cp -r Builds/WebGL/LittleLordMajesty/* pages/
+          # Unity WebGL 압축 파일 처리
+          find pages/Build -name "*.gz" -exec bash -c 'mv "$1" "${1%.gz}"' _ {} \; 2>/dev/null || true
+
+          # 랜딩 페이지 생성
+          cat > pages/index.html << 'HTML'
+          <!DOCTYPE html>
+          <html lang="ko">
+          <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Little Lord Majesty — Play in Browser</title>
+          <style>
+            body { margin: 0; background: #0d0b14; color: #eee; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+            h1 { color: #c8a42e; font-size: 2.5em; text-shadow: 0 0 20px rgba(200,164,46,0.5); }
+            p  { color: #888; margin: 0.5em 0 1.5em; }
+            iframe { width: 960px; height: 600px; border: 2px solid #333; border-radius: 8px; }
+            @media (max-width: 1000px) { iframe { width: 100vw; height: 56vw; } }
+          </style>
+          </head>
+          <body>
+          <h1>⚔️ Little Lord Majesty</h1>
+          <p>AI-Powered Kingdom Strategy — Play in your browser</p>
+          <iframe src="index_unity.html" allowfullscreen></iframe>
+          </body>
+          </html>
+          HTML
+
+          # Unity 빌드 index를 다른 이름으로 보존
+          [ -f pages/index.html ] && mv pages/index.html pages/index_unity.html 2>/dev/null || true
+
+          echo "Pages prepared successfully"
+          ls -la pages/
+
+      # ── GitHub Pages 배포 ───────────────────────────────────
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: pages
+          force_orphan: true
+
+      # ── 빌드 아티팩트 보관 (Windows 다운로드용) ──────────────
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebGL-Build
+          path: Builds/WebGL/
+          retention-days: 14
+
+  # ── Windows 빌드 (선택적, 별도 job) ─────────────────────────
+  build-windows:
+    name: Build Windows
+    runs-on: ubuntu-latest
+    needs: []  # build와 병렬 실행
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Win64-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: Library-Win64-
+
+      - name: Build Windows
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL:   ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform:  StandaloneWindows64
+          unityVersion:    2022.3.62f1
+          buildsPath:      Builds
+          buildName:       LittleLordMajesty
+          allowDirtyBuild: true
+
+      - name: Upload Windows Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Build
+          path: Builds/StandaloneWindows64/
+          retention-days: 14
