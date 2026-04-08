@@ -94,7 +94,9 @@ Assets/Audio/TTS_Cache/*.mp3
 Assets/Audio/TTS_Cache/*.wav
 Assets/Audio/TTS_Cache/*.ogg
 
-# Secrets / Config (use environment variables)
+# Secrets / API Keys — NEVER commit these
 Assets/Resources/Config/secrets.json
+Assets/Resources/Config/GameConfig.asset
+Assets/Resources/Config/GameConfig.asset.meta
 google-services.json
 GoogleService-Info.plist

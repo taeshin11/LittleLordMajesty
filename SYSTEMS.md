@@ -13,6 +13,7 @@ Assets/Scripts/
 ├── NPC/            NPC 관리, 방문자, 승급
 ├── Civilization/   Anno+문명 시스템 (생산체인, 인구, 칙령, 연구)
 ├── GameSystems/    건물, 전투, 외교, 튜토리얼
+├── Warfare/        스파이/포로/선전/상인봇/총력전/주지사 (Milestone 08)
 ├── World/          세계 지도, 3D 씬
 ├── Multiplayer/    LordNet PvP, 사절단, 수비대장, 국가
 ├── UI/             모든 UI 스크립트
@@ -20,7 +21,7 @@ Assets/Scripts/
 ├── Firebase/       Firebase REST API
 ├── Localization/   7개 언어 현지화
 ├── Input/          터치/키보드 입력
-├── Utils/          디버그 콘솔, 플레이스홀더 아트
+├── Utils/          디버그 콘솔, 플레이스홀더 아트, 빠른 명령 템플릿
 ├── Data/           ScriptableObject 데이터 클래스
 └── Editor/         Unity 에디터 자동화 도구
 ```
