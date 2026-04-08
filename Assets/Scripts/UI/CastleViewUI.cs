@@ -149,7 +149,7 @@ public class CastleViewUI : MonoBehaviour
             talkBtn?.onClick.AddListener(() =>
             {
                 _npcListPanel.SetActive(false);
-                OnNPCTapped(capturedId);
+                FindObjectOfType<NPCInteractionUI>()?.OpenForNPC(capturedId);
             });
         }
     }

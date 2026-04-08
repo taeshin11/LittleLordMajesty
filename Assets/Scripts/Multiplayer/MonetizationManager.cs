@@ -83,7 +83,7 @@ public class MonetizationManager : MonoBehaviour
     {
         WisdomScrollsToday = Mathf.Max(0, WisdomScrollsToday - amount);
         PlayerPrefs.SetInt("ScrollsUsedToday", WisdomScrollsToday);
-        ToastNotification.Instance?.Show($"+{amount} Wisdom Scrolls!");
+        ToastNotification.Show($"+{amount} Wisdom Scrolls!");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -132,27 +132,27 @@ public class MonetizationManager : MonoBehaviour
             case RewardType.WanderingMerchant:
                 rm?.AddResource(ResourceManager.ResourceType.Gold, AD_REWARD_GOLD);
                 AddScrolls(AD_REWARD_SCROLLS);
-                ToastNotification.Instance?.Show(
+                ToastNotification.Show(
                     "The merchant thanks you for listening! +100 Gold, +5 Scrolls");
                 break;
 
             case RewardType.ScoutHint:
                 // 힌트 내용은 WorldMapUI에서 활용
                 PlayerPrefs.SetInt("ScoutHintAvailable", 1);
-                ToastNotification.Instance?.Show(
+                ToastNotification.Show(
                     "The blue bird whispers enemy secrets...");
                 break;
 
             case RewardType.BattleBuff:
                 StartCoroutine(ApplyBattleBuff(30f, 0.2f)); // 30초, 방어력 20% 증가
-                ToastNotification.Instance?.Show(
+                ToastNotification.Show(
                     "Divine protection granted! Defense +20% for 30 seconds.");
                 break;
 
             case RewardType.BuildAccelerate:
                 // BuildingManager에 즉시 완료 신호
                 PlayerPrefs.SetInt("BuildAccelerateAvailable", 1);
-                ToastNotification.Instance?.Show("Construction accelerated!");
+                ToastNotification.Show("Construction accelerated!");
                 break;
 
             case RewardType.ScrollRecharge:
@@ -237,7 +237,7 @@ public class MonetizationManager : MonoBehaviour
         PlayerPrefs.SetInt($"OwnNPC_{npcId}", 1);
         var npc = Array.Find(LegendaryNPCs, n => n.Id == npcId);
         if (npc != null)
-            ToastNotification.Instance?.Show($"'{npc.Name}' has joined your castle!");
+            ToastNotification.Show($"'{npc.Name}' has joined your castle!");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -251,7 +251,7 @@ public class MonetizationManager : MonoBehaviour
         PlayerPrefs.SetString("PremiumExpiry",
             DateTime.UtcNow.AddDays(30).ToString("O"));
 
-        ToastNotification.Instance?.Show(
+        ToastNotification.Show(
             "Lord's Blessing activated! Enjoy unlimited wisdom and 20% faster construction.");
     }
 
@@ -300,7 +300,7 @@ public class MonetizationManager : MonoBehaviour
             }
             else
             {
-                ToastNotification.Instance?.Show(
+                ToastNotification.Show(
                     "No Wisdom Scrolls left. Watch an ad or upgrade to Lord's Blessing.");
                 onDenied?.Invoke();
             }

@@ -253,7 +253,7 @@ public class PrisonerSystem : MonoBehaviour
                     list.Add(revealed);
                     prisoner.RevealedSecrets = list.ToArray();
                     OnSecretRevealed?.Invoke(prisoner, revealed);
-                    ToastNotification.Instance?.Show($"Secret revealed: {revealed}");
+                    ToastNotification.Show($"Secret revealed: {revealed}");
                 }
                 break;
             case InterrogationOutcome.FullReveal:
@@ -277,7 +277,7 @@ public class PrisonerSystem : MonoBehaviour
         GameManager.Instance?.ResourceManager?.AddResource(
             ResourceManager.ResourceType.Gold, prisoner.RansomGold);
         prisoner.Status = "ransomed";
-        ToastNotification.Instance?.Show($"+{prisoner.RansomGold} gold ransom received.");
+        ToastNotification.Show($"+{prisoner.RansomGold} gold ransom received.");
         onDone?.Invoke();
     }
 

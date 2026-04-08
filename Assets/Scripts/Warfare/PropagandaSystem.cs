@@ -71,7 +71,7 @@ public class PropagandaSystem : MonoBehaviour
     {
         var rm = GameManager.Instance?.ResourceManager;
         if (rm?.Gold < goldCost) {
-            ToastNotification.Instance?.Show("Not enough gold to hire bards.");
+            ToastNotification.Show("Not enough gold to hire bards.");
             return;
         }
         rm?.TrySpend(0, 0, goldCost);
@@ -165,7 +165,7 @@ public class PropagandaSystem : MonoBehaviour
             }));
 
         OnRumorDebunked?.Invoke(campaignId);
-        ToastNotification.Instance?.Show("Debunk statement issued across the realm.");
+        ToastNotification.Show("Debunk statement issued across the realm.");
         onDone?.Invoke();
     }
 

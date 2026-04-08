@@ -292,7 +292,7 @@ public class NationConstitutionSystem : MonoBehaviour
                             sharedFood = constitution.SharedFood
                         }));
 
-                    ToastNotification.Instance?.Show(
+                    ToastNotification.Show(
                         $"Prime Minister granted {amount} {parts[0].Trim()} from the national treasury.");
                 }
             }
@@ -359,7 +359,7 @@ public class NationConstitutionSystem : MonoBehaviour
                 sharedFood = current.SharedFood + food
             }));
 
-        ToastNotification.Instance?.Show($"Contributed to national treasury: {gold}g {wood}w {food}f");
+        ToastNotification.Show($"Contributed to national treasury: {gold}g {wood}w {food}f");
         onDone?.Invoke();
     }
 

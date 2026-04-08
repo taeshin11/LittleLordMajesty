@@ -142,7 +142,7 @@ public class NationUI : MonoBehaviour
         LordNetManager.Instance?.CreateNation(name, tag, nation =>
         {
             RefreshNationPanel(nation);
-            ToastNotification.Instance?.Show($"Nation [{nation.Tag}] {nation.Name} founded!");
+            ToastNotification.Show($"Nation [{nation.Tag}] {nation.Name} founded!");
         });
     }
 
@@ -154,7 +154,7 @@ public class NationUI : MonoBehaviour
         LordNetManager.Instance?.JoinNation(nationId, nation =>
         {
             RefreshNationPanel(nation);
-            ToastNotification.Instance?.Show($"Joined [{nation.Tag}] {nation.Name}!");
+            ToastNotification.Show($"Joined [{nation.Tag}] {nation.Name}!");
         });
     }
 
@@ -227,6 +227,6 @@ public class NationUI : MonoBehaviour
         // Send to nation leader
         LordNetManager.Instance?.SendDiplomaticMessage(
             targetNation.LeaderId, message, proposal,
-            () => ToastNotification.Instance?.Show($"Diplomatic message sent to [{targetNation.Tag}]"));
+            () => ToastNotification.Show($"Diplomatic message sent to [{targetNation.Tag}]"));
     }
 }

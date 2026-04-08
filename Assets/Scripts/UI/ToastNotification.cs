@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -107,7 +108,7 @@ public class ToastNotification : MonoBehaviour
             bg.color = data.Type switch
             {
                 ToastType.Success => theme?.SuccessGreen ?? Color.green,
-                ToastType.Warning => theme?.WarningOrange ?? Color.yellow,
+                ToastType.Warning => theme?.WarningAmber ?? Color.yellow,
                 ToastType.Error => theme?.DangerRed ?? Color.red,
                 ToastType.Resource => new Color(0.2f, 0.2f, 0.3f, 0.9f),
                 _ => new Color(0.2f, 0.2f, 0.4f, 0.9f)

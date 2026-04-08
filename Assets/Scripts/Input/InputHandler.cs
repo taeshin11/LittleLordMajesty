@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
+using TouchPhase = UnityEngine.TouchPhase;
 
 /// <summary>
 /// Centralised input handler using Unity's New Input System.

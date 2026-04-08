@@ -190,50 +190,46 @@ public class SpyInfiltrationSystem : MonoBehaviour
 
     private IEnumerator ProcessSpyEffectResult(Spy spy, NPCManager.NPCData targetNPC, string llmReply)
     {
-        try
+        SpyEffectResult effect = null;
+        try { effect = JsonConvert.DeserializeObject<SpyEffectResult>(llmReply); }
+        catch (Exception e) { Debug.LogWarning($"[Spy] Effect parse failed: {e.Message}"); }
+
+        if (effect == null) yield break;
+
+        // NPC 상태 변경
+        targetNPC.MoodScore     = Mathf.Clamp(targetNPC.MoodScore + effect.satisfactionDelta, 0, 100);
+        targetNPC.LoyaltyToLord = Mathf.Clamp(targetNPC.LoyaltyToLord + effect.loyaltyDelta, 0, 100);
+
+        // 발견 판정
+        bool detected = UnityEngine.Random.value < effect.detectionChance;
+        if (detected)
         {
-            var effect = JsonConvert.DeserializeObject<SpyEffectResult>(llmReply);
-            if (effect == null) yield break;
+            spy.Status = "exposed";
+            yield return FirebasePatch($"spies/{LordNetManager.Instance?.LocalPlayerId}/{spy.SpyId}.json",
+                JsonConvert.SerializeObject(new { status = "exposed" }));
 
-            // NPC 상태 변경
-            targetNPC.MoodScore     = Mathf.Clamp(targetNPC.MoodScore + effect.satisfactionDelta, 0, 100);
-            targetNPC.LoyaltyToLord = Mathf.Clamp(targetNPC.LoyaltyToLord + effect.loyaltyDelta, 0, 100);
-
-            // 발견 판정
-            bool detected = UnityEngine.Random.value < effect.detectionChance;
-            if (detected)
-            {
-                spy.Status = "exposed";
-                yield return FirebasePatch($"spies/{LordNetManager.Instance?.LocalPlayerId}/{spy.SpyId}.json",
-                    JsonConvert.SerializeObject(new { status = "exposed" }));
-
-                OnSpyDetected?.Invoke(spy);
-                GameManager.Instance?.EventManager?.TriggerManualEvent(
-                    "Spy Detected!",
-                    $"A suspicious {spy.DisguiseAs} has been caught spreading rumors. " +
-                    $"'{effect.whisperText}'\nInterrogate or execute the agent?",
-                    EventManager.EventSeverity.Moderate);
-            }
-            else
-            {
-                // 생산성 피해 기록
-                var virusEffect = new PromptVirusEffect
-                {
-                    TargetPlayerId   = LordNetManager.Instance?.LocalPlayerId,
-                    SourceSpyId      = spy.SpyId,
-                    AffectedNPCId    = targetNPC.Id,
-                    ContaminatedIdea = effect.whisperText,
-                    SatisfactionDelta= effect.satisfactionDelta,
-                    ProductivityDelta= effect.satisfactionDelta / 2,
-                    IsDetected       = false,
-                    AppliedAtUtc     = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-                };
-                OnNPCContaminated?.Invoke(virusEffect);
-            }
+            OnSpyDetected?.Invoke(spy);
+            GameManager.Instance?.EventManager?.TriggerManualEvent(
+                "Spy Detected!",
+                $"A suspicious {spy.DisguiseAs} has been caught spreading rumors. " +
+                $"'{effect.whisperText}'\nInterrogate or execute the agent?",
+                EventManager.EventSeverity.Moderate);
         }
-        catch (Exception e)
+        else
         {
-            Debug.LogWarning($"[Spy] Effect parse failed: {e.Message}");
+            // 생산성 피해 기록
+            var virusEffect = new PromptVirusEffect
+            {
+                TargetPlayerId   = LordNetManager.Instance?.LocalPlayerId,
+                SourceSpyId      = spy.SpyId,
+                AffectedNPCId    = targetNPC.Id,
+                ContaminatedIdea = effect.whisperText,
+                SatisfactionDelta= effect.satisfactionDelta,
+                ProductivityDelta= effect.satisfactionDelta / 2,
+                IsDetected       = false,
+                AppliedAtUtc     = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            };
+            OnNPCContaminated?.Invoke(virusEffect);
         }
     }
 

@@ -189,7 +189,7 @@ public class GeneralTraitSystem : MonoBehaviour
             OnTraitAcquired?.Invoke(npcId, trait);
             onGranted?.Invoke(trait);
 
-            ToastNotification.Instance?.Show(
+            ToastNotification.Show(
                 $"{npc.Name} gained trait: {trait.TraitName}");
         }
         catch (Exception e) { Debug.LogWarning($"[Trait] Parse failed: {e.Message}"); }

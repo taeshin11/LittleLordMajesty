@@ -41,6 +41,9 @@ public class NPCPersona : ScriptableObject
         Guard,
         Builder,
         Mage,
+        Scholar,
+        Priest,
+        Spy,
         OrcRaider,  // Enemy type
         MysteriousVisitor
     }

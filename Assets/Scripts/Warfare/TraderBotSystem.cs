@@ -135,7 +135,7 @@ public class TraderBotSystem : MonoBehaviour
         yield return FirebasePut($"traders/{targetId}/{offer.OfferId}.json", json);
 
         onDispatched?.Invoke(offer);
-        ToastNotification.Instance?.Show($"{merchantName} dispatched to trade {amount}x {goodsType}.");
+        ToastNotification.Show($"{merchantName} dispatched to trade {amount}x {goodsType}.");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -259,7 +259,7 @@ public class TraderBotSystem : MonoBehaviour
         offer.Status = "sold";
         offer.FinalGoldReceived = goldPaid;
         OnTradeDone?.Invoke(offer);
-        ToastNotification.Instance?.Show($"Trade complete! Received {offer.GoodsAmount}x {offer.GoodsType}.");
+        ToastNotification.Show($"Trade complete! Received {offer.GoodsAmount}x {offer.GoodsType}.");
 
         // 판매자에게 금화 전달 알림
         yield return FirebasePost($"notifications/{offer.SellerPlayerId}.json",

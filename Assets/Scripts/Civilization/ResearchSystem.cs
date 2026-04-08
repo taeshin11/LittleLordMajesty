@@ -259,7 +259,7 @@ public class ResearchSystem : MonoBehaviour
         OnResearchCompleted?.Invoke(tech);
         Debug.Log($"[Research] Completed: {tech.Name}! Bonus: {tech.Bonus}");
 
-        ToastNotification.Instance?.Show($"Research complete: {tech.Name}\n{tech.Bonus}");
+        ToastNotification.Show($"Research complete: {tech.Name}\n{tech.Bonus}");
 
         // 학자 NPC 보고
         TriggerScholarReport(tech);
@@ -278,10 +278,10 @@ public class ResearchSystem : MonoBehaviour
     // ─────────────────────────────────────────────────────────────
 
     public List<Technology> GetAvailableTechs() =>
-        new(_techs.Values).FindAll(t => t.Status == TechStatus.Available);
+        new List<Technology>(_techs.Values).FindAll(t => t.Status == TechStatus.Available);
 
     public List<Technology> GetCompletedTechs() =>
-        new(_techs.Values).FindAll(t => t.Status == TechStatus.Completed);
+        new List<Technology>(_techs.Values).FindAll(t => t.Status == TechStatus.Completed);
 
     public Technology GetCurrentResearch() => _currentResearch;
 
