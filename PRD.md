@@ -59,7 +59,34 @@
 | Steam Windows | Win10 64-bit | In development |
 | Steam macOS | macOS 12+ | In development |
 
-### 3.6. Persistence & Cloud
+### 3.6. Warfare & Espionage
+
+Six interlocking systems that enable multiplayer shadow-war alongside direct military conflict.
+
+| System | Mechanic | LLM Role |
+|--------|----------|----------|
+| **Spy Infiltration** | Dispatch a disguised spy to corrupt enemy NPC morale over 7 days | Generates satisfaction/loyalty deltas and detection narrative; roleplays spy under interrogation |
+| **Prisoner System** | Capture enemy commander after battle; interrogate in dungeon | Maintains defender's pre-written persona (DefensePhilosophy); responds with resist/lie/partial/full/broken outcomes |
+| **Propaganda** | Hire bards to fabricate and spread fake news across 2–5 world players | Transforms blunt slander instructions into believable medieval-flavoured gossip |
+| **Trader Bot** | Dispatch an autonomous merchant with secret pricing floor and negotiation style | Negotiates multi-turn deals with human buyers, honouring the seller's minimum price without revealing it |
+| **Total War Bundle** | Morale speeches, general trait evolution, natural language tactical orders, province governor rebellion | Evaluates rhetoric quality; generates personality traits from battle history; parses free-text commands into NavMesh unit orders; writes governor rebellion proclamations |
+| **Quick Actions** | One-tap template buttons for all LLM input points (NPC/Battle/Diplomacy/Economy/Espionage) | Reduces input friction; context-aware button set generated from `QuickActionTemplates.GetContextualActions()` |
+
+All Warfare systems use Firebase Realtime DB for async cross-player state. Firebase paths: `spies/`, `prisoners/`, `rumors/`, `traders/`, `debunkBroadcasts/`, `notifications/`.
+
+### 3.7. LLM Latency Strategy
+
+Gemini 1.5 Flash cold-start on mobile 4G is typically 1.5–3 seconds. Five strategies are used to keep interactions feeling responsive:
+
+| Strategy | Description | Status |
+|----------|-------------|--------|
+| **Streaming** | Replace single-callback `SendMessage()` with streaming endpoint; first token < 500ms | Planned — API signature ready |
+| **Action-First** | Trigger visual feedback (character animation, dialogue window open) immediately at call time, before LLM response | Implemented in all Warfare coroutines |
+| **Thinking Animation** | Display "..." or idle animation during `while (!done)` wait loop; masks latency gap perceptually | Implemented via coroutine polling pattern |
+| **Response Length Limits** | Every prompt includes explicit length cap: JSON-only for structured outputs, "2–3 sentences max" for prose | Implemented in all 6 warfare system prompts |
+| **Pre-generation Cache** | Pre-generate common responses (daily NPC greetings, merchant openers) at session start; serve from memory on first interaction, refresh in background | Planned — `GeminiAPIClient` cache layer, keyed by system-prompt hash |
+
+### 3.8. Persistence & Cloud
 - **Local save** — JSON, platform-aware path (`%APPDATA%` on PC, `persistentDataPath` on mobile).
 - **Firebase** — Global leaderboard (Firebase Realtime DB via REST API, no SDK).
 - **Steam** — Achievements + Steam leaderboard (Facepunch.Steamworks — future integration).
@@ -91,11 +118,15 @@
 | 3 | Polish & AI (Gemini personas, events, world map) | ✅ Complete |
 | 4 | 3D Scene + Editor Automation | ✅ Complete |
 | 5 | Bug Fixes (Agent Team) + Steam/PC Support | ✅ Complete |
-| 6 | Scene Setup in Unity + API Keys | 🔲 Next |
-| 7 | Real 3D Models (Kenney.nl / Blender) | 🔲 Backlog |
-| 8 | Animations (NPC idle/walk) | 🔲 Backlog |
-| 9 | Android/iOS/Steam Build + QA | 🔲 Backlog |
-| 10 | App Store + Steam Store Submission | 🔲 Backlog |
+| 6 | LordNet Multiplayer + Freemium Monetization | ✅ Complete |
+| 7 | Anno/Civilization Systems (Production, Population, Decrees, Research) | ✅ Complete |
+| 8 | Warfare & Espionage (Spy/Prisoner/Propaganda/TraderBot/TotalWar/QuickActions) + LLM Latency Strategy | ✅ Complete |
+| 9 | Unity Scene Setup + API Keys + QuickAction UI Wiring | 🔲 Next |
+| 10 | Gemini Request Queue + Firebase Schema Validation + E2E Warfare Tests | 🔲 Next |
+| 11 | Real 3D Models (Kenney.nl / Blender) | 🔲 Backlog |
+| 12 | Animations (NPC idle/walk) | 🔲 Backlog |
+| 13 | Android/iOS/Steam Build + QA | 🔲 Backlog |
+| 14 | App Store + Steam Store Submission | 🔲 Backlog |
 
 ---
 

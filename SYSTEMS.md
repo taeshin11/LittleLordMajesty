@@ -80,6 +80,26 @@ Assets/Scripts/
 | `NationConstitutionSystem.cs` | AI 재상 (헌법 기반 System Prompt로 운영) |
 | `NationUI.cs` | 국가 창설/가입, 채팅, 외교 UI |
 
+### Warfare (첩보전 & 총력전) — Milestone 08
+| 파일 | 역할 | 주요 이벤트/API |
+|------|------|----------------|
+| `SpyInfiltrationSystem.cs` | 스파이 파견, Prompt Virus로 적 NPC 오염, 심문 | `OnSpyDetected`, `OnNPCContaminated`, `SendSpy()`, `InterrogateSuspect()` |
+| `PrisonerSystem.cs` | 전투 포로 포획, 지하감옥 심문 (버팀/자백/거짓/협상) | `OnPrisonerCaptured`, `OnSecretRevealed`, `OnPrisonerBroken`, `Interrogate()` |
+| `PropagandaSystem.cs` | 음유시인 가짜 뉴스 캠페인 전파, 해명 공문 | `OnRumorReceived`, `OnRumorDebunked`, `HireBardsForPropaganda()`, `IssueDebunkStatement()` |
+| `TraderBotSystem.cs` | 자율 상인봇 파견, 비동기 다중 턴 흥정 | `OnTraderArrived`, `OnTradeDone`, `DispatchTrader()`, `NegotiateWithTrader()` |
+| `TotalWarSystems.cs` | 4개 총력전 시스템 번들 (아래 참조) | 각 클래스별 이벤트 |
+| — `MoraleSpeechSystem` | 출정 연설 평가 → 사기 버프 | `OnSpeechDelivered`, `DeliverSpeech()` |
+| — `GeneralTraitSystem` | 전투 경험 → NPC 특성 진화 (System Prompt 추가) | `OnTraitAcquired`, `ProcessBattleExperience()` |
+| — `BattleCommandSystem` | 자연어 전술 명령 → NavMesh 유닛 행동 변환 | `OnOrdersIssued`, `IssueTacticalOrders()` |
+| — `GovernorSystem` | 속주 총독 충성도/반란 관리, 협상 진압 | `OnRebellionDeclared`, `OnProvinceRecaptured`, `NegotiateWithGovernor()` |
+
+### Utils (유틸리티)
+| 파일 | 역할 |
+|------|------|
+| `DebugConsole.cs` | 인게임 디버그 콘솔 |
+| `PlaceholderArtGenerator.cs` | 에디터용 임시 아트 자동 생성 |
+| `QuickActionTemplates.cs` | 상황별 원탭 LLM 프롬프트 템플릿 (NPC/전투/외교/경제/첩보) |
+
 ### Monetization
 | 파일 | 역할 |
 |------|------|
