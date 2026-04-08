@@ -23,7 +23,9 @@ public class NPCManager : MonoBehaviour
         public float MoodScore; // 0-100
         public bool IsAvailable;
         public string BackgroundStory;
-        public Vector2 Position; // Castle position
+        [System.Obsolete("Use WorldPosition for 3D placement")]
+        public Vector2 Position; // Legacy 2D position (kept for save compatibility)
+        public Vector3 WorldPosition; // 3D world position in castle scene
     }
 
     [Serializable]
@@ -33,7 +35,7 @@ public class NPCManager : MonoBehaviour
         public string CurrentTask;
         public float MoodScore;
         public int LoyaltyToLord;
-        public Vector2 Position;
+        public Vector3 WorldPosition;
     }
 
     public enum NPCTaskState { Idle, Working, Combat, Resting, Fleeing, InDialogue }
@@ -73,7 +75,7 @@ public class NPCManager : MonoBehaviour
             MoodScore = 75,
             IsAvailable = true,
             BackgroundStory = "A veteran steward who has served the castle for 20 years. Pragmatic and wise.",
-            Position = new Vector2(0, 0)
+            WorldPosition = new Vector3(0, 0, 2f)
         });
 
         AddNPC(new NPCData
@@ -86,7 +88,7 @@ public class NPCManager : MonoBehaviour
             MoodScore = 60,
             IsAvailable = true,
             BackgroundStory = "A young soldier eager for battle and glory. Reckless but fearless.",
-            Position = new Vector2(2, 1)
+            WorldPosition = new Vector3(3f, 0, -1f)
         });
 
         AddNPC(new NPCData
@@ -99,7 +101,7 @@ public class NPCManager : MonoBehaviour
             MoodScore = 65,
             IsAvailable = true,
             BackgroundStory = "A sturdy farmer who has worked these lands her whole life. Honest and reliable.",
-            Position = new Vector2(-2, -1)
+            WorldPosition = new Vector3(-3f, 0, -1f)
         });
 
         AddNPC(new NPCData
@@ -112,7 +114,7 @@ public class NPCManager : MonoBehaviour
             MoodScore = 70,
             IsAvailable = true,
             BackgroundStory = "A traveling merchant who settled in the castle. Shrewd and always seeking profit.",
-            Position = new Vector2(1, -2)
+            WorldPosition = new Vector3(2f, 0, -3f)
         });
 
         Debug.Log($"[NPCManager] Initialized {_npcs.Count} starting NPCs");

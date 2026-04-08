@@ -9,11 +9,8 @@ using System.Collections.Generic;
 /// </summary>
 public class CastleViewUI : MonoBehaviour
 {
-    [Header("Castle Scene")]
-    [SerializeField] private Transform _npcContainer;
-    [SerializeField] private GameObject _npcSpritePrefab;
-    [SerializeField] private Transform _buildingContainer;
-    [SerializeField] private GameObject _buildingSlotPrefab;
+    // 3D castle scene is rendered by CastleScene3D (world space).
+    // This UI is a screen-space overlay — no 2D NPC/building sprites here.
 
     [Header("HUD Top Bar")]
     [SerializeField] private TextMeshProUGUI _lordTitleText;
@@ -47,15 +44,13 @@ public class CastleViewUI : MonoBehaviour
     [SerializeField] private Transform _buildingMenuContent;
     [SerializeField] private GameObject _buildingMenuItemPrefab;
 
-    private Dictionary<string, NPCSpriteController> _npcSprites = new();
-
     private void Start()
     {
         SetupButtons();
         SubscribeToEvents();
-        RefreshNPCSprites();
         RefreshResourceHUD();
         UpdateLordInfo();
+        // NPC 3D spawning is handled by CastleScene3D (world space)
     }
 
     private void SetupButtons()
@@ -75,61 +70,8 @@ public class CastleViewUI : MonoBehaviour
         if (gm?.ResourceManager != null)
             gm.ResourceManager.OnResourceChanged += OnResourceChanged;
 
-        if (gm?.NPCManager != null)
-        {
-            gm.NPCManager.OnNPCAdded += OnNPCAdded;
-            gm.NPCManager.OnNPCDialogue += OnNPCDialogue;
-        }
-
         if (gm != null)
-        {
             gm.OnDayChanged += _ => UpdateLordInfo();
-        }
-    }
-
-    private void RefreshNPCSprites()
-    {
-        if (_npcContainer == null || _npcSpritePrefab == null) return;
-        var npcs = NPCManager.Instance?.GetAllNPCs();
-        if (npcs == null) return;
-
-        foreach (var npc in npcs)
-        {
-            if (!_npcSprites.ContainsKey(npc.Id))
-                SpawnNPCSprite(npc);
-        }
-    }
-
-    private void SpawnNPCSprite(NPCManager.NPCData npc)
-    {
-        var sprite = Instantiate(_npcSpritePrefab, _npcContainer);
-
-        // Position based on NPC data
-        var rt = sprite.GetComponent<RectTransform>();
-        if (rt != null) rt.anchoredPosition = npc.Position * 100f;
-
-        var ctrl = sprite.GetComponent<NPCSpriteController>();
-        if (ctrl != null)
-        {
-            ctrl.Initialize(npc, () => OnNPCTapped(npc.Id));
-            _npcSprites[npc.Id] = ctrl;
-        }
-    }
-
-    private void OnNPCTapped(string npcId)
-    {
-        UIManager.Instance?.OpenDialogue(npcId);
-        NPCInteractionUI interactionUI = FindObjectOfType<NPCInteractionUI>(true);
-        interactionUI?.OpenForNPC(npcId);
-    }
-
-    private void OnNPCAdded(NPCManager.NPCData npc) => SpawnNPCSprite(npc);
-
-    private void OnNPCDialogue(string npcId, string text)
-    {
-        // Show speech bubble above NPC
-        if (_npcSprites.TryGetValue(npcId, out var ctrl))
-            ctrl.ShowSpeechBubble(text, 3f);
     }
 
     private void OnResourceChanged(ResourceManager.ResourceType type, int oldVal, int newVal)
@@ -275,49 +217,4 @@ public class CastleViewUI : MonoBehaviour
     }
 }
 
-/// <summary>
-/// Controller for NPC pixel sprite in the castle view.
-/// </summary>
-public class NPCSpriteController : MonoBehaviour
-{
-    [SerializeField] private Image _spriteImage;
-    [SerializeField] private Button _button;
-    [SerializeField] private GameObject _speechBubble;
-    [SerializeField] private TextMeshProUGUI _speechText;
-    [SerializeField] private Animator _animator;
-
-    private string _npcId;
-
-    public void Initialize(NPCManager.NPCData npc, System.Action onTap)
-    {
-        _npcId = npc.Id;
-        _button?.onClick.AddListener(() => onTap?.Invoke());
-
-        // Set sprite color by profession
-        if (_spriteImage != null)
-        {
-            _spriteImage.color = npc.Profession switch
-            {
-                NPCPersona.NPCProfession.Soldier => new Color(0.6f, 0.3f, 0.2f),
-                NPCPersona.NPCProfession.Farmer => new Color(0.5f, 0.7f, 0.3f),
-                NPCPersona.NPCProfession.Merchant => new Color(0.8f, 0.7f, 0.1f),
-                NPCPersona.NPCProfession.Vassal => new Color(0.5f, 0.4f, 0.7f),
-                _ => Color.white
-            };
-        }
-    }
-
-    public void ShowSpeechBubble(string text, float duration)
-    {
-        if (_speechBubble == null) return;
-        _speechBubble.SetActive(true);
-        if (_speechText != null) _speechText.text = text.Length > 60 ? text.Substring(0, 60) + "..." : text;
-        StartCoroutine(HideBubbleAfter(duration));
-    }
-
-    private System.Collections.IEnumerator HideBubbleAfter(float t)
-    {
-        yield return new WaitForSeconds(t);
-        if (_speechBubble != null) _speechBubble.SetActive(false);
-    }
-}
+// NPCSpriteController removed — 3D NPCs are handled by NPC3DClickHandler in CastleScene3D.
