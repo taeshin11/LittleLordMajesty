@@ -170,6 +170,24 @@ public static class SceneAutoBuilder
         // EventSystem
         CreateEventSystem();
 
+        // Lighting — Directional Light (sun)
+        var sunGO = new GameObject("Directional Light");
+        var sun = sunGO.AddComponent<Light>();
+        sun.type = LightType.Directional;
+        sun.color = new Color(1.0f, 0.95f, 0.85f); // Warm sunlight
+        sun.intensity = 1.2f;
+        sun.shadows = LightShadows.Soft;
+        sunGO.transform.eulerAngles = new Vector3(50f, -30f, 0f);
+
+        // Ambient + Fog
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+        RenderSettings.ambientLight = new Color(0.4f, 0.4f, 0.5f);
+        RenderSettings.fog = true;
+        RenderSettings.fogColor = new Color(0.55f, 0.65f, 0.75f);
+        RenderSettings.fogMode = FogMode.Linear;
+        RenderSettings.fogStartDistance = 35f;
+        RenderSettings.fogEndDistance = 90f;
+
         // Main Canvas
         var canvas = CreateCanvas("MainCanvas", out var canvasScaler);
         canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
