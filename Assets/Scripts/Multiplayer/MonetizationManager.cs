@@ -81,7 +81,7 @@ public class MonetizationManager : MonoBehaviour
 
     public void AddScrolls(int amount)
     {
-        WisdomScrollsToday = Mathf.Max(0, WisdomScrollsToday - amount);
+        WisdomScrollsToday = WisdomScrollsToday + amount;
         PlayerPrefs.SetInt("ScrollsUsedToday", WisdomScrollsToday);
         ToastNotification.Show($"+{amount} Wisdom Scrolls!");
     }

@@ -44,8 +44,11 @@ public class CastleViewUI : MonoBehaviour
     [SerializeField] private Transform _buildingMenuContent;
     [SerializeField] private GameObject _buildingMenuItemPrefab;
 
+    private NPCInteractionUI _npcInteractionUI;
+
     private void Start()
     {
+        _npcInteractionUI = FindObjectOfType<NPCInteractionUI>();
         SetupButtons();
         SubscribeToEvents();
         RefreshResourceHUD();
@@ -149,7 +152,7 @@ public class CastleViewUI : MonoBehaviour
             talkBtn?.onClick.AddListener(() =>
             {
                 _npcListPanel.SetActive(false);
-                FindObjectOfType<NPCInteractionUI>()?.OpenForNPC(capturedId);
+                _npcInteractionUI?.OpenForNPC(capturedId);
             });
         }
     }

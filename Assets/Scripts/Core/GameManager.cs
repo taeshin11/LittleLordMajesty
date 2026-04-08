@@ -85,6 +85,8 @@ public class GameManager : MonoBehaviour
             NPCManager = gameObject.AddComponent<NPCManager>();
         if (EventManager == null)
             EventManager = gameObject.AddComponent<EventManager>();
+        if (WorldMapManager == null)
+            WorldMapManager = gameObject.AddComponent<WorldMapManager>();
     }
 
     public void SetGameState(GameState newState)

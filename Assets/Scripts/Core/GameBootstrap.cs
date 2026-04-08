@@ -97,14 +97,16 @@ public class GameBootstrap : MonoBehaviour
     {
         if (FindObjectOfType<T>() != null) return;
 
+        GameObject go;
         if (prefab != null)
         {
-            Instantiate(prefab);
+            go = Instantiate(prefab);
         }
         else
         {
-            var go = new GameObject(name);
+            go = new GameObject(name);
             go.AddComponent<T>();
         }
+        DontDestroyOnLoad(go);
     }
 }
