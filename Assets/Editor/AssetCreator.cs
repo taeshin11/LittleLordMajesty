@@ -207,14 +207,7 @@ public static class AssetCreator
         stRT.offsetMin = new Vector2(6, 4); stRT.offsetMax = new Vector2(-6, -4);
         bubbleGO.SetActive(false);
 
-        go.AddComponent<NPCSpriteController>();
-        var soNSC = new SerializedObject(go.GetComponent<NPCSpriteController>());
-        soNSC.FindProperty("_spriteImage").objectReferenceValue  = img;
-        soNSC.FindProperty("_button").objectReferenceValue       = btn;
-        soNSC.FindProperty("_speechBubble").objectReferenceValue = bubbleGO;
-        soNSC.FindProperty("_speechText").objectReferenceValue   = st;
-        soNSC.ApplyModifiedProperties();
-
+        // NPCSpriteController removed — 3D NPCs handled by NPC3DClickHandler in CastleScene3D
         SavePrefab(go, path);
     }
 
