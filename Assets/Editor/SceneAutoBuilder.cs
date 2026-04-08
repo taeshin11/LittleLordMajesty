@@ -395,13 +395,15 @@ public static class SceneAutoBuilder
         var saveBtn     = CreateButton(actionBar.transform, "SaveButton",    "Save",     new Color(0.2f, 0.5f, 0.3f));
         var npcListBtn  = CreateButton(actionBar.transform, "NPCListButton", "NPCs",     new Color(0.4f, 0.2f, 0.6f));
         var worldMapBtn = CreateButton(actionBar.transform, "WorldMapButton","Map",      new Color(0.5f, 0.3f, 0.1f));
+        var settingsBtn = CreateButton(actionBar.transform, "SettingsButton","⚙",        new Color(0.25f, 0.25f, 0.30f));
         var menuBtn     = CreateButton(actionBar.transform, "MenuButton",    "☰",        new Color(0.25f, 0.25f, 0.25f));
 
-        SetAnchored(buildBtn,    new Vector2(-430, 0), new Vector2(160, 70));
-        SetAnchored(saveBtn,     new Vector2(-215, 0), new Vector2(160, 70));
-        SetAnchored(npcListBtn,  new Vector2(   0, 0), new Vector2(160, 70));
-        SetAnchored(worldMapBtn, new Vector2( 215, 0), new Vector2(160, 70));
-        SetAnchored(menuBtn,     new Vector2( 430, 0), new Vector2(100, 70));
+        SetAnchored(buildBtn,    new Vector2(-430, 0), new Vector2(150, 70));
+        SetAnchored(saveBtn,     new Vector2(-270, 0), new Vector2(130, 70));
+        SetAnchored(npcListBtn,  new Vector2(-100, 0), new Vector2(150, 70));
+        SetAnchored(worldMapBtn, new Vector2(  80, 0), new Vector2(150, 70));
+        SetAnchored(settingsBtn, new Vector2( 250, 0), new Vector2( 90, 70));
+        SetAnchored(menuBtn,     new Vector2( 400, 0), new Vector2( 90, 70));
 
         // Notification banner
         var notifBanner = CreatePanel(panel.transform, "NotificationBanner",
@@ -438,8 +440,6 @@ public static class SceneAutoBuilder
 
         // Wire CastleViewUI
         var soCastle = new SerializedObject(castleUI);
-        soCastle.FindProperty("_npcContainer").objectReferenceValue         = npcContainer.transform;
-        soCastle.FindProperty("_buildingContainer").objectReferenceValue    = buildingContainer.transform;
         soCastle.FindProperty("_lordTitleText").objectReferenceValue        = lordTitle.GetComponent<TextMeshProUGUI>();
         soCastle.FindProperty("_dateText").objectReferenceValue             = dateText.GetComponent<TextMeshProUGUI>();
         soCastle.FindProperty("_woodText").objectReferenceValue             = woodTxt.GetComponent<TextMeshProUGUI>();
@@ -448,6 +448,7 @@ public static class SceneAutoBuilder
         soCastle.FindProperty("_populationText").objectReferenceValue       = popTxt.GetComponent<TextMeshProUGUI>();
         soCastle.FindProperty("_menuButton").objectReferenceValue           = menuBtn.GetComponent<Button>();
         soCastle.FindProperty("_worldMapButton").objectReferenceValue       = worldMapBtn.GetComponent<Button>();
+        soCastle.FindProperty("_settingsButton").objectReferenceValue       = settingsBtn.GetComponent<Button>();
         soCastle.FindProperty("_buildButton").objectReferenceValue          = buildBtn.GetComponent<Button>();
         soCastle.FindProperty("_saveButton").objectReferenceValue           = saveBtn.GetComponent<Button>();
         soCastle.FindProperty("_npcListButton").objectReferenceValue        = npcListBtn.GetComponent<Button>();
@@ -563,8 +564,9 @@ public static class SceneAutoBuilder
         thinkingGO.SetActive(false);
 
         // Quick commands strip
-        var quickCmdsGO = new GameObject("QuickCommandsStrip"); quickCmdsGO.transform.SetParent(panel.transform, false);
-        var qcRT = quickCmdsGO.GetComponent<RectTransform>() ?? quickCmdsGO.AddComponent<RectTransform>();
+        var quickCmdsGO = new GameObject("QuickCommandsStrip");
+        var qcRT = quickCmdsGO.AddComponent<RectTransform>();
+        quickCmdsGO.transform.SetParent(panel.transform, false);
         qcRT.anchorMin = new Vector2(0, 0.1f); qcRT.anchorMax = new Vector2(1, 0.16f);
         qcRT.offsetMin = new Vector2(8, 0); qcRT.offsetMax = new Vector2(-8, 0);
         var qcHLG = quickCmdsGO.AddComponent<HorizontalLayoutGroup>();
@@ -692,7 +694,6 @@ public static class SceneAutoBuilder
 
         var soSett = new SerializedObject(panel.GetComponent<SettingsUI>());
         soSett.FindProperty("_closeButton").objectReferenceValue  = closeBtn.GetComponent<Button>();
-        soSett.FindProperty("_titleText").objectReferenceValue    = header.GetComponent<TextMeshProUGUI>();
         soSett.ApplyModifiedProperties();
 
         return panel;
@@ -716,9 +717,7 @@ public static class SceneAutoBuilder
         mapContRT.offsetMin = new Vector2(20, 0); mapContRT.offsetMax = new Vector2(-20, 0);
 
         var soMap = new SerializedObject(panel.GetComponent<WorldMapUI>());
-        soMap.FindProperty("_mapContainer").objectReferenceValue  = mapContainer.transform;
-        soMap.FindProperty("_titleText").objectReferenceValue     = header.GetComponent<TextMeshProUGUI>();
-        soMap.FindProperty("_closeButton").objectReferenceValue   = closeBtn.GetComponent<Button>();
+        soMap.FindProperty("_mapGridParent").objectReferenceValue = mapContainer.transform;
         soMap.ApplyModifiedProperties();
 
         return panel;
@@ -736,9 +735,7 @@ public static class SceneAutoBuilder
         var (scrollRect, content) = CreateScrollView(panel.transform, "LeaderScroll");
 
         var soLB = new SerializedObject(panel.GetComponent<LeaderboardUI>());
-        soLB.FindProperty("_titleText").objectReferenceValue  = header.GetComponent<TextMeshProUGUI>();
-        soLB.FindProperty("_scrollRect").objectReferenceValue = scrollRect;
-        soLB.FindProperty("_entryContainer").objectReferenceValue = content;
+        soLB.FindProperty("_entriesContainer").objectReferenceValue = content;
         soLB.ApplyModifiedProperties();
 
         return panel;
@@ -819,7 +816,7 @@ public static class SceneAutoBuilder
         tmp.alignment = align;
         tmp.color = color;
         tmp.enableWordWrapping = false;
-        go.AddComponent<RectTransform>();
+        // Note: TextMeshProUGUI already adds RectTransform implicitly
         return go;
     }
 
