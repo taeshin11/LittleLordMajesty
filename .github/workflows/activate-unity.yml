@@ -1,0 +1,83 @@
+name: Unity License Activation Helper
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'generate-alf'
+        type: choice
+        options:
+          - generate-alf       # Step 1: Generate .alf file
+          - enable-builds      # Step 3: Enable builds after secrets are set
+
+jobs:
+  # STEP 1: .alf 파일 생성 (Unity 계정 없어도 됨)
+  generate-alf:
+    name: Generate Unity Activation File
+    runs-on: ubuntu-latest
+    if: inputs.action == 'generate-alf'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Request Unity Activation File
+        uses: game-ci/unity-request-activation-file@v2
+        id: getManualLicenseFile
+        with:
+          unityVersion: 2022.3.62f1
+
+      - name: Upload .alf
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unity_v2022.3.62f1.alf
+          path: ${{ steps.getManualLicenseFile.outputs.filePath }}
+          retention-days: 7
+
+      - name: Next Steps Instructions
+        run: |
+          echo "========================================"
+          echo "✅ .alf file generated!"
+          echo ""
+          echo "NEXT STEPS:"
+          echo "1. Download the .alf artifact from this run"
+          echo "2. Go to: https://license.unity3d.com/manual"
+          echo "3. Upload the .alf file → Download the .ulf file"
+          echo "4. Go to GitHub repo → Settings → Secrets → Actions"
+          echo "   Add secret: UNITY_LICENSE = (paste entire .ulf file content)"
+          echo "   Add secret: UNITY_EMAIL   = your Unity email"
+          echo "   Add secret: UNITY_PASSWORD = your Unity password"
+          echo "5. Run this workflow again with 'enable-builds'"
+          echo "========================================"
+
+  # STEP 3: 빌드 활성화 (secrets 설정 후 실행)
+  enable-builds:
+    name: Enable Unity Builds
+    runs-on: ubuntu-latest
+    if: inputs.action == 'enable-builds'
+    steps:
+      - name: Verify secrets are set
+        run: |
+          if [ -z "$UNITY_LICENSE" ]; then
+            echo "ERROR: UNITY_LICENSE secret is not set!"
+            echo "Please set GitHub Secrets first."
+            exit 1
+          fi
+          echo "✅ UNITY_LICENSE is set"
+          if [ -z "$UNITY_EMAIL" ]; then
+            echo "WARNING: UNITY_EMAIL not set"
+          fi
+          echo "All checks passed! Enabling builds..."
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+
+      - name: Enable builds via GitHub API
+        run: |
+          curl -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/variables/UNITY_BUILD_ENABLED" \
+            -d '{"name":"UNITY_BUILD_ENABLED","value":"true"}'
+          echo "✅ UNITY_BUILD_ENABLED set to true"
+          echo "Next push will trigger the full build!"
