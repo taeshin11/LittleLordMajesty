@@ -1,0 +1,102 @@
+name: Unity Code Quality Check
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  validate:
+    name: Validate Project Structure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required directories exist
+        run: |
+          dirs=(
+            "Assets/Scripts/Core"
+            "Assets/Scripts/AI"
+            "Assets/Scripts/NPC"
+            "Assets/Scripts/UI"
+            "Assets/Scripts/Audio"
+            "Assets/Scripts/Localization"
+            "Assets/Scripts/Events"
+            "Assets/Scripts/World"
+            "Assets/Resources/Localization"
+            "Packages"
+            "ProjectSettings"
+            "research_history"
+          )
+          for dir in "${dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              echo "✅ $dir"
+            else
+              echo "❌ Missing: $dir"
+              exit 1
+            fi
+          done
+
+      - name: Check localization files exist for all 7 languages
+        run: |
+          langs=("en" "ko" "ja" "zh" "fr" "de" "es")
+          for lang in "${langs[@]}"; do
+            file="Assets/Resources/Localization/${lang}.json"
+            if [ -f "$file" ]; then
+              echo "✅ $file"
+              python3 -c "import json; json.load(open('$file'))" && echo "  JSON valid"
+            else
+              echo "❌ Missing: $file"
+              exit 1
+            fi
+          done
+
+      - name: Validate JSON files
+        run: |
+          find Assets/Resources -name "*.json" | while read f; do
+            python3 -c "import json; json.load(open('$f'))" && echo "✅ $f" || (echo "❌ Invalid JSON: $f" && exit 1)
+          done
+
+      - name: Check no API keys in codebase
+        run: |
+          # Scan for potential API key patterns
+          if grep -r --include="*.cs" --include="*.json" \
+            -E '(AIza[0-9A-Za-z_-]{35}|AAAA[A-Za-z0-9_-]{7}:[A-Za-z0-9_-]{140})' \
+            Assets/ 2>/dev/null | grep -v ".meta"; then
+            echo "❌ Potential API key found in source!"
+            exit 1
+          else
+            echo "✅ No hardcoded API keys detected"
+          fi
+
+      - name: Count scripts
+        run: |
+          echo "📊 Script Statistics:"
+          echo "C# Scripts: $(find Assets/Scripts -name "*.cs" | wc -l)"
+          echo "Localization files: $(find Assets/Resources/Localization -name "*.json" | wc -l)"
+          echo "Research history entries: $(ls research_history/*.md 2>/dev/null | wc -l)"
+
+      - name: Check PRD completion
+        run: |
+          echo "📋 PRD Checklist:"
+          phases=(
+            "GameManager"
+            "GeminiAPIClient"
+            "TTSManager"
+            "LocalizationManager"
+            "NPCManager"
+            "EventManager"
+            "WorldMapManager"
+            "BuildingManager"
+            "UIManager"
+          )
+          for script in "${phases[@]}"; do
+            if find Assets/Scripts -name "${script}.cs" | grep -q .; then
+              echo "✅ ${script}"
+            else
+              echo "❌ Missing: ${script}"
+            fi
+          done
