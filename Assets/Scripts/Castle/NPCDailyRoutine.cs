@@ -135,6 +135,54 @@ public class NPCDailyRoutine : MonoBehaviour
                         WorldPosition=new Vector3( 0, 1,  1), CanBeInterrupted=true },
             },
 
+            NPCPersona.NPCProfession.Scholar => new List<RoutineStop>
+            {
+                new() { LocationName="Library",       ArriveAtHour= 6, Animation="write",
+                        ActivityDesc="studying ancient manuscripts before dawn",
+                        WorldPosition=new Vector3(-2, 2, 1), CanBeInterrupted=false },
+                new() { LocationName="Town Square",   ArriveAtHour=10, Animation="idle_chat",
+                        ActivityDesc="discussing philosophy with the townsfolk",
+                        WorldPosition=new Vector3( 0, 0,-1), CanBeInterrupted=true },
+                new() { LocationName="Library",       ArriveAtHour=13, Animation="write",
+                        ActivityDesc="transcribing records and writing reports",
+                        WorldPosition=new Vector3(-2, 2, 1), CanBeInterrupted=true },
+                new() { LocationName="Keep Study",    ArriveAtHour=18, Animation="idle_stand",
+                        ActivityDesc="advising the lord on matters of history and law",
+                        WorldPosition=new Vector3( 0, 2, 0), CanBeInterrupted=true },
+            },
+
+            NPCPersona.NPCProfession.Priest => new List<RoutineStop>
+            {
+                new() { LocationName="Chapel",        ArriveAtHour= 6, Animation="idle_pray",
+                        ActivityDesc="conducting morning prayers at the chapel",
+                        WorldPosition=new Vector3( 3, 0, 4), CanBeInterrupted=false },
+                new() { LocationName="Town Square",   ArriveAtHour= 9, Animation="idle_chat",
+                        ActivityDesc="blessing the people and listening to confessions",
+                        WorldPosition=new Vector3( 0, 0,-1), CanBeInterrupted=true },
+                new() { LocationName="Barracks",      ArriveAtHour=12, Animation="idle_chat",
+                        ActivityDesc="tending to the wounded soldiers",
+                        WorldPosition=new Vector3( 4, 0,-4), CanBeInterrupted=true },
+                new() { LocationName="Chapel",        ArriveAtHour=19, Animation="idle_pray",
+                        ActivityDesc="conducting evening vespers",
+                        WorldPosition=new Vector3( 3, 0, 4), CanBeInterrupted=false },
+            },
+
+            NPCPersona.NPCProfession.Spy => new List<RoutineStop>
+            {
+                new() { LocationName="Tavern",        ArriveAtHour= 8, Animation="idle_drink",
+                        ActivityDesc="gathering information from loose-tongued merchants",
+                        WorldPosition=new Vector3(-1, 0,-3), CanBeInterrupted=true },
+                new() { LocationName="Castle Gate",   ArriveAtHour=11, Animation="idle_chat",
+                        ActivityDesc="watching the comings and goings at the gate",
+                        WorldPosition=new Vector3( 0, 0,-7), CanBeInterrupted=true },
+                new() { LocationName="Town Square",   ArriveAtHour=14, Animation="idle_chat",
+                        ActivityDesc="blending in with the crowd, watching and listening",
+                        WorldPosition=new Vector3( 0, 0,-1), CanBeInterrupted=true },
+                new() { LocationName="Watchtower",    ArriveAtHour=20, Animation="patrol",
+                        ActivityDesc="making a final sweep of the perimeter",
+                        WorldPosition=new Vector3(-7, 0,-7), CanBeInterrupted=false },
+            },
+
             _ => new List<RoutineStop>
             {
                 new() { LocationName="Town Square", ArriveAtHour= 9, Animation="idle_chat",

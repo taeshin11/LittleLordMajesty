@@ -118,6 +118,9 @@ Current context: You are speaking directly to {lordTitle} {lordName} who has iss
         NPCProfession.Guard => "castle gate guard",
         NPCProfession.Builder => "master builder and architect",
         NPCProfession.Mage => "mysterious court mage",
+        NPCProfession.Scholar => "learned scholar and keeper of the castle library",
+        NPCProfession.Priest => "devout priest who tends to the spiritual needs of the people",
+        NPCProfession.Spy => "master of disguise operating in the shadows",
         NPCProfession.OrcRaider => "fearsome Orc raider (enemy)",
         NPCProfession.MysteriousVisitor => "mysterious stranger of unknown origins",
         _ => "castle inhabitant"

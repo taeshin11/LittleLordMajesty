@@ -72,6 +72,21 @@ public static class QuickActionTemplates
             new() { Label = "분쟁 해결",  Icon = "⚖️", Prompt = "영지 내 분쟁을 처리해줘. 공평하게 해결하도록." },
             new() { Label = "일정 잡아",  Icon = "📅", Prompt = "이번 주 영지 운영 일정을 정리해줘." },
         },
+        [NPCPersona.NPCProfession.Scholar] = new QuickAction[] {
+            new() { Label = "역사 조언",  Icon = "📚", Prompt = "과거 왕국들이 이 상황에서 어떻게 했는지 알려줘." },
+            new() { Label = "기술 연구",  Icon = "🔬", Prompt = "지금 영지에 가장 필요한 기술이 뭔지 분석해줘." },
+            new() { Label = "문서 작성",  Icon = "📜", Prompt = "공식 포고문 초안을 작성해줘." },
+        },
+        [NPCPersona.NPCProfession.Priest] = new QuickAction[] {
+            new() { Label = "축복 요청",  Icon = "✨", Prompt = "오늘 전투를 앞두고 병사들을 축복해줘." },
+            new() { Label = "민심 파악",  Icon = "💭", Prompt = "요즘 백성들 사이에서 어떤 이야기가 도는지 알려줘." },
+            new() { Label = "조언",       Icon = "🕊️", Prompt = "내가 고민하는 윤리적 문제에 대한 네 생각은?" },
+        },
+        [NPCPersona.NPCProfession.Spy] = new QuickAction[] {
+            new() { Label = "정보 보고",  Icon = "🔍", Prompt = "최근에 수집한 중요한 첩보를 보고해줘." },
+            new() { Label = "침투 임무",  Icon = "🕵️", Prompt = "적국 귀족 한 명을 포섭할 계획을 세워봐." },
+            new() { Label = "위협 분석",  Icon = "⚠️", Prompt = "현재 영지에 가장 위험한 내부 위협이 뭐라고 생각해?" },
+        },
     };
 
     // ─────────────────────────────────────────────────────────────
