@@ -100,3 +100,4 @@ Assets/Resources/Config/GameConfig.asset
 Assets/Resources/Config/GameConfig.asset.meta
 google-services.json
 GoogleService-Info.plist
+*.alf
