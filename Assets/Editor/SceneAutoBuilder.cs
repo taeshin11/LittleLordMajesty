@@ -864,6 +864,10 @@ public static class SceneAutoBuilder
         Directory.CreateDirectory(outPath);
         Debug.Log($"[SceneBuilder] Building WebGL → {outPath}");
 
+        // Disable compression for GitHub Pages compatibility (no Content-Encoding header support)
+        PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
+        PlayerSettings.WebGL.decompressionFallback = true;
+
         var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
         {
             scenes             = GetBuildScenePaths(),
