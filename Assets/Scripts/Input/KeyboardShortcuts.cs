@@ -77,8 +77,9 @@ public class KeyboardShortcuts : MonoBehaviour
     {
         var npcs = NPCManager.Instance?.GetAllNPCs();
         if (npcs == null || npcs.Count == 0) return;
-        // Open the first available NPC for now; can be improved with index tracking
-        UIManager.Instance?.OpenDialogue(npcs[0].Id);
+        // Open the rich NPC chat panel via NPCInteractionUI (single entry point).
+        // Do NOT also call UIManager.OpenDialogue — that is the separate 3D-click path
+        // and calling both would cause commands to double-fire.
         var interactionUI = FindObjectOfType<NPCInteractionUI>(true);
         interactionUI?.OpenForNPC(npcs[0].Id);
     }
