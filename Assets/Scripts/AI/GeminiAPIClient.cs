@@ -16,7 +16,8 @@ public class GeminiAPIClient : MonoBehaviour
 {
     public static GeminiAPIClient Instance { get; private set; }
 
-    private const string API_BASE_URL    = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    private const string API_BASE_URL    = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent";
+    private const string STREAM_URL      = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:streamGenerateContent?alt=sse";
     private const int    MAX_RETRIES     = 3;
     private const float  RETRY_DELAY     = 1f;
     private const float  MIN_REQUEST_GAP = 1.0f; // Rate limiting: 1s between requests
@@ -40,6 +41,7 @@ public class GeminiAPIClient : MonoBehaviour
     [Serializable]
     private class GeminiRequest
     {
+        public Content system_instruction;
         public List<Content> contents;
         public GenerationConfig generationConfig;
         public SafetySettings[] safetySettings;
@@ -212,15 +214,11 @@ public class GeminiAPIClient : MonoBehaviour
             }
         }
 
-        // Add current message with system context
-        string fullMessage = string.IsNullOrEmpty(systemPrompt)
-            ? userMessage
-            : $"[SYSTEM CONTEXT]\n{systemPrompt}\n\n[USER MESSAGE]\n{userMessage}";
-
+        // Add current user message (system prompt goes in system_instruction)
         contents.Add(new Content
         {
             role = "user",
-            parts = new List<Part> { new Part { text = fullMessage } }
+            parts = new List<Part> { new Part { text = userMessage } }
         });
 
         var request = new GeminiRequest
@@ -238,7 +236,16 @@ public class GeminiAPIClient : MonoBehaviour
             }
         };
 
-        string jsonBody = JsonConvert.SerializeObject(request);
+        // Use Gemini's native system_instruction for system prompt (reduces token usage)
+        if (!string.IsNullOrEmpty(systemPrompt))
+        {
+            request.system_instruction = new Content
+            {
+                parts = new List<Part> { new Part { text = systemPrompt } }
+            };
+        }
+
+        string jsonBody = JsonConvert.SerializeObject(request, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
         string url = $"{API_BASE_URL}?key={_apiKey}";
 
         using var webRequest = new UnityWebRequest(url, "POST");
@@ -324,6 +331,90 @@ public class GeminiAPIClient : MonoBehaviour
         using var sha = SHA256.Create();
         byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(systemPrompt + "|" + userMessage));
         return BitConverter.ToString(hash, 0, 8).Replace("-", ""); // 16 hex chars
+    }
+
+    /// <summary>
+    /// Streaming variant — calls onChunk with each partial response for real-time typewriter UX.
+    /// Falls back to non-streaming if SSE parsing fails.
+    /// </summary>
+    public Coroutine SendMessageStreaming(
+        string userMessage,
+        string systemPrompt,
+        List<(string role, string text)> conversationHistory,
+        Action<string> onChunk,
+        Action<string> onComplete,
+        Action<string> onError = null)
+    {
+        return StartCoroutine(StreamCoroutine(userMessage, systemPrompt, conversationHistory, onChunk, onComplete, onError));
+    }
+
+    private IEnumerator StreamCoroutine(
+        string userMessage, string systemPrompt,
+        List<(string role, string text)> history,
+        Action<string> onChunk, Action<string> onComplete, Action<string> onError)
+    {
+        var contents = new List<Content>();
+        if (history != null)
+            foreach (var (role, text) in history)
+                contents.Add(new Content { role = role == "user" ? "user" : "model", parts = new List<Part> { new Part { text = text } } });
+        contents.Add(new Content { role = "user", parts = new List<Part> { new Part { text = userMessage } } });
+
+        var request = new GeminiRequest
+        {
+            contents = contents,
+            generationConfig = new GenerationConfig { maxOutputTokens = _maxOutputTokens, temperature = _temperature },
+            safetySettings = new SafetySettings[]
+            {
+                new SafetySettings { category = "HARM_CATEGORY_HARASSMENT", threshold = "BLOCK_MEDIUM_AND_ABOVE" },
+                new SafetySettings { category = "HARM_CATEGORY_HATE_SPEECH", threshold = "BLOCK_MEDIUM_AND_ABOVE" }
+            }
+        };
+        if (!string.IsNullOrEmpty(systemPrompt))
+            request.system_instruction = new Content { parts = new List<Part> { new Part { text = systemPrompt } } };
+
+        string jsonBody = JsonConvert.SerializeObject(request, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+        string url = $"{STREAM_URL}&key={_apiKey}";
+
+        using var webRequest = new UnityWebRequest(url, "POST");
+        webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));
+        webRequest.downloadHandler = new DownloadHandlerBuffer();
+        webRequest.SetRequestHeader("Content-Type", "application/json");
+        webRequest.timeout = 30;
+
+        _requestCount++;
+        OnRequestCountChanged?.Invoke(_requestCount);
+
+        yield return webRequest.SendWebRequest();
+
+        if (webRequest.result == UnityWebRequest.Result.Success)
+        {
+            // Parse SSE response — each chunk is "data: {json}\n\n"
+            string fullText = "";
+            string[] lines = webRequest.downloadHandler.text.Split('\n');
+            foreach (string line in lines)
+            {
+                if (!line.StartsWith("data: ")) continue;
+                string json = line.Substring(6).Trim();
+                if (string.IsNullOrEmpty(json)) continue;
+
+                try
+                {
+                    var chunk = JsonConvert.DeserializeObject<GeminiResponse>(json);
+                    string partText = chunk?.candidates?[0]?.content?.parts?[0]?.text ?? "";
+                    if (!string.IsNullOrEmpty(partText))
+                    {
+                        fullText += partText;
+                        onChunk?.Invoke(partText);
+                    }
+                }
+                catch { /* skip malformed chunks */ }
+            }
+            onComplete?.Invoke(fullText);
+        }
+        else
+        {
+            onError?.Invoke(webRequest.error);
+        }
     }
 
     public void ClearCache() => _responseCache.Clear();

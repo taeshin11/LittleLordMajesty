@@ -199,7 +199,7 @@ public class NPCManager : MonoBehaviour
         _gemini.SendMessage(
             playerCommand,
             systemPrompt,
-            convState.ConversationHistory,
+            convState.GetContextualHistory(),
             response =>
             {
                 convState.AddToHistory("model", response);

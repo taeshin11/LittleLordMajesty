@@ -156,15 +156,54 @@ public class NPCConversationState
 
     private const int MAX_HISTORY = 10; // Keep last 10 exchanges
 
+    public string ConversationSummary = ""; // Compressed summary of older exchanges
+
     public void AddToHistory(string role, string text)
     {
         ConversationHistory.Add((role, text));
         TotalInteractions++;
 
-        // Trim to prevent context overflow
-        while (ConversationHistory.Count > MAX_HISTORY * 2)
-            ConversationHistory.RemoveAt(0);
+        // When history exceeds limit, summarize oldest half and keep recent
+        if (ConversationHistory.Count > MAX_HISTORY * 2)
+            CompressHistory();
     }
 
-    public void ClearHistory() => ConversationHistory.Clear();
+    private void CompressHistory()
+    {
+        int halfCount = MAX_HISTORY;
+        // Build summary from oldest entries
+        var sb = new System.Text.StringBuilder();
+        if (!string.IsNullOrEmpty(ConversationSummary))
+            sb.Append(ConversationSummary).Append(" ");
+
+        for (int i = 0; i < halfCount && i < ConversationHistory.Count; i++)
+        {
+            var (role, text) = ConversationHistory[i];
+            string snippet = text.Length > 60 ? text.Substring(0, 60) + "..." : text;
+            sb.Append(role == "user" ? "Lord: " : "NPC: ").Append(snippet).Append("; ");
+        }
+        ConversationSummary = sb.ToString();
+
+        // Remove the summarized entries
+        ConversationHistory.RemoveRange(0, halfCount);
+    }
+
+    /// <summary>Returns history with summary prepended as context.</summary>
+    public List<(string role, string text)> GetContextualHistory()
+    {
+        var result = new List<(string role, string text)>();
+        if (!string.IsNullOrEmpty(ConversationSummary))
+        {
+            result.Add(("user", $"[Previous conversation summary: {ConversationSummary}]"));
+            result.Add(("model", "I remember our previous discussions."));
+        }
+        result.AddRange(ConversationHistory);
+        return result;
+    }
+
+    public void ClearHistory()
+    {
+        ConversationHistory.Clear();
+        ConversationSummary = "";
+    }
 }
