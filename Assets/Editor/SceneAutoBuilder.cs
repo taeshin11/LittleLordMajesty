@@ -776,6 +776,72 @@ public static class SceneAutoBuilder
     static void WireSettingsUI(GameObject settingsPanel) { /* wired in BuildSettingsPanel */ }
 
     // ─────────────────────────────────────────────────────────────
+    //  CI BUILD ENTRY POINTS  (called via -executeMethod)
+    // ─────────────────────────────────────────────────────────────
+
+    /// <summary>Called by GitHub Actions: Unity.exe -executeMethod SceneAutoBuilder.BuildWebGL</summary>
+    public static void BuildWebGL()
+    {
+        string outPath = "Builds/WebGL";
+        Directory.CreateDirectory(outPath);
+        Debug.Log($"[SceneBuilder] Building WebGL → {outPath}");
+
+        var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+        {
+            scenes             = GetBuildScenePaths(),
+            locationPathName   = outPath,
+            target             = BuildTarget.WebGL,
+            options            = BuildOptions.None
+        });
+
+        if (report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+            Debug.Log($"[SceneBuilder] WebGL build succeeded ({report.summary.totalSize / 1024} KB)");
+        else
+        {
+            Debug.LogError($"[SceneBuilder] WebGL build FAILED: {report.summary.result}");
+            EditorApplication.Exit(1);
+        }
+    }
+
+    /// <summary>Called by GitHub Actions: Unity.exe -executeMethod SceneAutoBuilder.BuildWindows</summary>
+    public static void BuildWindows()
+    {
+        string outPath = "Builds/Windows/LittleLordMajesty.exe";
+        Directory.CreateDirectory("Builds/Windows");
+        Debug.Log($"[SceneBuilder] Building Windows → {outPath}");
+
+        var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+        {
+            scenes             = GetBuildScenePaths(),
+            locationPathName   = outPath,
+            target             = BuildTarget.StandaloneWindows64,
+            options            = BuildOptions.None
+        });
+
+        if (report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+            Debug.Log($"[SceneBuilder] Windows build succeeded ({report.summary.totalSize / 1024} KB)");
+        else
+        {
+            Debug.LogError($"[SceneBuilder] Windows build FAILED: {report.summary.result}");
+            EditorApplication.Exit(1);
+        }
+    }
+
+    static string[] GetBuildScenePaths()
+    {
+        // Use Build Settings if populated; otherwise fall back to known scene paths
+        var configured = EditorBuildSettings.scenes;
+        if (configured != null && configured.Length > 0)
+        {
+            var paths = new System.Collections.Generic.List<string>();
+            foreach (var s in configured)
+                if (s.enabled) paths.Add(s.path);
+            if (paths.Count > 0) return paths.ToArray();
+        }
+        return new[] { $"{SCENES_PATH}/Bootstrap.unity", $"{SCENES_PATH}/Game.unity" };
+    }
+
+    // ─────────────────────────────────────────────────────────────
     //  BUILD SETTINGS
     // ─────────────────────────────────────────────────────────────
 
