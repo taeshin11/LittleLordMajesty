@@ -18,7 +18,7 @@
 
 ## 2. Core Game Loop
 
-1. **Instruction & Communication** — Issue work orders and mediate conflicts via text prompts to AI NPCs (Gemini 1.5 Flash).
+1. **Instruction & Communication** — Issue work orders and mediate conflicts via text prompts to AI NPCs (Gemini 2.0 Flash Lite).
 2. **Internal Affairs** — Strengthen the castle through resource management and building tech tree.
 3. **Conquest & Expansion** — Deploy armies on 3D World Map; occupy AI lords' castles; expand territory.
 4. **Crisis Management** — Defend against Orc raids; resolve internal crises (fires, food shortages, NPC conflicts).
@@ -28,7 +28,7 @@
 ## 3. Key Feature Requirements
 
 ### 3.1. AI NPC & Interaction System
-- **Gemini 1.5 Flash API** — All NPC dialogue, command interpretation, event outcomes.
+- **Gemini 2.0 Flash Lite API** — All NPC dialogue, command interpretation, event outcomes.
 - **Persona System** — Unique personality, background, speech style per profession (Vassal, Soldier, Merchant, Farmer, Scholar, Priest, Spy).
 - **Voice Output (TTS)** — Google Cloud TTS with MD5-based local audio cache (near-zero repeat cost).
 - **Request Queue** — Max 1–2 concurrent Gemini requests; 1-second inter-request interval to stay within free-tier quota.
@@ -80,7 +80,7 @@ Gemini 1.5 Flash cold-start on mobile 4G is typically 1.5–3 seconds. Five stra
 
 | Strategy | Description | Status |
 |----------|-------------|--------|
-| **Streaming** | Replace single-callback `SendMessage()` with streaming endpoint; first token < 500ms | Planned — API signature ready |
+| **Streaming** | Replace single-callback `SendMessage()` with streaming endpoint; first token < 500ms | Implemented — `SendMessageStreaming()` SSE in `GeminiAPIClient.cs` (M12) |
 | **Action-First** | Trigger visual feedback (character animation, dialogue window open) immediately at call time, before LLM response | Implemented in all Warfare coroutines |
 | **Thinking Animation** | Display "..." or idle animation during `while (!done)` wait loop; masks latency gap perceptually | Implemented via coroutine polling pattern |
 | **Response Length Limits** | Every prompt includes explicit length cap: JSON-only for structured outputs, "2–3 sentences max" for prose | Implemented in all 6 warfare system prompts |
@@ -99,7 +99,7 @@ Gemini 1.5 Flash cold-start on mobile 4G is typically 1.5–3 seconds. Five stra
 |-------|-----------|
 | Engine | Unity 2022.3 LTS (C#) |
 | Rendering | 3D low-poly, URP (Universal Render Pipeline) |
-| AI | Gemini 1.5 Flash REST API |
+| AI | Gemini 2.0 Flash Lite REST API |
 | TTS | Google Cloud TTS REST API |
 | Backend | Firebase REST (no SDK) |
 | Steam | Facepunch.Steamworks (pending) |
@@ -121,12 +121,13 @@ Gemini 1.5 Flash cold-start on mobile 4G is typically 1.5–3 seconds. Five stra
 | 6 | LordNet Multiplayer + Freemium Monetization | ✅ Complete |
 | 7 | Anno/Civilization Systems (Production, Population, Decrees, Research) | ✅ Complete |
 | 8 | Warfare & Espionage (Spy/Prisoner/Propaganda/TraderBot/TotalWar/QuickActions) + LLM Latency Strategy | ✅ Complete |
-| 9 | Unity Scene Setup + API Keys + QuickAction UI Wiring | 🔲 Next |
-| 10 | Gemini Request Queue + Firebase Schema Validation + E2E Warfare Tests | 🔲 Next |
-| 11 | Real 3D Models (Kenney.nl / Blender) | 🔲 Backlog |
-| 12 | Animations (NPC idle/walk) | 🔲 Backlog |
-| 13 | Android/iOS/Steam Build + QA | 🔲 Backlog |
-| 14 | App Store + Steam Store Submission | 🔲 Backlog |
+| 9 | Unity Scene Setup + API Keys + QuickAction UI Wiring | ✅ Complete |
+| 10 | Scenes + Assets + Bootstrap/Game.unity wired | ✅ Complete |
+| 11 | QA Audit + Critical Bug Fixes (32 bugs) | ✅ Complete |
+| 12 | Steam Integration + Tutorial System + LLM Streaming (Gemini 2.0 Flash Lite) | ✅ Complete |
+| 13 | Alpha Playtest Verification + Steam Store Prep + Visual Upgrade (Kenney) | 🔲 Next |
+| 14 | Android/iOS/Steam Build + Final QA | 🔲 Backlog |
+| 15 | App Store + Steam Store Submission | 🔲 Backlog |
 
 ---
 
