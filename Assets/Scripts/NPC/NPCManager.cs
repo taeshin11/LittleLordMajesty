@@ -52,6 +52,7 @@ public class NPCManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
@@ -124,6 +125,11 @@ public class NPCManager : MonoBehaviour
 
     public void AddNPC(NPCData npc)
     {
+        if (GetNPC(npc.Id) != null)
+        {
+            Debug.LogWarning($"[NPCManager] NPC '{npc.Id}' already exists, skipping.");
+            return;
+        }
         _npcs.Add(npc);
         _conversationStates[npc.Id] = new NPCConversationState
         {

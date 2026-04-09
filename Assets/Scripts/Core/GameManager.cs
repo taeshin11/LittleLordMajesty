@@ -165,6 +165,7 @@ public class GameManager : MonoBehaviour
         LordTitle = "Little Lord";
         ResourceManager?.ResetToDefault();
         NPCManager?.InitializeStartingNPCs();
+        EventManager?.ClearActiveEvents();
         SetGameState(GameState.Castle);
     }
 }

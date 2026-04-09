@@ -48,6 +48,7 @@ public class EventManager : MonoBehaviour
     private List<GameEvent> _activeEvents = new();
     private List<GameEvent> _eventHistory = new();
     private GeminiAPIClient _gemini;
+    private int _lastCheckedDay = -1;
 
     [SerializeField] private float _orcRaidChancePerDay = 0.05f; // 5% per day
     [SerializeField] private float _randomEventChancePerDay = 0.1f; // 10% per day
@@ -59,6 +60,7 @@ public class EventManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
@@ -66,8 +68,17 @@ public class EventManager : MonoBehaviour
         _gemini = GeminiAPIClient.Instance;
     }
 
+    public void ClearActiveEvents()
+    {
+        _activeEvents.Clear();
+        _lastCheckedDay = -1;
+    }
+
     public void CheckDailyEvents(int day, int year)
     {
+        if (_lastCheckedDay == day) return; // 하루에 한 번만
+        _lastCheckedDay = day;
+
         // Orc raid check
         if (UnityEngine.Random.value < _orcRaidChancePerDay)
             TriggerOrcRaid();

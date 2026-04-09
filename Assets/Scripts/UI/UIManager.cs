@@ -155,6 +155,13 @@ public class UIManager : MonoBehaviour
             case GameManager.GameState.Paused:
                 SetPanelActive(_pausePanel, true);
                 break;
+            case GameManager.GameState.Loading:
+                SetPanelActive(_loadingPanel, true);
+                break;
+            case GameManager.GameState.GameOver:
+            case GameManager.GameState.Victory:
+                SetPanelActive(_mainMenuPanel, true); // fallback until dedicated panels exist
+                break;
         }
     }
 

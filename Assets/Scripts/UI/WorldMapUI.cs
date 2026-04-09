@@ -158,6 +158,7 @@ public class WorldMapUI : MonoBehaviour
         int maxSoldiers = NPCManager.Instance?.GetNPCsByProfession(NPCPersona.NPCProfession.Soldier)?.Count * 10 ?? 10;
         if (_armySlider != null)
         {
+            _armySlider.onValueChanged.RemoveAllListeners();
             _armySlider.maxValue = maxSoldiers;
             _armySlider.value = maxSoldiers / 2;
             _armySlider.onValueChanged.AddListener(v =>
