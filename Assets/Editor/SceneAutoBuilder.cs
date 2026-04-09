@@ -819,7 +819,7 @@ public static class SceneAutoBuilder
 
         // Next button
         var nextBtn = CreateButton(box.transform, "NextButton", "Next",
-            new Color(0.25f, 0.55f, 0.3f), new Color(0.95f, 0.95f, 0.9f));
+            new Color(0.25f, 0.55f, 0.3f));
         SetAnchored(nextBtn, new Vector2(200, -110), new Vector2(180, 50));
 
         // Next button text
@@ -827,7 +827,7 @@ public static class SceneAutoBuilder
 
         // Skip button
         var skipBtn = CreateButton(box.transform, "SkipButton", "Skip Tutorial",
-            new Color(0.3f, 0.2f, 0.2f), new Color(0.6f, 0.5f, 0.5f));
+            new Color(0.3f, 0.2f, 0.2f));
         SetAnchored(skipBtn, new Vector2(-200, -110), new Vector2(180, 50));
 
         // Wire TutorialUI serialized fields

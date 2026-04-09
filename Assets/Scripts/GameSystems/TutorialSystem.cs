@@ -42,6 +42,7 @@ public class TutorialSystem : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
         BuildTutorialSteps();
     }
 
@@ -146,6 +147,7 @@ public class TutorialSystem : MonoBehaviour
     {
         _tutorialActive = false;
         PlayerPrefs.SetInt("TutorialCompleted", 1);
+        PlayerPrefs.Save();
         OnTutorialComplete?.Invoke();
         Debug.Log("[Tutorial] Complete!");
     }
@@ -154,7 +156,17 @@ public class TutorialSystem : MonoBehaviour
     {
         _tutorialActive = false;
         PlayerPrefs.SetInt("TutorialCompleted", 1);
+        PlayerPrefs.Save();
+        OnTutorialComplete?.Invoke();
         Debug.Log("[Tutorial] Skipped.");
+    }
+
+    public void ResetTutorial()
+    {
+        PlayerPrefs.DeleteKey("TutorialCompleted");
+        PlayerPrefs.Save();
+        _currentStepIndex = -1;
+        _tutorialActive = false;
     }
 
     public bool IsTutorialActive() => _tutorialActive;

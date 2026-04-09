@@ -170,8 +170,11 @@ public class GameManager : MonoBehaviour
         EventManager?.ClearActiveEvents();
         SetGameState(GameState.Castle);
 
-        // Start tutorial for first-time players
+        // Reset and start tutorial for new games
         if (TutorialSystem.Instance != null)
+        {
+            TutorialSystem.Instance.ResetTutorial();
             TutorialSystem.Instance.StartTutorial();
+        }
     }
 }
