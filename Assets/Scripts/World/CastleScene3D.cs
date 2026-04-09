@@ -456,16 +456,8 @@ public class NPC3DClickHandler : MonoBehaviour
 {
     public string NpcId;
 
-    private NPCInteractionUI _cachedUI;
-
-    private void Awake()
-    {
-        _cachedUI = FindObjectOfType<NPCInteractionUI>(true);
-    }
-
     private void OnMouseDown()
     {
-        // Use UIManager as single entry point to avoid double-firing dialogue
         UIManager.Instance?.OpenDialogue(NpcId);
     }
 }
