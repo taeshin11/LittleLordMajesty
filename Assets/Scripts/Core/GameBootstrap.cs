@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections;
 
 /// <summary>
@@ -62,10 +63,20 @@ public class GameBootstrap : MonoBehaviour
         yield return SetLoadingProgress(1.0f, "Ready!");
         yield return new WaitForSeconds(0.5f);
 
-        // Hide splash and go to main menu
+        // Hide splash and load the Game scene
         if (_splashScreen != null) _splashScreen.SetActive(false);
 
-        // Load main menu scene or activate UI
+        Debug.Log("[Bootstrap] Loading Game scene...");
+
+        // Load Game.unity which contains UIManager, CastleScene3D, and all UI panels
+        var asyncLoad = SceneManager.LoadSceneAsync("Game");
+        if (asyncLoad != null)
+        {
+            while (!asyncLoad.isDone)
+                yield return null;
+        }
+
+        // UIManager is now in the scene — set initial state
         if (GameManager.Instance != null)
             GameManager.Instance.SetGameState(GameManager.GameState.MainMenu);
 
