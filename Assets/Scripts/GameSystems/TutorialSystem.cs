@@ -116,6 +116,13 @@ public class TutorialSystem : MonoBehaviour
 
         _tutorialActive = true;
         _currentStepIndex = -1;
+        // Defer first step to end of frame so UI subscribers (TutorialUI.Start) have time to register
+        StartCoroutine(DeferredAdvanceStep());
+    }
+
+    private IEnumerator DeferredAdvanceStep()
+    {
+        yield return null; // Wait one frame
         AdvanceStep();
     }
 

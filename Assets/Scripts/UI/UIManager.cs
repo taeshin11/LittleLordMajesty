@@ -253,20 +253,25 @@ public class UIManager : MonoBehaviour
         });
     }
 
+    private Coroutine _activeTypewriter;
+
     private void DisplayNPCResponse(string response)
     {
         if (_npcDialogueText == null) return;
-        StartCoroutine(TypewriterEffect(_npcDialogueText, response, 0.03f));
+        if (_activeTypewriter != null) StopCoroutine(_activeTypewriter);
+        _activeTypewriter = StartCoroutine(TypewriterEffect(_npcDialogueText, response, 0.03f));
     }
 
     private IEnumerator TypewriterEffect(TextMeshProUGUI target, string fullText, float charDelay)
     {
-        target.text = "";
-        foreach (char c in fullText)
+        target.text = fullText;
+        target.maxVisibleCharacters = 0;
+        for (int i = 1; i <= fullText.Length; i++)
         {
-            target.text += c;
+            target.maxVisibleCharacters = i;
             yield return new WaitForSeconds(charDelay);
         }
+        _activeTypewriter = null;
     }
 
     private void SetThinking(bool isThinking)

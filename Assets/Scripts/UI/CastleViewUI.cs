@@ -45,10 +45,11 @@ public class CastleViewUI : MonoBehaviour
     [SerializeField] private GameObject _buildingMenuItemPrefab;
 
     private NPCInteractionUI _npcInteractionUI;
+    private Action<int> _dayChangedHandler;
 
     private void Start()
     {
-        _npcInteractionUI = FindObjectOfType<NPCInteractionUI>();
+        _npcInteractionUI = FindObjectOfType<NPCInteractionUI>(true);
         SetupButtons();
         SubscribeToEvents();
         RefreshResourceHUD();
@@ -74,7 +75,10 @@ public class CastleViewUI : MonoBehaviour
             gm.ResourceManager.OnResourceChanged += OnResourceChanged;
 
         if (gm != null)
-            gm.OnDayChanged += _ => UpdateLordInfo();
+        {
+            _dayChangedHandler = _ => UpdateLordInfo();
+            gm.OnDayChanged += _dayChangedHandler;
+        }
     }
 
     private void OnResourceChanged(ResourceManager.ResourceType type, int oldVal, int newVal)
@@ -192,8 +196,8 @@ public class CastleViewUI : MonoBehaviour
                 BuildingManager.Instance?.TryBuild(capturedType, built =>
                 {
                     ShowNotification($"{built.Name} constructed!");
-                    ToggleBuildingMenu();
-                    ToggleBuildingMenu(); // Refresh
+                    // Refresh building menu contents without toggle flicker
+                    PopulateBuildingMenu();
                 });
             });
         }
@@ -224,8 +228,8 @@ public class CastleViewUI : MonoBehaviour
         var gm = GameManager.Instance;
         if (gm?.ResourceManager != null)
             gm.ResourceManager.OnResourceChanged -= OnResourceChanged;
-        if (gm != null)
-            gm.OnDayChanged -= _ => UpdateLordInfo();
+        if (gm != null && _dayChangedHandler != null)
+            gm.OnDayChanged -= _dayChangedHandler;
     }
 
     // Called by KeyboardShortcuts on PC

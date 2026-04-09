@@ -130,10 +130,13 @@ public class TutorialUI : MonoBehaviour
 
     private GameObject FindUIElement(string elementName)
     {
-        if (_uiElementCache.TryGetValue(elementName, out var cached) && cached != null)
-            return cached;
+        // Unity fake-null: destroyed objects pass C# null check but fail Unity ==
+        if (_uiElementCache.TryGetValue(elementName, out var cached))
+        {
+            if (cached != null) return cached;
+            _uiElementCache.Remove(elementName); // Stale entry after scene reload
+        }
 
-        // One-time scan per element name
         foreach (var obj in FindObjectsOfType<RectTransform>(true))
         {
             if (obj.gameObject.name == elementName)

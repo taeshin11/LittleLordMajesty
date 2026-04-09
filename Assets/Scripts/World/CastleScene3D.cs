@@ -149,10 +149,7 @@ public class CastleScene3D : MonoBehaviour
         ground.transform.SetParent(_terrainRoot);
         ground.transform.localScale = new Vector3(2f, 1f, 2f); // 20x20 units
         ground.transform.localPosition = Vector3.zero;
-        var groundMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-        if (groundMat.shader == null)
-            groundMat = new Material(Shader.Find("Standard"));
-        groundMat.color = new Color(0.22f, 0.35f, 0.18f); // Dark green grass
+        var groundMat = new Material(GetSharedMaterial()) { color = new Color(0.22f, 0.35f, 0.18f) };
         ground.GetComponent<Renderer>().material = groundMat;
 
         // Castle walls border (4 low wall segments)
@@ -468,9 +465,8 @@ public class NPC3DClickHandler : MonoBehaviour
 
     private void OnMouseDown()
     {
+        // Use UIManager as single entry point to avoid double-firing dialogue
         UIManager.Instance?.OpenDialogue(NpcId);
-        if (_cachedUI == null) _cachedUI = FindObjectOfType<NPCInteractionUI>(true);
-        _cachedUI?.OpenForNPC(NpcId);
     }
 }
 

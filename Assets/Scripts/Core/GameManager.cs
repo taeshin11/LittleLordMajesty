@@ -61,7 +61,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        _dayCycleCoroutine = StartCoroutine(DayCycleCoroutine());
+        // DayCycle starts only when entering Castle/WorldMap, not during MainMenu
     }
 
     private void OnDestroy()
@@ -94,6 +94,18 @@ public class GameManager : MonoBehaviour
         GameState oldState = _currentState;
         _currentState = newState;
         OnGameStateChanged?.Invoke(oldState, newState);
+
+        // Start/stop day cycle based on gameplay state
+        bool needsDayCycle = newState == GameState.Castle || newState == GameState.WorldMap
+                          || newState == GameState.Dialogue || newState == GameState.Event;
+        if (needsDayCycle && _dayCycleCoroutine == null)
+            _dayCycleCoroutine = StartCoroutine(DayCycleCoroutine());
+        else if (!needsDayCycle && _dayCycleCoroutine != null)
+        {
+            StopCoroutine(_dayCycleCoroutine);
+            _dayCycleCoroutine = null;
+        }
+
         Debug.Log($"[GameManager] State: {oldState} -> {newState}");
     }
 

@@ -190,6 +190,13 @@ public class GeminiAPIClient : MonoBehaviour
         Action<string> onError,
         int retryCount = 0)
     {
+        if (string.IsNullOrEmpty(_apiKey))
+        {
+            Debug.LogError("[Gemini] API key is empty. Set it in Resources/Config/GameConfig.");
+            onError?.Invoke("API key not configured.");
+            yield break;
+        }
+
         string cacheKey = ComputeCacheKey(systemPrompt, userMessage);
         if (_responseCache.TryGetValue(cacheKey, out string cached))
         {
@@ -353,6 +360,12 @@ public class GeminiAPIClient : MonoBehaviour
         List<(string role, string text)> history,
         Action<string> onChunk, Action<string> onComplete, Action<string> onError)
     {
+        if (string.IsNullOrEmpty(_apiKey))
+        {
+            onError?.Invoke("API key not configured.");
+            yield break;
+        }
+
         var contents = new List<Content>();
         if (history != null)
             foreach (var (role, text) in history)
