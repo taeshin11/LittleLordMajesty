@@ -48,6 +48,12 @@ public static class SaveSystem
             var rm = gm?.ResourceManager;
             var nm = gm?.NPCManager;
 
+            // Gather completed buildings
+            var builtBuildings = BuildingManager.Instance?.GetBuiltBuildings();
+            string[] buildingNames = builtBuildings != null
+                ? Array.ConvertAll(builtBuildings.ToArray(), b => b.Type.ToString())
+                : Array.Empty<string>();
+
             var data = new SaveData
             {
                 PlayerName = gm?.PlayerName ?? "Unknown",
@@ -60,6 +66,7 @@ public static class SaveSystem
                 Gold = rm?.Gold ?? 0,
                 Population = rm?.Population ?? 0,
                 TerritoriesOwned = gm?.WorldMapManager?.OwnedTerritoryCount ?? 1,
+                CompletedBuildings = buildingNames,
                 NPCStates = nm?.GetSaveData() ?? Array.Empty<NPCManager.NPCSaveData>(),
                 SaveTimestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
             };
@@ -114,6 +121,23 @@ public static class SaveSystem
 
         gm.ResourceManager?.SetResources(data.Wood, data.Food, data.Gold, data.Population);
         gm.NPCManager?.LoadSaveData(data.NPCStates);
+
+        // Restore buildings
+        if (data.CompletedBuildings != null && BuildingManager.Instance != null)
+        {
+            foreach (string typeName in data.CompletedBuildings)
+            {
+                if (Enum.TryParse<BuildingManager.BuildingType>(typeName, out var bType))
+                {
+                    var building = BuildingManager.Instance.GetBuilding(bType);
+                    if (building != null && !building.IsBuilt)
+                    {
+                        building.IsBuilt = true;
+                        building.Level = 1;
+                    }
+                }
+            }
+        }
     }
 
     public static bool HasSaveFile() => File.Exists(SavePath) || File.Exists(BackupPath);

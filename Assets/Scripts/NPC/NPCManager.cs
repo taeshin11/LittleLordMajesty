@@ -41,7 +41,9 @@ public class NPCManager : MonoBehaviour
     public enum NPCTaskState { Idle, Working, Combat, Resting, Fleeing, InDialogue }
 
     private List<NPCData> _npcs = new();
+    private Dictionary<string, NPCData> _npcLookup = new();
     private Dictionary<string, NPCConversationState> _conversationStates = new();
+    private Dictionary<string, NPCDailyRoutine> _routineCache = new();
     private GeminiAPIClient _gemini;
 
     public event Action<NPCData> OnNPCAdded;
@@ -65,7 +67,9 @@ public class NPCManager : MonoBehaviour
     public void InitializeStartingNPCs()
     {
         _npcs.Clear();
+        _npcLookup.Clear();
         _conversationStates.Clear();
+        _routineCache.Clear();
 
         // Starting NPC roster
         AddNPC(new NPCData
@@ -131,6 +135,7 @@ public class NPCManager : MonoBehaviour
             return;
         }
         _npcs.Add(npc);
+        _npcLookup[npc.Id] = npc;
         _conversationStates[npc.Id] = new NPCConversationState
         {
             Persona = CreatePersonaForNPC(npc)
@@ -261,12 +266,18 @@ public class NPCManager : MonoBehaviour
         Debug.Log($"[NPCManager] {npc.Name} assigned to: {task}");
     }
 
-    public NPCData GetNPC(string id) => _npcs.Find(n => n.Id == id);
+    public NPCData GetNPC(string id) =>
+        _npcLookup.TryGetValue(id, out var npc) ? npc : null;
 
     private NPCDailyRoutine FindNPCRoutine(string npcId)
     {
+        if (_routineCache.TryGetValue(npcId, out var cached) && cached != null)
+            return cached;
         foreach (var r in FindObjectsOfType<NPCDailyRoutine>())
+        {
+            _routineCache[r.NpcId] = r;
             if (r.NpcId == npcId) return r;
+        }
         return null;
     }
     public List<NPCData> GetAllNPCs() => new List<NPCData>(_npcs);

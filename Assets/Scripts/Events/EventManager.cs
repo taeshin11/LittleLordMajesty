@@ -125,7 +125,8 @@ public class EventManager : MonoBehaviour
         else
         {
             var types = new[] { EventType.NPCConflict, EventType.MysteriousVisitor,
-                EventType.TradeOpportunity, EventType.Fire, EventType.Disease };
+                EventType.TradeOpportunity, EventType.Fire, EventType.Disease,
+                EventType.Rebellion, EventType.WeatherDisaster };
             type = types[UnityEngine.Random.Range(0, types.Length)];
         }
 
@@ -182,6 +183,26 @@ public class EventManager : MonoBehaviour
                 Description = "Fire has broken out in the castle storage! Quick action is needed to prevent catastrophic loss!",
                 OccurredAt = DateTime.UtcNow,
                 TimeToResolveSeconds = 60f
+            },
+            EventType.Rebellion => new GameEvent
+            {
+                EventId = Guid.NewGuid().ToString("N")[..8],
+                Type = EventType.Rebellion,
+                Severity = EventSeverity.Severe,
+                Title = LocalizationManager.Instance?.Get("event_rebellion_title") ?? "Rebellion!",
+                Description = "Disgruntled citizens have gathered in the courtyard, demanding change. Tensions are rising.",
+                OccurredAt = DateTime.UtcNow,
+                TimeToResolveSeconds = 120f
+            },
+            EventType.WeatherDisaster => new GameEvent
+            {
+                EventId = Guid.NewGuid().ToString("N")[..8],
+                Type = EventType.WeatherDisaster,
+                Severity = EventSeverity.Moderate,
+                Title = LocalizationManager.Instance?.Get("event_weather_title") ?? "Severe Storm!",
+                Description = "A violent storm batters the castle. Roofs are damaged and crops are at risk!",
+                OccurredAt = DateTime.UtcNow,
+                TimeToResolveSeconds = 90f
             },
             _ => new GameEvent
             {
@@ -309,6 +330,17 @@ Is the response clever, resourceful, and appropriate? Judge fairly.";
                 rm.TrySpend(costWood, costFood, costGold);
             }
 
+            // Apply moral effect to all NPCs
+            if (result.moralEffect != 0)
+            {
+                var allNPCs = NPCManager.Instance?.GetAllNPCs();
+                if (allNPCs != null)
+                {
+                    foreach (var npc in allNPCs)
+                        npc.MoodScore = Mathf.Clamp(npc.MoodScore + result.moralEffect, 0f, 100f);
+                }
+            }
+
             ResolveEvent(ev, result.success, result.outcome);
             onOutcome?.Invoke(result.outcome, result.success);
         }
@@ -374,12 +406,13 @@ Is the response clever, resourceful, and appropriate? Judge fairly.";
     /// <summary>
     /// Manually trigger an event from other systems (Research complete, Spy detected, etc.)
     /// </summary>
-    public void TriggerManualEvent(string title, string description, EventSeverity severity)
+    public void TriggerManualEvent(string title, string description, EventSeverity severity,
+        EventType type = EventType.CastleSpyDetected)
     {
         var ev = new GameEvent
         {
             EventId     = System.Guid.NewGuid().ToString("N")[..8],
-            Type        = EventType.CastleSpyDetected,
+            Type        = type,
             Severity    = severity,
             Title       = title,
             Description = description,
