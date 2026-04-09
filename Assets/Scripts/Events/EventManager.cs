@@ -282,12 +282,21 @@ Is the response clever, resourceful, and appropriate? Judge fairly.";
 
             var result = Newtonsoft.Json.JsonConvert.DeserializeObject<EventOutcomeData>(json);
 
-            // Apply resource costs
-            GameManager.Instance?.ResourceManager?.TrySpend(
-                result.resourceCost?.wood ?? 0,
-                result.resourceCost?.food ?? 0,
-                result.resourceCost?.gold ?? 0
-            );
+            // Apply resource costs — validate affordability first
+            int costWood = result.resourceCost?.wood ?? 0;
+            int costFood = result.resourceCost?.food ?? 0;
+            int costGold = result.resourceCost?.gold ?? 0;
+            var rm = GameManager.Instance?.ResourceManager;
+            if (rm != null && (costWood > 0 || costFood > 0 || costGold > 0))
+            {
+                if (!rm.CanAfford(costWood, costFood, costGold))
+                {
+                    ResolveEvent(ev, false, "Not enough resources to carry out this plan.");
+                    onOutcome?.Invoke("Insufficient resources.", false);
+                    return;
+                }
+                rm.TrySpend(costWood, costFood, costGold);
+            }
 
             ResolveEvent(ev, result.success, result.outcome);
             onOutcome?.Invoke(result.outcome, result.success);

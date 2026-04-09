@@ -77,6 +77,9 @@ public class ResourceManager : MonoBehaviour
         Debug.Log($"[Resources] Daily: +{woodProd}W +{foodProd}F(−{foodCons}) +{goldProd}G | Now: {_wood}W {_food}F {_gold}G");
     }
 
+    public bool CanAfford(int wood = 0, int food = 0, int gold = 0) =>
+        _wood >= wood && _food >= food && _gold >= gold;
+
     public bool TrySpend(int wood = 0, int food = 0, int gold = 0)
     {
         if (_wood < wood || _food < food || _gold < gold) return false;

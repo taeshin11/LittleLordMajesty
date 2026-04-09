@@ -175,9 +175,18 @@ public class NPCManager : MonoBehaviour
             LocalizationManager.Instance?.CurrentLanguageCode ?? "en"
         );
 
-        // Add task context
+        // Add task + location context from daily routine
         if (!string.IsNullOrEmpty(npc.CurrentTask))
             systemPrompt += $"\n\nCurrent task: {npc.CurrentTask}. Mood: {npc.MoodScore:F0}/100.";
+
+        // Inject location-aware context (where the NPC is right now)
+        var routine = FindNPCRoutine(npcId);
+        if (routine != null)
+        {
+            string locationCtx = routine.GetCurrentActivityContext();
+            if (!string.IsNullOrEmpty(locationCtx))
+                systemPrompt += "\n\n" + locationCtx;
+        }
 
         convState.AddToHistory("user", playerCommand);
 
@@ -247,6 +256,13 @@ public class NPCManager : MonoBehaviour
     }
 
     public NPCData GetNPC(string id) => _npcs.Find(n => n.Id == id);
+
+    private NPCDailyRoutine FindNPCRoutine(string npcId)
+    {
+        foreach (var r in FindObjectsOfType<NPCDailyRoutine>())
+            if (r.NpcId == npcId) return r;
+        return null;
+    }
     public List<NPCData> GetAllNPCs() => new List<NPCData>(_npcs);
     public List<NPCData> GetAvailableNPCs() => _npcs.FindAll(n => n.IsAvailable && n.TaskState == NPCTaskState.Idle);
     public List<NPCData> GetNPCsByProfession(NPCPersona.NPCProfession profession) =>

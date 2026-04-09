@@ -192,9 +192,18 @@ public class SpyInfiltrationSystem : MonoBehaviour
     {
         SpyEffectResult effect = null;
         try { effect = JsonConvert.DeserializeObject<SpyEffectResult>(llmReply); }
-        catch (Exception e) { Debug.LogWarning($"[Spy] Effect parse failed: {e.Message}"); }
+        catch (Exception e) { Debug.LogWarning($"[Spy] Effect parse failed: {e.Message}. Using fallback effect."); }
 
-        if (effect == null) yield break;
+        if (effect == null)
+        {
+            effect = new SpyEffectResult
+            {
+                satisfactionDelta = -3,
+                loyaltyDelta      = -2,
+                detectionChance   = 0.05f,
+                whisperText       = "The operation proceeded without clear outcome."
+            };
+        }
 
         // NPC 상태 변경
         targetNPC.MoodScore     = Mathf.Clamp(targetNPC.MoodScore + effect.satisfactionDelta, 0, 100);
