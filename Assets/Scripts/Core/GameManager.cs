@@ -169,5 +169,9 @@ public class GameManager : MonoBehaviour
         NPCManager?.InitializeStartingNPCs();
         EventManager?.ClearActiveEvents();
         SetGameState(GameState.Castle);
+
+        // Start tutorial for first-time players
+        if (TutorialSystem.Instance != null)
+            TutorialSystem.Instance.StartTutorial();
     }
 }

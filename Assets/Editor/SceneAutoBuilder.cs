@@ -211,6 +211,9 @@ public static class SceneAutoBuilder
         var toastLayer = CreateFullscreenPanel(canvas.transform, "ToastLayer", Color.clear);
         var toastNotif = toastLayer.AddComponent<ToastNotification>();
 
+        // Tutorial overlay (above toast, below nothing)
+        var tutorialPanel = BuildTutorialPanel(canvas.transform);
+
         // Leaderboard panel
         var leaderboardPanel = BuildLeaderboardPanel(canvas.transform);
         leaderboardPanel.SetActive(false);
@@ -767,6 +770,81 @@ public static class SceneAutoBuilder
         soLB.FindProperty("_entriesContainer").objectReferenceValue = content;
         soLB.ApplyModifiedProperties();
 
+        return panel;
+    }
+
+    static GameObject BuildTutorialPanel(Transform parent)
+    {
+        var panel = CreateFullscreenPanel(parent, "TutorialOverlay", Color.clear);
+        var tutUI = panel.AddComponent<TutorialUI>();
+
+        // Dim background
+        var dim = panel.GetComponent<Image>();
+        dim.color = new Color(0, 0, 0, 0.5f);
+        dim.raycastTarget = true;
+
+        // Highlight frame (repositioned at runtime)
+        var highlight = new GameObject("HighlightFrame", typeof(RectTransform), typeof(Image));
+        highlight.transform.SetParent(panel.transform, false);
+        var hlImg = highlight.GetComponent<Image>();
+        hlImg.color = new Color(1f, 0.85f, 0.2f, 0.6f);
+        hlImg.raycastTarget = false;
+        highlight.SetActive(false);
+
+        // Arrow indicator
+        var arrow = new GameObject("Arrow", typeof(RectTransform), typeof(Image));
+        arrow.transform.SetParent(panel.transform, false);
+        var arrowImg = arrow.GetComponent<Image>();
+        arrowImg.color = new Color(1f, 0.85f, 0.2f);
+        arrowImg.raycastTarget = false;
+        SetAnchored(arrow, new Vector2(0, 100), new Vector2(40, 60));
+
+        // Dialogue box at bottom
+        var box = CreatePanel(panel.transform, "DialogueBox",
+            new Color(0.08f, 0.06f, 0.14f, 0.95f), new Vector2(900, 300));
+        SetAnchored(box, new Vector2(0, -650), new Vector2(900, 300));
+        var boxOutline = box.AddComponent<Outline>();
+        boxOutline.effectColor = new Color(0.8f, 0.65f, 0.2f);
+        boxOutline.effectDistance = new Vector2(2, -2);
+
+        // Title
+        var title = CreateTMPText(box.transform, "TutorialTitle", "Welcome!",
+            32, TextAlignmentOptions.Center, new Color(0.95f, 0.85f, 0.4f));
+        SetAnchored(title, new Vector2(0, 100), new Vector2(800, 50));
+
+        // Description
+        var desc = CreateTMPText(box.transform, "TutorialDesc", "",
+            22, TextAlignmentOptions.TopLeft, new Color(0.85f, 0.82f, 0.75f));
+        SetAnchored(desc, new Vector2(0, 20), new Vector2(800, 120));
+
+        // Next button
+        var nextBtn = CreateButton(box.transform, "NextButton", "Next",
+            new Color(0.25f, 0.55f, 0.3f), new Color(0.95f, 0.95f, 0.9f));
+        SetAnchored(nextBtn, new Vector2(200, -110), new Vector2(180, 50));
+
+        // Next button text
+        var nextBtnText = nextBtn.GetComponentInChildren<TextMeshProUGUI>();
+
+        // Skip button
+        var skipBtn = CreateButton(box.transform, "SkipButton", "Skip Tutorial",
+            new Color(0.3f, 0.2f, 0.2f), new Color(0.6f, 0.5f, 0.5f));
+        SetAnchored(skipBtn, new Vector2(-200, -110), new Vector2(180, 50));
+
+        // Wire TutorialUI serialized fields
+        var soTut = new SerializedObject(tutUI);
+        soTut.FindProperty("_overlayRoot").objectReferenceValue    = panel;
+        soTut.FindProperty("_dimBackground").objectReferenceValue  = dim;
+        soTut.FindProperty("_dialogueBox").objectReferenceValue    = box;
+        soTut.FindProperty("_titleText").objectReferenceValue      = title.GetComponent<TextMeshProUGUI>();
+        soTut.FindProperty("_descriptionText").objectReferenceValue = desc.GetComponent<TextMeshProUGUI>();
+        soTut.FindProperty("_nextButton").objectReferenceValue     = nextBtn.GetComponent<Button>();
+        soTut.FindProperty("_nextButtonText").objectReferenceValue = nextBtnText;
+        soTut.FindProperty("_skipButton").objectReferenceValue     = skipBtn.GetComponent<Button>();
+        soTut.FindProperty("_highlightFrame").objectReferenceValue = highlight;
+        soTut.FindProperty("_arrowImage").objectReferenceValue     = arrowImg;
+        soTut.ApplyModifiedProperties();
+
+        panel.SetActive(false); // Hidden until tutorial starts
         return panel;
     }
 

@@ -130,6 +130,9 @@ public class BuildingManager : MonoBehaviour
         OnBuildingConstructed?.Invoke(building);
         onComplete?.Invoke(building);
 
+        // Tutorial: complete "build farm" step on any building
+        TutorialSystem.Instance?.CompleteCurrentStep("build_farm");
+
         Debug.Log($"[Buildings] Built: {building.Name}");
         return true;
     }

@@ -224,6 +224,9 @@ public class UIManager : MonoBehaviour
         }
 
         GameManager.Instance?.SetGameState(GameManager.GameState.Dialogue);
+
+        // Tutorial: complete "talk to NPC" step
+        TutorialSystem.Instance?.CompleteCurrentStep("talk_to_aldric");
     }
 
     public void OnSendCommandClicked()
@@ -239,6 +242,9 @@ public class UIManager : MonoBehaviour
         if (string.IsNullOrEmpty(_currentActiveNPCId)) return;
 
         SetThinking(true);
+
+        // Tutorial: complete "issue command" step
+        TutorialSystem.Instance?.CompleteCurrentStep("issue_command");
 
         NPCManager.Instance?.IssueCommandToNPC(_currentActiveNPCId, command, response =>
         {

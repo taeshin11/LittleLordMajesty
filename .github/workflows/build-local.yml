@@ -31,10 +31,11 @@ jobs:
             -projectPath "$PROJECT" \
             -buildTarget WebGL \
             -executeMethod SceneAutoBuilder.BuildWebGL \
-            -logFile "$PROJECT/unity_build.log"
+            -logFile "$PROJECT/unity_build.log" || BUILD_FAIL=1
 
           echo "=== Build Log (last 50 lines) ==="
           tail -50 unity_build.log || true
+          [ "${BUILD_FAIL:-0}" = "1" ] && exit 1 || true
 
       - name: Check build output
         shell: bash
