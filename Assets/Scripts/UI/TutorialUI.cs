@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic;
 
 /// <summary>
 /// Overlay UI for the tutorial system. Shows step dialogue boxes,
@@ -29,6 +30,7 @@ public class TutorialUI : MonoBehaviour
 
     private TutorialSystem.TutorialStep _currentStep;
     private Coroutine _typewriterCoroutine;
+    private readonly Dictionary<string, GameObject> _uiElementCache = new();
 
     private void Awake()
     {
@@ -58,8 +60,8 @@ public class TutorialUI : MonoBehaviour
             TutorialSystem.Instance.OnStepStarted -= ShowStep;
             TutorialSystem.Instance.OnTutorialComplete -= OnTutorialComplete;
         }
-        if (_nextButton != null) _nextButton.onClick.RemoveAllListeners();
-        if (_skipButton != null) _skipButton.onClick.RemoveAllListeners();
+        if (_nextButton != null) _nextButton.onClick.RemoveListener(OnNextClicked);
+        if (_skipButton != null) _skipButton.onClick.RemoveListener(OnSkipClicked);
     }
 
     private void ShowStep(TutorialSystem.TutorialStep step)
@@ -128,12 +130,17 @@ public class TutorialUI : MonoBehaviour
 
     private GameObject FindUIElement(string elementName)
     {
-        // Search all active GameObjects by name
-        var allObjects = FindObjectsOfType<RectTransform>(true);
-        foreach (var obj in allObjects)
+        if (_uiElementCache.TryGetValue(elementName, out var cached) && cached != null)
+            return cached;
+
+        // One-time scan per element name
+        foreach (var obj in FindObjectsOfType<RectTransform>(true))
         {
             if (obj.gameObject.name == elementName)
+            {
+                _uiElementCache[elementName] = obj.gameObject;
                 return obj.gameObject;
+            }
         }
         return null;
     }
@@ -141,10 +148,11 @@ public class TutorialUI : MonoBehaviour
     private IEnumerator TypewriterEffect(string fullText)
     {
         if (_descriptionText == null) yield break;
-        _descriptionText.text = "";
-        foreach (char c in fullText)
+        _descriptionText.text = fullText;
+        _descriptionText.maxVisibleCharacters = 0;
+        for (int i = 1; i <= fullText.Length; i++)
         {
-            _descriptionText.text += c;
+            _descriptionText.maxVisibleCharacters = i;
             yield return new WaitForSecondsRealtime(0.02f);
         }
     }
