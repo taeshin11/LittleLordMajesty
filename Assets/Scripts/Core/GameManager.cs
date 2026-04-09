@@ -133,6 +133,8 @@ public class GameManager : MonoBehaviour
         OnDayChanged?.Invoke(Day);
         EventManager?.CheckDailyEvents(Day, Year);
         ResourceManager?.ProcessDailyProduction();
+        SteamManager.OnDayReached(Day);
+        if (ResourceManager != null) SteamManager.OnGoldReached(ResourceManager.Gold);
         Debug.Log($"[GameManager] Day {Day}, Year {Year}");
     }
 

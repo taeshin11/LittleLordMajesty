@@ -75,7 +75,6 @@ jobs:
           # Personal license: only email+password needed (no serial/ulf required)
           UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
         with:
           targetPlatform:    WebGL
           unityVersion:      2022.3.62f1
@@ -128,7 +127,6 @@ jobs:
         env:
           UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
         with:
           targetPlatform:    Android
           unityVersion:      2022.3.62f1
