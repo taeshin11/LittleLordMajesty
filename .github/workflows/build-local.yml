@@ -55,6 +55,13 @@ jobs:
           retention-days: 7
         continue-on-error: true
 
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./Builds/WebGL
+          force_orphan: true
+
   build-windows:
     name: Build Windows (Local Unity)
     runs-on: self-hosted
