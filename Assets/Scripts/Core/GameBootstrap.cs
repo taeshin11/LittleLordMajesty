@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using System.Collections;
 
 /// <summary>
@@ -16,12 +17,35 @@ public class GameBootstrap : MonoBehaviour
     [SerializeField] private GameObject _firebasePrefab;
 
     [SerializeField] private GameObject _splashScreen;
-    [SerializeField] private UnityEngine.UI.Slider _loadingBar;
+    [SerializeField] private Slider _loadingBar;
     [SerializeField] private TMPro.TextMeshProUGUI _loadingText;
+
+    // Debug overlay for WebGL — shows boot progress on screen
+    private string _debugLog = "";
 
     private void Start()
     {
+        Application.logMessageReceived += OnLogMessage;
         StartCoroutine(BootSequence());
+    }
+
+    private void OnDestroy()
+    {
+        Application.logMessageReceived -= OnLogMessage;
+    }
+
+    private void OnLogMessage(string message, string stackTrace, LogType type)
+    {
+        if (type == LogType.Error || type == LogType.Exception)
+            _debugLog += $"[{type}] {message}\n";
+    }
+
+    // Show debug info on screen for WebGL troubleshooting
+    private void OnGUI()
+    {
+        if (string.IsNullOrEmpty(_debugLog)) return;
+        GUI.color = Color.red;
+        GUI.Label(new Rect(10, 10, Screen.width - 20, Screen.height / 2), _debugLog);
     }
 
     private IEnumerator BootSequence()
@@ -53,32 +77,46 @@ public class GameBootstrap : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[Bootstrap] GameConfig not found at Resources/Config/GameConfig. Create one!");
+            Debug.LogWarning("[Bootstrap] GameConfig not found at Resources/Config/GameConfig.");
         }
 
         yield return SetLoadingProgress(0.85f, "Preparing castle...");
 
         EnsureManager<GameManager>(_gameManagerPrefab, "GameManager");
 
-        yield return SetLoadingProgress(1.0f, "Ready!");
-        yield return new WaitForSeconds(0.5f);
-
-        // Hide splash and load the Game scene
-        if (_splashScreen != null) _splashScreen.SetActive(false);
-
-        Debug.Log("[Bootstrap] Loading Game scene...");
+        yield return SetLoadingProgress(1.0f, "Loading game world...");
+        yield return new WaitForSeconds(0.3f);
 
         // Load Game.unity which contains UIManager, CastleScene3D, and all UI panels
+        Debug.Log("[Bootstrap] Loading Game scene...");
         var asyncLoad = SceneManager.LoadSceneAsync("Game");
-        if (asyncLoad != null)
+        if (asyncLoad == null)
         {
-            while (!asyncLoad.isDone)
-                yield return null;
+            Debug.LogError("[Bootstrap] Failed to load Game scene! Is it in Build Settings?");
+            yield break;
         }
 
-        // UIManager is now in the scene — set initial state
+        while (!asyncLoad.isDone)
+            yield return null;
+
+        Debug.Log("[Bootstrap] Game scene loaded.");
+
+        // Wait one frame for all Awake/Start to run
+        yield return null;
+
+        // Check UIManager
+        if (UIManager.Instance == null)
+        {
+            Debug.LogError("[Bootstrap] UIManager.Instance is null after Game scene loaded!");
+            yield break;
+        }
+
+        // Set initial state
         if (GameManager.Instance != null)
+        {
+            Debug.Log("[Bootstrap] Setting MainMenu state...");
             GameManager.Instance.SetGameState(GameManager.GameState.MainMenu);
+        }
 
         Debug.Log("[Bootstrap] Game initialized successfully.");
     }
