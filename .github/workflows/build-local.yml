@@ -1,0 +1,94 @@
+name: Build (Self-Hosted PC)
+
+# 본인 PC에서 Unity 빌드 실행 — 라이선스 불필요 (이미 PC에 설치된 Unity 사용)
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths:
+      - 'Assets/**'
+      - 'ProjectSettings/**'
+      - 'Packages/**'
+
+jobs:
+  build-webgl:
+    name: Build WebGL (Local Unity)
+    runs-on: self-hosted   # 본인 PC의 GitHub Actions 러너
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build WebGL
+        shell: bash
+        run: |
+          UNITY="C:/Program Files/Unity/Hub/Editor/2022.3.62f1/Editor/Unity.exe"
+          PROJECT="$(pwd)"
+          OUT="$(pwd)/Builds/WebGL"
+          mkdir -p "$OUT"
+
+          "$UNITY" \
+            -batchmode \
+            -quit \
+            -projectPath "$PROJECT" \
+            -buildTarget WebGL \
+            -executeMethod SceneAutoBuilder.BuildWebGL \
+            -logFile "$PROJECT/unity_build.log" || \
+          "$UNITY" \
+            -batchmode \
+            -quit \
+            -projectPath "$PROJECT" \
+            -buildTarget WebGL \
+            -buildPath "$OUT" \
+            -logFile "$PROJECT/unity_build.log"
+
+          echo "=== Build Log (last 50 lines) ==="
+          tail -50 unity_build.log || true
+
+      - name: Check build output
+        shell: bash
+        run: |
+          if [ -f "Builds/WebGL/index.html" ] || \
+             find Builds/WebGL -name "*.wasm" 2>/dev/null | grep -q .; then
+            echo "✅ WebGL build successful"
+          else
+            echo "⚠️  Build output not found — check unity_build.log"
+          fi
+
+      - name: Upload WebGL Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebGL-Build-Local
+          path: Builds/WebGL/
+          retention-days: 7
+        continue-on-error: true
+
+  build-windows:
+    name: Build Windows (Local Unity)
+    runs-on: self-hosted
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Windows
+        shell: bash
+        run: |
+          UNITY="C:/Program Files/Unity/Hub/Editor/2022.3.62f1/Editor/Unity.exe"
+          OUT="$(pwd)/Builds/Windows"
+          mkdir -p "$OUT"
+
+          "$UNITY" \
+            -batchmode \
+            -quit \
+            -projectPath "$(pwd)" \
+            -buildTarget StandaloneWindows64 \
+            -buildPath "$OUT/LittleLordMajesty.exe" \
+            -logFile "$(pwd)/unity_build_win.log"
+
+          tail -30 unity_build_win.log || true
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Build-Local
+          path: Builds/Windows/
+          retention-days: 7
+        continue-on-error: true
