@@ -11,7 +11,59 @@ Reach a state where a real person can sit down, launch the game from the Steam c
 
 ---
 
+## M13 Progress Summary
+
+### Completed: 6-Agent Audit & Bug Fixes
+
+**Commits:**
+- `0ea03e9` fix: M13 critical bug fixes from 6-agent audit
+- `27249ca` fix: M13 medium bug fixes — save/load, buildings, events, performance
+- `e76d101` fix: remove dead `_cachedUI` field from NPC3DClickHandler
+- `3d275a4` fix: add missing `using System` for `Action<>` in CastleViewUI
+
+The 6-agent audit (QA / Backend / UI / CodeReview / Historian / ProjectManager) found **36 issues total**: 13 CRITICAL, 9 HIGH, 11 MEDIUM, 3 LOW.
+
+#### CRITICAL Fixes (all resolved)
+
+| Issue | Fix |
+|-------|-----|
+| DayCycle state guard missing | Added guard to prevent double-start on scene reload |
+| TypewriterEffect GC alloc per frame | Cached string builder; eliminated per-frame allocation |
+| CastleViewUI event leak | Unsubscribed all events in `OnDestroy()` |
+| API key guard absent | Added null/empty check before any Gemini call |
+| Tutorial timing race | Deferred tutorial start until all managers initialized |
+| TutorialUI cache fake-null | Fixed `??` check against Unity Object — now uses explicit null comparison |
+| NPC click double-fire | Removed dead `_cachedUI` field; eliminated redundant click path |
+| Shader.Find cache missing | Cached Shader.Find result in static field; no per-frame lookup |
+
+#### MEDIUM Fixes (all resolved)
+
+| Issue | Fix |
+|-------|-----|
+| SaveSystem missing building save/restore | Buildings now serialized and restored on load |
+| 8 missing BuildingData entries | Added all 8 entries to BuildingDatabase |
+| Rebellion event not firing | Event registration corrected in EventManager |
+| WeatherDisaster event not firing | Event registration corrected in EventManager |
+| `moralEffect` not applied | Applied morale delta in event resolution path |
+| TriggerManualEvent missing type param | Added generic type parameter to method signature |
+| NPC/Building Dictionary lookup O(n) | Switched to Dictionary-backed lookups |
+| NPC routine not cached | Cached routine reference; eliminated repeated GetComponent calls |
+
+QA re-verification confirmed all fixes clean — zero regressions introduced.
+
+### Completed: GitHub Pages Auto-Deploy
+
+**Commits:**
+- `7ec99b8` feat: auto-deploy WebGL build to GitHub Pages
+- `d5a78ab` fix: add write permissions for GitHub Pages deployment
+
+CI pipeline now automatically deploys the WebGL build to GitHub Pages on every push to main. Permissions fix applied to the workflow so the deploy step can write to the `gh-pages` branch.
+
+---
+
 ## P0 — Alpha Playtest Code-Level Verification
+
+**Status: TODO — highest priority**
 
 These tasks must be done before any external tester touches the build.
 
@@ -78,6 +130,8 @@ Steps:
 
 ## P1 — Steam Store Metadata Preparation
 
+**Status: TODO**
+
 ### P1.1 Steamworks Partner Account
 - Register on Steamworks Partner (partner.steamgames.com)
 - Pay the $100 app fee
@@ -114,6 +168,8 @@ Register the 10 achievement IDs from `SteamManager.cs` in Steamworks backend:
 ---
 
 ## P2 — Visual Upgrade
+
+**Status: TODO**
 
 ### P2.1 Kenney Asset Integration
 
@@ -161,16 +217,19 @@ Use Unity's built-in Particle System. Store prefabs in `Assets/Prefabs/VFX/`.
 
 ## M13 Completion Criteria
 
-| Criteria | Priority |
-|----------|----------|
-| 10 consecutive Bootstrap → Castle runs, zero errors | P0 |
-| Null-ref sweep clean, `SceneReferenceValidator` passes | P0 |
-| Tutorial 7-step flow verified and edge cases handled | P0 |
-| Gemini streaming: 10 NPC interactions without timeout | P0 |
-| Steam App ID registered, store page content drafted | P1 |
-| At least 5 store screenshots captured | P1 |
-| Kenney assets replacing all primitives in Game.unity | P2 |
-| NPC idle and talk animations playing correctly | P2 |
+| Criteria | Priority | Status |
+|----------|----------|--------|
+| 6-agent audit complete, all CRITICAL + MEDIUM issues fixed | P0 | DONE |
+| GitHub Pages auto-deploy wired in CI | P0 | DONE |
+| QA re-verification: zero regressions | P0 | DONE |
+| 10 consecutive Bootstrap → Castle runs, zero errors | P0 | TODO |
+| Null-ref sweep clean, `SceneReferenceValidator` passes | P0 | TODO |
+| Tutorial 7-step flow verified and edge cases handled | P0 | TODO |
+| Gemini streaming: 10 NPC interactions without timeout | P0 | TODO |
+| Steam App ID registered, store page content drafted | P1 | TODO |
+| At least 5 store screenshots captured | P1 | TODO |
+| Kenney assets replacing all primitives in Game.unity | P2 | TODO |
+| NPC idle and talk animations playing correctly | P2 | TODO |
 
 ---
 
