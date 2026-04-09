@@ -3,6 +3,7 @@ using UnityEngine.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
@@ -258,13 +259,28 @@ public class GeminiAPIClient : MonoBehaviour
             try
             {
                 var response = JsonConvert.DeserializeObject<GeminiResponse>(webRequest.downloadHandler.text);
-                string responseText = response?.candidates?[0]?.content?.parts?[0]?.text ?? "";
+                var candidate = response?.candidates?[0];
+                string finishReason = candidate?.finishReason ?? "";
+
+                // Safety filter blocked the response
+                if (finishReason == "SAFETY")
+                {
+                    Debug.LogWarning("[Gemini] Response blocked by safety filter.");
+                    onSuccess?.Invoke("I cannot respond to that request.");
+                    yield break;
+                }
+
+                string responseText = candidate?.content?.parts?[0]?.text ?? "";
 
                 if (!string.IsNullOrEmpty(responseText))
                 {
-                    // Cache the response for cost optimization
-                    if (_responseCache.Count < 500) // Limit cache size
-                        _responseCache[cacheKey] = responseText;
+                    // LRU-lite: evict oldest entry when cache is full
+                    if (_responseCache.Count >= 500)
+                    {
+                        var oldest = System.Linq.Enumerable.First(_responseCache);
+                        _responseCache.Remove(oldest.Key);
+                    }
+                    _responseCache[cacheKey] = responseText;
 
                     Debug.Log($"[Gemini] Response ({response.usageMetadata?.totalTokenCount} tokens): {responseText.Substring(0, Mathf.Min(80, responseText.Length))}...");
                     onSuccess?.Invoke(responseText);
@@ -282,15 +298,22 @@ public class GeminiAPIClient : MonoBehaviour
         }
         else
         {
-            Debug.LogError($"[Gemini] Request failed (attempt {retryCount + 1}): {webRequest.error}");
+            long statusCode = webRequest.responseCode;
+            Debug.LogError($"[Gemini] Request failed (attempt {retryCount + 1}, HTTP {statusCode}): {webRequest.error}");
+
             if (retryCount < MAX_RETRIES)
             {
-                yield return new WaitForSeconds(RETRY_DELAY * (retryCount + 1));
+                // 429 Rate limit → longer back-off; 5xx server error → short retry
+                float delay = statusCode == 429
+                    ? RETRY_DELAY * (retryCount + 3)   // 3s, 4s, 5s
+                    : RETRY_DELAY * (retryCount + 1);  // 1s, 2s, 3s
+
+                yield return new WaitForSeconds(delay);
                 yield return SendMessageCoroutine(userMessage, systemPrompt, history, onSuccess, onError, retryCount + 1);
             }
             else
             {
-                onError?.Invoke(webRequest.error);
+                onError?.Invoke(statusCode == 429 ? "AI rate limit reached. Please wait a moment." : webRequest.error);
             }
         }
     }
