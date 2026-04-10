@@ -101,3 +101,8 @@ Assets/Resources/Config/GameConfig.asset.meta
 google-services.json
 GoogleService-Info.plist
 *.alf
+
+# Playwright test harness
+tools/playwright_test/node_modules/
+tools/playwright_test/package-lock.json
+tools/playwright_test/screenshots/
