@@ -207,8 +207,12 @@ public static class SceneAutoBuilder
         var loadingPanel    = BuildLoadingPanel(canvas.transform);
         var settingsPanel   = BuildSettingsPanel(canvas.transform);
 
-        // Toast layer (on top of everything)
+        // Toast layer (on top of everything). Must NOT block raycasts — it covers the
+        // whole screen as an invisible Image, so with raycastTarget=true (the default)
+        // it would eat every click meant for the MainMenu buttons beneath it.
         var toastLayer = CreateFullscreenPanel(canvas.transform, "ToastLayer", Color.clear);
+        var toastLayerImg = toastLayer.GetComponent<Image>();
+        if (toastLayerImg != null) toastLayerImg.raycastTarget = false;
         var toastNotif = toastLayer.AddComponent<ToastNotification>();
 
         // Tutorial overlay (above toast, below nothing)
@@ -977,6 +981,9 @@ public static class SceneAutoBuilder
         go.transform.SetParent(parent, false);
         var img = go.AddComponent<Image>();
         img.color = color;
+        // Defensive: a fully-transparent Image is almost never meant to be a click target.
+        // Without this, invisible overlays silently eat clicks from everything beneath.
+        if (color.a <= 0.001f) img.raycastTarget = false;
         var rt = go.GetComponent<RectTransform>();
         rt.sizeDelta = size;
         return go;
