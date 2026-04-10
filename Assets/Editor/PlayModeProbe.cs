@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using System.Collections;
 using System.IO;
+using TMPro;
 
 /// <summary>
 /// Runs Unity in batch play mode for a few seconds on Bootstrap.unity and captures
@@ -52,6 +53,17 @@ public static class PlayModeProbe
             // Wait ~3 seconds for Bootstrap → Game scene transition and UIManager.Awake
             yield return new WaitForSeconds(3f);
 
+            // Programmatically trigger New Game to enter Castle state so we can
+            // inspect the rebuilt NPC grid. If GameManager isn't found we'll still
+            // dump the MainMenu state.
+            var gm = GameManager.Instance;
+            if (gm != null)
+            {
+                Debug.Log("[Probe] Triggering NewGame to enter Castle state...");
+                gm.NewGame("TestPlayer");
+                yield return new WaitForSeconds(2f);
+            }
+
             var report = new System.Text.StringBuilder();
             report.AppendLine($"[Probe] Scene: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
 
@@ -90,7 +102,7 @@ public static class PlayModeProbe
 
             // Find MainMenu buttons and their world positions
             var mainMenu = GameObject.Find("MainMenuPanel");
-            if (mainMenu != null)
+            if (mainMenu != null && mainMenu.activeSelf)
             {
                 foreach (var btn in mainMenu.GetComponentsInChildren<Button>(true))
                 {
@@ -101,6 +113,29 @@ public static class PlayModeProbe
                     report.AppendLine($"        worldCorners: BL={corners[0]} TR={corners[2]}");
                 }
             }
+
+            // If we transitioned into Castle, inspect the NPC grid
+            var npcGrid = GameObject.Find("NPCGrid");
+            if (npcGrid != null)
+            {
+                report.AppendLine($"[Probe] NPCGrid found, active={npcGrid.activeInHierarchy}");
+                report.AppendLine($"[Probe] NPCGrid child count: {npcGrid.transform.childCount}");
+                foreach (Transform cardT in npcGrid.transform)
+                {
+                    if (!cardT.name.StartsWith("NPCCard_")) continue;
+                    var crt = cardT.GetComponent<RectTransform>();
+                    report.AppendLine($"[Probe] Card '{cardT.name}' pos={crt.anchoredPosition} size={crt.sizeDelta}");
+                    var nameLabel = cardT.Find("Name")?.GetComponent<TextMeshProUGUI>();
+                    var initialLabel = cardT.Find("Portrait/Initial")?.GetComponent<TextMeshProUGUI>();
+                    if (nameLabel != null)
+                        report.AppendLine($"        Name='{nameLabel.text}' enabled={nameLabel.enabled} rect={nameLabel.rectTransform.rect.size}");
+                    if (initialLabel != null)
+                        report.AppendLine($"        Initial='{initialLabel.text}' rect={initialLabel.rectTransform.rect.size}");
+                }
+            }
+            var objective = GameObject.Find("ObjectiveText")?.GetComponent<TextMeshProUGUI>();
+            if (objective != null)
+                report.AppendLine($"[Probe] Objective: '{objective.text}'");
 
             // Try to raycast at the center of the screen where the New Game button should be
             if (eventSystem != null && canvas != null)
