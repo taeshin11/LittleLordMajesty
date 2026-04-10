@@ -36,7 +36,13 @@ public class TutorialUI : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        if (_overlayRoot != null) _overlayRoot.SetActive(false);
+        // DO NOT call _overlayRoot.SetActive(false) here. _overlayRoot is THIS
+        // gameObject (set in BuildTutorialPanel), and TutorialSystem.StartTutorial
+        // explicitly SetActive(true)'s the panel to make Awake/Start run. If this
+        // Awake then deactivates itself again, we get a self-recursion that has
+        // caused wasm "null function" runtime errors on WebGL builds.
+        // Initial inactive state is already set in SceneAutoBuilder at scene-build
+        // time (BuildTutorialPanel: `panel.SetActive(false)`).
     }
 
     private void Start()
@@ -143,7 +149,7 @@ public class TutorialUI : MonoBehaviour
             _uiElementCache.Remove(elementName); // Stale entry after scene reload
         }
 
-        foreach (var obj in FindObjectsOfType<RectTransform>(true))
+        foreach (var obj in FindObjectsByType<RectTransform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (obj.gameObject.name == elementName)
             {

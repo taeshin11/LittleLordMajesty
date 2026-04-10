@@ -74,7 +74,7 @@ public class UIManager : MonoBehaviour
         // silently dropped because no module was processing pointer events. This guard
         // creates or re-enables a StandaloneInputModule on the scene's EventSystem so
         // the game stays clickable even on fresh clones with stale ProjectSettings.
-        var es = EventSystem.current ?? FindObjectOfType<EventSystem>();
+        var es = EventSystem.current ?? FindFirstObjectByType<EventSystem>(FindObjectsInactive.Include);
         if (es == null)
         {
             var esGO = new GameObject("EventSystem");

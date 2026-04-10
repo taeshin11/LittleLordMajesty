@@ -53,23 +53,40 @@ public class CastleViewUI : MonoBehaviour
 
     private void Start()
     {
-        _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include);
-        SetupButtons();
-        SubscribeToEvents();
-        RefreshResourceHUD();
-        UpdateLordInfo();
-        RequestBackgroundArt();
-        // Auto-open the NPC list drawer so characters are visible immediately
-        // instead of hiding behind the "NPCs" button.
-        if (_npcListPanel != null)
+        // Defensive: every step is wrapped so a single failure doesn't take
+        // out the whole castle entry. Logged warnings tell us which step
+        // tripped without crashing the wasm runtime.
+        try { _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include); }
+        catch (System.Exception e) { Debug.LogError($"[CastleView] Find NPCInteractionUI: {e.Message}"); }
+
+        try { SetupButtons(); }
+        catch (System.Exception e) { Debug.LogError($"[CastleView] SetupButtons: {e.Message}"); }
+
+        try { SubscribeToEvents(); }
+        catch (System.Exception e) { Debug.LogError($"[CastleView] SubscribeToEvents: {e.Message}"); }
+
+        try { RefreshResourceHUD(); }
+        catch (System.Exception e) { Debug.LogError($"[CastleView] RefreshResourceHUD: {e.Message}"); }
+
+        try { UpdateLordInfo(); }
+        catch (System.Exception e) { Debug.LogError($"[CastleView] UpdateLordInfo: {e.Message}"); }
+
+        try { RequestBackgroundArt(); }
+        catch (System.Exception e) { Debug.LogError($"[CastleView] RequestBackgroundArt: {e.Message}"); }
+
+        // Auto-open the NPC card grid so characters are visible immediately.
+        try
         {
-            _npcListPanel.SetActive(true);
-            PopulateNPCList();
+            if (_npcListPanel != null)
+            {
+                _npcListPanel.SetActive(true);
+                PopulateNPCList();
+            }
         }
-        // Welcome hint for first-time players — explains the basic loop even if
-        // the tutorial fails to fire for any reason.
-        ShowWelcomeHint();
-        // NPC 3D spawning is handled by CastleScene3D (world space)
+        catch (System.Exception e) { Debug.LogError($"[CastleView] PopulateNPCList: {e.Message}\n{e.StackTrace}"); }
+
+        try { ShowWelcomeHint(); }
+        catch (System.Exception e) { Debug.LogError($"[CastleView] ShowWelcomeHint: {e.Message}"); }
     }
 
     private void ShowWelcomeHint()

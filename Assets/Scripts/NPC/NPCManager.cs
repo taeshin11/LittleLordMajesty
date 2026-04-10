@@ -273,7 +273,7 @@ public class NPCManager : MonoBehaviour
     {
         if (_routineCache.TryGetValue(npcId, out var cached) && cached != null)
             return cached;
-        foreach (var r in FindObjectsOfType<NPCDailyRoutine>())
+        foreach (var r in FindObjectsByType<NPCDailyRoutine>(FindObjectsSortMode.None))
         {
             _routineCache[r.NpcId] = r;
             if (r.NpcId == npcId) return r;

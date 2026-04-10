@@ -189,21 +189,41 @@ public class GameManager : MonoBehaviour
 
     public void NewGame(string playerName)
     {
+        // Verbose diagnostic logging during the NewGame flow — every step is
+        // a candidate for the wasm "null function" runtime crash, so we tag
+        // each one and the Playwright console-log scraper can pinpoint which
+        // step was the LAST to log before the crash.
+        Debug.Log("[NewGame] STEP 1: setting fields");
         PlayerName = playerName;
         Day = 1;
         Year = 1;
         PlayTimeSeconds = 0f;
         LordTitle = "Little Lord";
-        ResourceManager?.ResetToDefault();
-        NPCManager?.InitializeStartingNPCs();
-        EventManager?.ClearActiveEvents();
-        SetGameState(GameState.Castle);
 
-        // Reset and start tutorial for new games
+        Debug.Log("[NewGame] STEP 2: ResourceManager.ResetToDefault");
+        try { ResourceManager?.ResetToDefault(); }
+        catch (System.Exception e) { Debug.LogError($"[NewGame] ResetToDefault: {e}"); }
+
+        Debug.Log("[NewGame] STEP 3: NPCManager.InitializeStartingNPCs");
+        try { NPCManager?.InitializeStartingNPCs(); }
+        catch (System.Exception e) { Debug.LogError($"[NewGame] InitializeStartingNPCs: {e}"); }
+
+        Debug.Log("[NewGame] STEP 4: EventManager.ClearActiveEvents");
+        try { EventManager?.ClearActiveEvents(); }
+        catch (System.Exception e) { Debug.LogError($"[NewGame] ClearActiveEvents: {e}"); }
+
+        Debug.Log("[NewGame] STEP 5: SetGameState(Castle)");
+        try { SetGameState(GameState.Castle); }
+        catch (System.Exception e) { Debug.LogError($"[NewGame] SetGameState: {e}"); }
+
+        Debug.Log("[NewGame] STEP 6: Tutorial reset+start");
         if (TutorialSystem.Instance != null)
         {
-            TutorialSystem.Instance.ResetTutorial();
-            TutorialSystem.Instance.StartTutorial();
+            try { TutorialSystem.Instance.ResetTutorial(); }
+            catch (System.Exception e) { Debug.LogError($"[NewGame] ResetTutorial: {e}"); }
+            try { TutorialSystem.Instance.StartTutorial(); }
+            catch (System.Exception e) { Debug.LogError($"[NewGame] StartTutorial: {e}"); }
         }
+        Debug.Log("[NewGame] STEP 7: NewGame() complete");
     }
 }
