@@ -76,6 +76,22 @@ public class GameManager : MonoBehaviour
             PlayTimeSeconds += Time.deltaTime;
     }
 
+#if !UNITY_EDITOR
+    // WebGL debug overlay — shows game state to diagnose black screen
+    private void OnGUI()
+    {
+        var style = new GUIStyle(GUI.skin.label) { fontSize = 18 };
+        style.normal.textColor = Color.yellow;
+        float y = 10;
+        GUI.Label(new Rect(10, y, 800, 30), $"State: {_currentState}", style); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), $"UIManager: {(UIManager.Instance != null ? "OK" : "NULL")}", style); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), $"Scene: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}", style); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), $"Cameras: {Camera.allCamerasCount}", style); y += 25;
+        var canvas = FindObjectOfType<Canvas>();
+        GUI.Label(new Rect(10, y, 800, 30), $"Canvas: {(canvas != null ? canvas.name + " " + canvas.renderMode : "NULL")}", style); y += 25;
+    }
+#endif
+
     private void InitializeSystems()
     {
         // Systems auto-find or create themselves
