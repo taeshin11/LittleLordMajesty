@@ -9,6 +9,7 @@ on:
       - 'Assets/**'
       - 'ProjectSettings/**'
       - 'Packages/**'
+      - '.github/workflows/**'
 
 permissions:
   contents: write
@@ -20,6 +21,9 @@ jobs:
     runs-on: self-hosted   # 본인 PC의 GitHub Actions 러너
     steps:
       - uses: actions/checkout@v4
+        with:
+          clean: true
+          fetch-depth: 0
 
       - name: Build WebGL
         shell: bash
@@ -72,6 +76,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
+        with:
+          clean: true
+          fetch-depth: 0
 
       - name: Build Windows
         shell: bash
