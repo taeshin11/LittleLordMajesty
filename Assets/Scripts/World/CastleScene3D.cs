@@ -36,14 +36,38 @@ public class CastleScene3D : MonoBehaviour
     private readonly Dictionary<string, GameObject> _npcObjects      = new();
     private readonly Dictionary<BuildingManager.BuildingType, GameObject> _buildingObjects = new();
 
-    // Cached shared material — avoids new Material() per-object
+    // Cached shared material — avoids new Material() per-object.
+    // Tries several shaders in order of preference; falls through to Unlit/Color
+    // which is ALWAYS included in WebGL builds. Standard and URP/Lit may not be
+    // bundled depending on the project's render pipeline and "Always Included
+    // Shaders" list, and missing shaders render as Unity's magenta fallback.
     private static Material _sharedMaterial;
     private static Material GetSharedMaterial()
     {
         if (_sharedMaterial != null) return _sharedMaterial;
-        _sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-        if (_sharedMaterial.shader == null)
-            _sharedMaterial = new Material(Shader.Find("Standard"));
+
+        string[] shaderNames = {
+            "Universal Render Pipeline/Lit",
+            "Standard",
+            "Mobile/Diffuse",
+            "Legacy Shaders/Diffuse",
+            "Unlit/Color",          // always available
+        };
+
+        foreach (var name in shaderNames)
+        {
+            var shader = Shader.Find(name);
+            if (shader != null)
+            {
+                _sharedMaterial = new Material(shader);
+                Debug.Log($"[CastleScene3D] Using shader: {name}");
+                return _sharedMaterial;
+            }
+        }
+
+        // Last-ditch: create material with default shader (will be whatever Unity picks)
+        _sharedMaterial = new Material(Shader.Find("Hidden/InternalErrorShader") ?? Shader.Find("Unlit/Color"));
+        Debug.LogError("[CastleScene3D] No usable shader found, using error shader");
         return _sharedMaterial;
     }
 
@@ -73,8 +97,17 @@ public class CastleScene3D : MonoBehaviour
 
         _npcInteractionUI = FindObjectOfType<NPCInteractionUI>(true);
 
+        // Spawn NPCs that already exist (if NPCManager initialized before we did)
+        // plus subscribe to future additions.
         if (GameManager.Instance?.NPCManager != null)
+        {
+            var existingNPCs = GameManager.Instance.NPCManager.GetAllNPCs();
+            if (existingNPCs != null)
+                foreach (var npc in existingNPCs)
+                    SpawnNPC3D(npc);
+
             GameManager.Instance.NPCManager.OnNPCAdded += SpawnNPC3D;
+        }
 
         if (BuildingManager.Instance != null)
             BuildingManager.Instance.OnBuildingConstructed += SpawnBuilding3D;

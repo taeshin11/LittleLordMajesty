@@ -319,6 +319,12 @@ public static class SceneAutoBuilder
         var panel = CreateFullscreenPanel(parent, "MainMenuPanel", new Color(0.05f, 0.04f, 0.08f));
         panel.AddComponent<MainMenuUI>();
 
+        // Full-screen background art layer (Gemini-generated at runtime).
+        var bgArt = CreateFullscreenPanel(panel.transform, "BackgroundArt",
+            new Color(0.08f, 0.07f, 0.12f, 1f));
+        var bgArtImg = bgArt.GetComponent<Image>();
+        bgArtImg.raycastTarget = false;
+
         // Title
         var title = CreateTMPText(panel.transform, "TitleText", "Little Lord\nMajesty",
             80, TextAlignmentOptions.Center, new Color(0.9f, 0.75f, 0.2f));
@@ -362,6 +368,7 @@ public static class SceneAutoBuilder
         soMM.FindProperty("_titleText").objectReferenceValue       = title.GetComponent<TextMeshProUGUI>();
         soMM.FindProperty("_subtitleText").objectReferenceValue    = sub.GetComponent<TextMeshProUGUI>();
         soMM.FindProperty("_versionText").objectReferenceValue     = ver.GetComponent<TextMeshProUGUI>();
+        soMM.FindProperty("_backgroundArt").objectReferenceValue   = bgArtImg;
         soMM.ApplyModifiedProperties();
 
         return panel;
@@ -750,26 +757,199 @@ public static class SceneAutoBuilder
 
     static GameObject BuildSettingsPanel(Transform parent)
     {
-        var panel = CreateFullscreenPanel(parent, "SettingsPanel", new Color(0.06f, 0.05f, 0.1f));
-        panel.AddComponent<SettingsUI>();
+        var panel = CreateFullscreenPanel(parent, "SettingsPanel", new Color(0.06f, 0.05f, 0.1f, 0.95f));
+        var settingsUI = panel.AddComponent<SettingsUI>();
+
         var header = CreateTMPText(panel.transform, "SettingsTitle", "SETTINGS",
             48, TextAlignmentOptions.Center, Color.white);
-        SetAnchored(header, new Vector2(0, 700), new Vector2(600, 80));
+        SetAnchored(header, new Vector2(0, 800), new Vector2(600, 80));
 
-        var closeBtn = CreateButton(panel.transform, "CloseButton", "✕ Back", new Color(0.3f, 0.3f, 0.3f));
-        SetAnchored(closeBtn, new Vector2(-420, 700), new Vector2(150, 70));
+        var closeBtn = CreateButton(panel.transform, "CloseButton", "✕", new Color(0.3f, 0.3f, 0.3f));
+        SetAnchored(closeBtn, new Vector2(-450, 800), new Vector2(90, 70));
 
-        var soSett = new SerializedObject(panel.GetComponent<SettingsUI>());
-        soSett.FindProperty("_closeButton").objectReferenceValue  = closeBtn.GetComponent<Button>();
+        // Language row
+        var langLabel = CreateTMPText(panel.transform, "LangLabel", "Language",
+            28, TextAlignmentOptions.Left, new Color(0.85f, 0.85f, 0.9f));
+        SetAnchored(langLabel, new Vector2(-200, 550), new Vector2(400, 50));
+
+        var langDropdown = CreateDropdown(panel.transform, "LanguageDropdown");
+        SetAnchored(langDropdown, new Vector2(150, 550), new Vector2(400, 60));
+
+        // Music volume row
+        var musicLabel = CreateTMPText(panel.transform, "MusicLabel", "Music Volume",
+            28, TextAlignmentOptions.Left, new Color(0.85f, 0.85f, 0.9f));
+        SetAnchored(musicLabel, new Vector2(-200, 400), new Vector2(400, 50));
+        var musicSlider = CreateSlider(panel.transform, "MusicSlider", 0f, 1f, 0.8f);
+        SetAnchored(musicSlider, new Vector2(150, 400), new Vector2(400, 40));
+
+        // SFX volume row
+        var sfxLabel = CreateTMPText(panel.transform, "SFXLabel", "SFX Volume",
+            28, TextAlignmentOptions.Left, new Color(0.85f, 0.85f, 0.9f));
+        SetAnchored(sfxLabel, new Vector2(-200, 270), new Vector2(400, 50));
+        var sfxSlider = CreateSlider(panel.transform, "SFXSlider", 0f, 1f, 1.0f);
+        SetAnchored(sfxSlider, new Vector2(150, 270), new Vector2(400, 40));
+
+        // Save button
+        var saveBtn = CreateButton(panel.transform, "SaveSettingsButton", "Save", new Color(0.3f, 0.55f, 0.25f));
+        SetAnchored(saveBtn, new Vector2(0, -600), new Vector2(400, 80));
+
+        var soSett = new SerializedObject(settingsUI);
+        soSett.FindProperty("_closeButton").objectReferenceValue       = closeBtn.GetComponent<Button>();
+        soSett.FindProperty("_saveButton").objectReferenceValue        = saveBtn.GetComponent<Button>();
+        soSett.FindProperty("_languageDropdown").objectReferenceValue  = langDropdown.GetComponent<TMP_Dropdown>();
+        soSett.FindProperty("_musicSlider").objectReferenceValue       = musicSlider.GetComponent<Slider>();
+        soSett.FindProperty("_sfxSlider").objectReferenceValue         = sfxSlider.GetComponent<Slider>();
         soSett.ApplyModifiedProperties();
 
         return panel;
+    }
+
+    /// <summary>Creates a TMP Dropdown with a dark background.</summary>
+    static GameObject CreateDropdown(Transform parent, string name)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+
+        var img = go.AddComponent<Image>();
+        img.color = new Color(0.15f, 0.15f, 0.22f);
+
+        var dropdown = go.AddComponent<TMP_Dropdown>();
+
+        // Label
+        var labelGO = new GameObject("Label");
+        labelGO.transform.SetParent(go.transform, false);
+        var label = labelGO.AddComponent<TextMeshProUGUI>();
+        label.text = "Option";
+        label.fontSize = 24;
+        label.alignment = TextAlignmentOptions.Left;
+        label.color = Color.white;
+        var labelRT = labelGO.GetComponent<RectTransform>();
+        labelRT.anchorMin = Vector2.zero; labelRT.anchorMax = Vector2.one;
+        labelRT.offsetMin = new Vector2(15, 4); labelRT.offsetMax = new Vector2(-30, -4);
+
+        // Template (required by TMP_Dropdown — minimal working template)
+        var template = new GameObject("Template");
+        template.transform.SetParent(go.transform, false);
+        var templateImg = template.AddComponent<Image>();
+        templateImg.color = new Color(0.1f, 0.1f, 0.15f);
+        var templateRT = template.GetComponent<RectTransform>();
+        templateRT.anchorMin = new Vector2(0, 0); templateRT.anchorMax = new Vector2(1, 0);
+        templateRT.pivot = new Vector2(0.5f, 1);
+        templateRT.anchoredPosition = new Vector2(0, 2);
+        templateRT.sizeDelta = new Vector2(0, 200);
+        template.AddComponent<ScrollRect>();
+
+        var viewport = new GameObject("Viewport");
+        viewport.transform.SetParent(template.transform, false);
+        var vpImg = viewport.AddComponent<Image>();
+        vpImg.color = new Color(0.1f, 0.1f, 0.15f);
+        viewport.AddComponent<Mask>().showMaskGraphic = true;
+        var vpRT = viewport.GetComponent<RectTransform>();
+        vpRT.anchorMin = Vector2.zero; vpRT.anchorMax = Vector2.one;
+        vpRT.offsetMin = Vector2.zero; vpRT.offsetMax = Vector2.zero;
+
+        var content = new GameObject("Content");
+        content.transform.SetParent(viewport.transform, false);
+        var contentRT = content.AddComponent<RectTransform>();
+        contentRT.anchorMin = new Vector2(0, 1); contentRT.anchorMax = new Vector2(1, 1);
+        contentRT.pivot = new Vector2(0.5f, 1);
+
+        var item = new GameObject("Item");
+        item.transform.SetParent(content.transform, false);
+        var itemToggle = item.AddComponent<Toggle>();
+        var itemBg = item.AddComponent<Image>();
+        itemBg.color = new Color(0.2f, 0.2f, 0.3f);
+        itemToggle.targetGraphic = itemBg;
+        var itemRT = item.GetComponent<RectTransform>();
+        itemRT.anchorMin = new Vector2(0, 0.5f); itemRT.anchorMax = new Vector2(1, 0.5f);
+        itemRT.sizeDelta = new Vector2(0, 40);
+
+        var itemLabelGO = new GameObject("Item Label");
+        itemLabelGO.transform.SetParent(item.transform, false);
+        var itemLabel = itemLabelGO.AddComponent<TextMeshProUGUI>();
+        itemLabel.text = "Option";
+        itemLabel.fontSize = 22;
+        itemLabel.alignment = TextAlignmentOptions.Left;
+        itemLabel.color = Color.white;
+        var itemLabelRT = itemLabelGO.GetComponent<RectTransform>();
+        itemLabelRT.anchorMin = Vector2.zero; itemLabelRT.anchorMax = Vector2.one;
+        itemLabelRT.offsetMin = new Vector2(20, 0); itemLabelRT.offsetMax = new Vector2(-10, 0);
+
+        template.SetActive(false);
+
+        dropdown.template    = templateRT;
+        dropdown.captionText = label;
+        dropdown.itemText    = itemLabel;
+        dropdown.targetGraphic = img;
+
+        return go;
+    }
+
+    /// <summary>Creates a horizontal Slider.</summary>
+    static GameObject CreateSlider(Transform parent, string name, float min, float max, float value)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        go.AddComponent<RectTransform>();
+        var slider = go.AddComponent<Slider>();
+
+        var bg = new GameObject("Background");
+        bg.transform.SetParent(go.transform, false);
+        var bgImg = bg.AddComponent<Image>();
+        bgImg.color = new Color(0.2f, 0.2f, 0.25f);
+        var bgRT = bg.GetComponent<RectTransform>();
+        bgRT.anchorMin = Vector2.zero; bgRT.anchorMax = Vector2.one;
+        bgRT.offsetMin = Vector2.zero; bgRT.offsetMax = Vector2.zero;
+
+        var fillArea = new GameObject("Fill Area");
+        fillArea.transform.SetParent(go.transform, false);
+        var faRT = fillArea.AddComponent<RectTransform>();
+        faRT.anchorMin = new Vector2(0, 0.25f); faRT.anchorMax = new Vector2(1, 0.75f);
+        faRT.offsetMin = new Vector2(5, 0); faRT.offsetMax = new Vector2(-15, 0);
+
+        var fill = new GameObject("Fill");
+        fill.transform.SetParent(fillArea.transform, false);
+        var fillImg = fill.AddComponent<Image>();
+        fillImg.color = new Color(0.7f, 0.55f, 0.2f);
+        var fillRT = fill.GetComponent<RectTransform>();
+        fillRT.anchorMin = Vector2.zero; fillRT.anchorMax = new Vector2(1, 1);
+        fillRT.offsetMin = Vector2.zero; fillRT.offsetMax = Vector2.zero;
+
+        var handleArea = new GameObject("Handle Slide Area");
+        handleArea.transform.SetParent(go.transform, false);
+        var haRT = handleArea.AddComponent<RectTransform>();
+        haRT.anchorMin = Vector2.zero; haRT.anchorMax = Vector2.one;
+        haRT.offsetMin = new Vector2(10, 0); haRT.offsetMax = new Vector2(-10, 0);
+
+        var handle = new GameObject("Handle");
+        handle.transform.SetParent(handleArea.transform, false);
+        var handleImg = handle.AddComponent<Image>();
+        handleImg.color = Color.white;
+        var handleRT = handle.GetComponent<RectTransform>();
+        handleRT.anchorMin = new Vector2(0, 0); handleRT.anchorMax = new Vector2(0, 1);
+        handleRT.sizeDelta = new Vector2(20, 0);
+
+        slider.fillRect      = fillRT;
+        slider.handleRect    = handleRT;
+        slider.targetGraphic = handleImg;
+        slider.minValue      = min;
+        slider.maxValue      = max;
+        slider.value         = value;
+        slider.direction     = Slider.Direction.LeftToRight;
+
+        return go;
     }
 
     static GameObject BuildWorldMapPanel(Transform parent)
     {
         var panel = CreateFullscreenPanel(parent, "WorldMapPanel", new Color(0.05f, 0.08f, 0.05f));
         panel.AddComponent<WorldMapUI>();
+
+        // Full-screen background art (parchment-style, Gemini-generated)
+        var bgArt = CreateFullscreenPanel(panel.transform, "BackgroundArt",
+            new Color(0.08f, 0.09f, 0.07f, 1f));
+        var bgArtImg = bgArt.GetComponent<Image>();
+        bgArtImg.raycastTarget = false;
 
         var header = CreateTMPText(panel.transform, "WorldMapTitle", "WORLD MAP",
             40, TextAlignmentOptions.Center, new Color(0.7f, 0.9f, 0.7f));
@@ -786,6 +966,7 @@ public static class SceneAutoBuilder
         var soMap = new SerializedObject(panel.GetComponent<WorldMapUI>());
         soMap.FindProperty("_mapGridParent").objectReferenceValue = mapContainer.transform;
         soMap.FindProperty("_closeButton").objectReferenceValue = closeBtn.GetComponent<Button>();
+        soMap.FindProperty("_backgroundArt").objectReferenceValue = bgArtImg;
         soMap.ApplyModifiedProperties();
 
         return panel;

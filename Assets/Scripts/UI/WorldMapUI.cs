@@ -48,6 +48,9 @@ public class WorldMapUI : MonoBehaviour
     [Header("Navigation")]
     [SerializeField] private Button _closeButton;
 
+    [Header("Background Art (Gemini-generated)")]
+    [SerializeField] private Image _backgroundArt;
+
     private string _selectedTerritoryId;
     private Dictionary<string, TerritoryTile> _tileMap = new();
 
@@ -55,6 +58,7 @@ public class WorldMapUI : MonoBehaviour
     {
         BuildMapGrid();
         SubscribeToEvents();
+        RequestBackgroundArt();
 
         if (_scoutButton != null) _scoutButton.onClick.AddListener(OnScoutClicked);
         if (_attackButton != null) _attackButton.onClick.AddListener(OnAttackClicked);
@@ -62,6 +66,32 @@ public class WorldMapUI : MonoBehaviour
         if (_cancelSiegeButton != null) _cancelSiegeButton.onClick.AddListener(() => SetPanelActive(_armyPanel, false));
         if (_closeButton != null) _closeButton.onClick.AddListener(() =>
             GameManager.Instance?.SetGameState(GameManager.GameState.Castle));
+    }
+
+    /// <summary>Generates a painterly world map background via Gemini.</summary>
+    private void RequestBackgroundArt()
+    {
+        if (_backgroundArt == null || GeminiImageClient.Instance == null) return;
+
+        const string prompt =
+            "Ancient medieval parchment world map, hand-drawn fantasy cartography style, " +
+            "aged yellow-brown paper texture, inked territorial borders, small illustrated " +
+            "castles and forests, compass rose in the corner, no text labels, " +
+            "highly detailed, atmospheric, suitable as a game world map background.";
+
+        var targetImage = _backgroundArt;
+        GeminiImageClient.Instance.GenerateImage(prompt,
+            onSuccess: tex =>
+            {
+                if (targetImage == null) return;
+                var sprite = Sprite.Create(tex,
+                    new Rect(0, 0, tex.width, tex.height),
+                    new Vector2(0.5f, 0.5f));
+                targetImage.sprite = sprite;
+                targetImage.color = new Color(1f, 1f, 1f, 0.85f);
+                targetImage.preserveAspect = false;
+            },
+            onError: err => Debug.LogWarning($"[WorldMap] Background art failed: {err}"));
     }
 
     private void BuildMapGrid()

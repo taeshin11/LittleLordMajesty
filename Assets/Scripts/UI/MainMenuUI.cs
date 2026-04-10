@@ -33,11 +33,43 @@ public class MainMenuUI : MonoBehaviour
     [Header("Background")]
     [SerializeField] private ParticleSystem _backgroundParticles;
     [SerializeField] private Image _backgroundImage;
+    [SerializeField] private Image _backgroundArt;
 
     private void Start()
     {
         SetupUI();
         StartCoroutine(AnimateTitle());
+        RequestBackgroundArt();
+    }
+
+    /// <summary>
+    /// Generates a dramatic main menu background via Gemini 2.5 Flash Image.
+    /// Cached after first generation; returning players see it instantly.
+    /// </summary>
+    private void RequestBackgroundArt()
+    {
+        if (_backgroundArt == null || GeminiImageClient.Instance == null) return;
+
+        const string prompt =
+            "Dramatic medieval fantasy kingdom painting — a young lord standing on a high " +
+            "castle balcony at dusk, overlooking a vast kingdom with rolling hills, distant " +
+            "villages, and a glowing sunset sky. Painterly oil-painting style, cinematic " +
+            "lighting, warm golden tones, atmospheric haze, highly detailed, epic mood, " +
+            "wide establishing shot suitable as a menu screen background.";
+
+        var targetImage = _backgroundArt;
+        GeminiImageClient.Instance.GenerateImage(prompt,
+            onSuccess: tex =>
+            {
+                if (targetImage == null) return;
+                var sprite = Sprite.Create(tex,
+                    new Rect(0, 0, tex.width, tex.height),
+                    new Vector2(0.5f, 0.5f));
+                targetImage.sprite = sprite;
+                targetImage.color = new Color(1f, 1f, 1f, 0.75f); // dim to keep text legible
+                targetImage.preserveAspect = false;
+            },
+            onError: err => Debug.LogWarning($"[MainMenu] Background art failed: {err}"));
     }
 
     private void SetupUI()
