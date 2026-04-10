@@ -91,28 +91,30 @@ public class ResourceManager : MonoBehaviour
 
     public void AddResource(ResourceType type, int amount)
     {
-        int old;
+        // Only fire the change event if the clamped value actually moved —
+        // avoids HUD rerender every time we try to add to a capped resource.
+        int old, newVal;
         switch (type)
         {
             case ResourceType.Wood:
                 old = _wood;
-                _wood = Mathf.Clamp(_wood + amount, 0, _maxWood);
-                OnResourceChanged?.Invoke(type, old, _wood);
+                newVal = Mathf.Clamp(_wood + amount, 0, _maxWood);
+                if (newVal != old) { _wood = newVal; OnResourceChanged?.Invoke(type, old, _wood); }
                 break;
             case ResourceType.Food:
                 old = _food;
-                _food = Mathf.Clamp(_food + amount, 0, _maxFood);
-                OnResourceChanged?.Invoke(type, old, _food);
+                newVal = Mathf.Clamp(_food + amount, 0, _maxFood);
+                if (newVal != old) { _food = newVal; OnResourceChanged?.Invoke(type, old, _food); }
                 break;
             case ResourceType.Gold:
                 old = _gold;
-                _gold = Mathf.Clamp(_gold + amount, 0, _maxGold);
-                OnResourceChanged?.Invoke(type, old, _gold);
+                newVal = Mathf.Clamp(_gold + amount, 0, _maxGold);
+                if (newVal != old) { _gold = newVal; OnResourceChanged?.Invoke(type, old, _gold); }
                 break;
             case ResourceType.Population:
                 old = _population;
-                _population = Mathf.Clamp(_population + amount, 0, _maxPopulation);
-                OnResourceChanged?.Invoke(type, old, _population);
+                newVal = Mathf.Clamp(_population + amount, 0, _maxPopulation);
+                if (newVal != old) { _population = newVal; OnResourceChanged?.Invoke(type, old, _population); }
                 break;
         }
     }

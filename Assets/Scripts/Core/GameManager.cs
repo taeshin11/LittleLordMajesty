@@ -143,9 +143,10 @@ public class GameManager : MonoBehaviour
     private IEnumerator DayCycleCoroutine()
     {
         float dayDuration = 300f; // 5 real minutes = 1 in-game day
-        while (true)
+        while (this != null && enabled)
         {
             yield return new WaitForSeconds(dayDuration);
+            if (this == null || !enabled) yield break;
             AdvanceDay();
         }
     }

@@ -288,12 +288,12 @@ public class GeminiAPIClient : MonoBehaviour
 
                 if (!string.IsNullOrEmpty(responseText))
                 {
-                    // LRU-lite: evict oldest entry when cache is full
-                    if (_responseCache.Count >= 500)
-                    {
-                        var oldest = System.Linq.Enumerable.First(_responseCache);
-                        _responseCache.Remove(oldest.Key);
-                    }
+                    // Bounded cache: nuke everything when full. Dictionary.First()
+                    // does NOT guarantee insertion order in .NET, so the old
+                    // "evict first" code was evicting an arbitrary entry and
+                    // keeping stale data. A hard reset is simpler and correct.
+                    if (_responseCache.Count >= 300)
+                        _responseCache.Clear();
                     _responseCache[cacheKey] = responseText;
 
                     Debug.Log($"[Gemini] Response ({response.usageMetadata?.totalTokenCount} tokens): {responseText.Substring(0, Mathf.Min(80, responseText.Length))}...");

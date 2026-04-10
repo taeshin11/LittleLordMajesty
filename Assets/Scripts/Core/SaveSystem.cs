@@ -73,11 +73,19 @@ public static class SaveSystem
 
             string json = JsonConvert.SerializeObject(data, Formatting.Indented);
 
-            // Backup existing save
+            // Atomic save: write new data to a temp file FIRST, then only if
+            // that succeeded, rotate the backup and rename the temp to final.
+            // Previous order was (backup → write final), which could corrupt
+            // both backup and final in one bad disk error.
+            string tmpPath = SavePath + ".tmp";
+            File.WriteAllText(tmpPath, json);
+
             if (File.Exists(SavePath))
                 File.Copy(SavePath, BackupPath, overwrite: true);
 
-            File.WriteAllText(SavePath, json);
+            // File.Move does not overwrite on older runtimes; delete target first.
+            if (File.Exists(SavePath)) File.Delete(SavePath);
+            File.Move(tmpPath, SavePath);
             Debug.Log($"[SaveSystem] Game saved to {SavePath}");
         }
         catch (Exception e)

@@ -247,6 +247,10 @@ Keep it concise and impactful. Language: {LocalizationManager.Instance?.CurrentL
             null,
             enrichedDesc =>
             {
+                // Guard: the event may have been resolved and removed from
+                // _activeEvents while the Gemini call was in flight. Writing
+                // to ev.Description then is a dangling-reference write.
+                if (ev == null || !_activeEvents.Contains(ev)) return;
                 if (!string.IsNullOrEmpty(enrichedDesc))
                     ev.Description = enrichedDesc;
             }

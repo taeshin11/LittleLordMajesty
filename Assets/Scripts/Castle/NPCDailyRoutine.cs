@@ -235,7 +235,10 @@ public class NPCDailyRoutine : MonoBehaviour
 
     private IEnumerator RoutineLoop()
     {
-        while (true)
+        // Guard against running on a destroyed or disabled MonoBehaviour — Unity
+        // will silently continue scheduling `WaitForSeconds` even after the
+        // GameObject is destroyed, which burns CPU and can touch freed state.
+        while (this != null && enabled && gameObject != null && gameObject.activeInHierarchy)
         {
             _currentHour = GetCurrentGameHour();
 
