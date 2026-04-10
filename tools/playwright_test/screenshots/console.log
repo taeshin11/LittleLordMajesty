@@ -1,0 +1,292 @@
+# URL: https://taeshin11.github.io/LittleLordMajesty/
+# Timestamp: 2026-04-10T22:03:08.206Z
+# Console messages: 110
+# Page errors: 1
+
+### CONSOLE MESSAGES ###
+[log] [UnityCache] 'https://taeshin11.github.io/LittleLordMajesty/Build/WebGL.data' successfully downloaded and stored in the indexedDB cache
+[log] navigator.mediaDevices support available
+[log] [UnityMemory] Configuration Parameters - Can be set up in boot.config
+
+[log]     "memorysetup-allocator-temp-initial-block-size-main=262144"
+
+[log]     "memorysetup-allocator-temp-initial-block-size-worker=262144"
+
+[log]     "memorysetup-temp-allocator-size-audio-worker=65536"
+
+[log]     "memorysetup-temp-allocator-size-cloud-worker=32768"
+
+[log]     "memorysetup-temp-allocator-size-background-worker=32768"
+
+[log]     "memorysetup-bucket-allocator-granularity=16"
+
+[log]     "memorysetup-bucket-allocator-bucket-count=8"
+
+[log]     "memorysetup-bucket-allocator-block-size=4194304"
+
+[log]     "memorysetup-bucket-allocator-block-count=1"
+
+[log]     "memorysetup-main-allocator-block-size=16777216"
+
+[log]     "memorysetup-thread-allocator-block-size=16777216"
+
+[log]     "memorysetup-gfx-main-allocator-block-size=16777216"
+
+[log]     "memorysetup-gfx-thread-allocator-block-size=16777216"
+
+[log]     "memorysetup-cache-allocator-block-size=4194304"
+
+[log]     "memorysetup-typetree-allocator-block-size=2097152"
+
+[log]     "memorysetup-profiler-bucket-allocator-granularity=16"
+
+[log]     "memorysetup-profiler-bucket-allocator-bucket-count=8"
+
+[log]     "memorysetup-profiler-bucket-allocator-block-size=4194304"
+
+[log]     "memorysetup-profiler-bucket-allocator-block-count=1"
+
+[log]     "memorysetup-profiler-allocator-block-size=16777216"
+
+[log]     "memorysetup-profiler-editor-allocator-block-size=1048576"
+
+[log]     "memorysetup-temp-allocator-size-main=4194304"
+
+[log]     "memorysetup-job-temp-allocator-block-size=2097152"
+
+[log]     "memorysetup-job-temp-allocator-block-size-background=1048576"
+
+[log]     "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+
+[log] Input System module state changed to: Initialized.
+
+[log] [PhysX] Initialized SinglethreadedTaskDispatcher.
+
+[log] Loading player data from data.unity3d
+
+[log] Initialize engine version: 2022.3.62f1 (4af31df58517)
+
+[log] [Subsystems] Discovering subsystems at path UnitySubsystems
+
+[log] Creating WebGL 2.0 context.
+[log] Renderer: WebKit WebGL
+
+[log] Vendor:   WebKit
+
+[log] Version:  OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium))
+
+[log] GLES:     3
+
+[log]  EXT_clip_control EXT_color_buffer_float EXT_color_buffer_half_float EXT_conservative_depth EXT_depth_clamp EXT_float_blend EXT_polygon_offset_clamp EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge NV_shader_noperspective_interpolation OES_draw_buffers_indexed OES_sample_variables OES_shader_multisample_interpolation OES_texture_float_linear OVR_multiview2 WEBGL_clip_cull_distance WEBGL_compressed_texture_astc WEBGL_compressed_texture_etc WEBGL_compressed_texture_etc1 WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode WEBGL_stencil_texturing GL_EXT_clip_control GL_EXT_color_buffer_float GL_EXT_color_buffer_half_float GL_EXT_conservative_depth GL_EXT_depth_clamp GL_EXT_float_blend GL_EXT_polygon_offset_clamp GL_EXT_texture_compression_bptc GL_EXT_texture_compression_rgtc GL_EXT_texture_filter_anisotropic GL_EXT_texture_mirro
+
+[log] r_clamp_to_edge GL_NV_shader_noperspective_interpolation GL_OES_draw_buffers_indexed GL_OES_sample_variables GL_OES_shader_multisample_interpolation GL_OES_texture_float_linear GL_OVR_multiview2 GL_WEBGL_clip_cull_distance GL_WEBGL_compressed_texture_astc GL_WEBGL_compressed_texture_etc GL_WEBGL_compressed_texture_etc1 GL_WEBGL_compressed_texture_s3tc GL_WEBGL_compressed_texture_s3tc_srgb GL_WEBGL_debug_renderer_info GL_WEBGL_debug_shaders GL_WEBGL_lose_context GL_WEBGL_multi_draw GL_WEBGL_polygon_mode GL_WEBGL_stencil_texturing
+
+[log] OPENGL LOG: Creating OpenGL ES 3.0 graphics device ; Context level  <OpenGL ES 3.0> ; Context handle 1
+
+[log] Input Manager initialize...
+
+[log] [PhysX] Initialized SinglethreadedTaskDispatcher.
+
+[log] UnloadTime: 3.000000 ms
+
+[warning] Manual synchronization of Unity Application.persistentDataPath via JS_FileSystem_Sync() is deprecated and will be later removed in a future Unity version. The persistent data directory will be automatically synchronized instead on file modification. Pass config.autoSyncPersistentDataPath = true; to configuration in createUnityInstance() to opt in to the new behavior.
+[log] Audio context resumed after 0.215 seconds.
+[warning] [.WebGL-0x53ac02659a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[warning] [.WebGL-0x53ac02659a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[warning] [.WebGL-0x53ac02659a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[warning] [.WebGL-0x53ac02659a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+[log] [Localization] Loaded 210 strings for English
+
+[log] [TTS] Cache path: /idbfs/650869eed9ed8d16bde2c012f2489ad7/tts_cache
+
+[log] [GameConfig] Loaded keys from environment.
+
+[log] [WorldMap] Generated 9 territories, 3 AI lords
+
+[warning] The referenced script on this Behaviour (Game Object 'TutorialOverlay') is missing!
+
+[log] [PhysX] Initialized SinglethreadedTaskDispatcher.
+
+[log] UnloadTime: 1.900000 ms
+
+[log] [UI] Device: Tablet (960x600, ratio: 1.60)
+
+[log] Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+
+[error] Can't add component because class 'MeshCollider' doesn't exist!
+
+[log] [CastleScene3D] Using shader: Legacy Shaders/Diffuse
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[error] Can't add component because class 'BoxCollider' doesn't exist!
+
+[log] Unloading 6 unused Assets to reduce memory usage. Loaded Objects now: 2460.
+
+[log] Total: 4.700000 ms (FindLiveObjects: 0.100001 ms CreateObjectMapping: 0.099999 ms MarkObjects: 4.500000 ms  DeleteObjects: 0.000000 ms)
+
+
+[error] Failed to load resource: the server responded with a status of 404 ()
+[error] [GeminiImage] HTTP 404: HTTP/1.1 404 Not Found
+{
+  "error": {
+    "code": 404,
+    "message": "models/gemini-2.5-flash-image-preview is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+[warning] [MainMenu] Background art failed: HTTP 404: HTTP/1.1 404 Not Found
+{
+  "error": {
+    "code": 404,
+    "message": "models/gemini-2.5-flash-image-preview is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+    "status": "NOT_FOUND"
+  }
+}
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'SphereCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'SphereCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'SphereCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[error] Can't add component because class 'SphereCollider' doesn't exist!
+
+[error] Can't add component because class 'CapsuleCollider' doesn't exist!
+
+[log] [NPCManager] Initialized 4 starting NPCs
+
+[log] [GameManager] State: MainMenu -> Castle
+
+[warning] The character with Unicode value \u2699 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Label].
+
+[log] Invoking error handler due to
+RuntimeError: null function
+at wasm://wasm/09e3186a:wasm-function[37815]:0xb59ed4
+    at wasm://wasm/09e3186a:wasm-function[37881]:0xb5fd98
+    at wasm://wasm/09e3186a:wasm-function[37882]:0xb6007e
+    at wasm://wasm/09e3186a:wasm-function[37359]:0xb3bbe5
+    at wasm://wasm/09e3186a:wasm-function[37082]:0xb245ec
+    at wasm://wasm/09e3186a:wasm-function[37271]:0xb2a421
+    at wasm://wasm/09e3186a:wasm-function[37042]:0xb2074c
+    at wasm://wasm/09e3186a:wasm-function[37041]:0xb20592
+    at wasm://wasm/09e3186a:wasm-function[114360]:0x22c120b
+    at invoke_viii (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:411446)
+    at wasm://wasm/09e3186a:wasm-function[23278]:0x7fc1d9
+    at wasm://wasm/09e3186a:wasm-function[9784]:0x37cc94
+    at wasm://wasm/09e3186a:wasm-function[21642]:0x79f58a
+    at wasm://wasm/09e3186a:wasm-function[94643]:0x187c059
+    at wasm://wasm/09e3186a:wasm-function[95351]:0x188cd64
+    at wasm://wasm/09e3186a:wasm-function[114356]:0x22c11d7
+    at invoke_iiii (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:411123)
+    at wasm://wasm/09e3186a:wasm-function[95335]:0x188be02
+    at wasm://wasm/09e3186a:wasm-function[95386]:0x188dfef
+    at wasm://wasm/09e3186a:wasm-function[113979]:0x228e7f6
+    at wasm://wasm/09e3186a:wasm-function[111370]:0x222ffb4
+    at wasm://wasm/09e3186a:wasm-function[106132]:0x1fbc01c
+    at wasm://wasm/09e3186a:wasm-function[108946]:0x213310c
+    at wasm://wasm/09e3186a:wasm-function[108897]:0x2129ecd
+    at wasm://wasm/09e3186a:wasm-function[108897]:0x2129f40
+    at wasm://wasm/09e3186a:wasm-function[114331]:0x22a51fe
+    at wasm://wasm/09e3186a:wasm-function[114361]:0x22c1213
+    at browserIterationFunc (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:226118)
+    at callUserCallback (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:179690)
+    at Object.runIter (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:180930)
+    at Browser_mainLoop_runner (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:179226)
+[error] Failed to load resource: the server responded with a status of 404 ()
+[error] Failed to load resource: the server responded with a status of 404 ()
+[error] Failed to load resource: the server responded with a status of 404 ()
+[error] Failed to load resource: the server responded with a status of 404 ()
+[error] Failed to load resource: the server responded with a status of 404 ()
+
+### PAGE ERRORS ###
+null function
+RuntimeError: null function
+    at wasm://wasm/09e3186a:wasm-function[37815]:0xb59ed4
+    at wasm://wasm/09e3186a:wasm-function[37881]:0xb5fd98
+    at wasm://wasm/09e3186a:wasm-function[37882]:0xb6007e
+    at wasm://wasm/09e3186a:wasm-function[37359]:0xb3bbe5
+    at wasm://wasm/09e3186a:wasm-function[37082]:0xb245ec
+    at wasm://wasm/09e3186a:wasm-function[37271]:0xb2a421
+    at wasm://wasm/09e3186a:wasm-function[37042]:0xb2074c
+    at wasm://wasm/09e3186a:wasm-function[37041]:0xb20592
+    at wasm://wasm/09e3186a:wasm-function[114360]:0x22c120b
+    at invoke_viii (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:411446)
+    at wasm://wasm/09e3186a:wasm-function[23278]:0x7fc1d9
+    at wasm://wasm/09e3186a:wasm-function[9784]:0x37cc94
+    at wasm://wasm/09e3186a:wasm-function[21642]:0x79f58a
+    at wasm://wasm/09e3186a:wasm-function[94643]:0x187c059
+    at wasm://wasm/09e3186a:wasm-function[95351]:0x188cd64
+    at wasm://wasm/09e3186a:wasm-function[114356]:0x22c11d7
+    at invoke_iiii (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:411123)
+    at wasm://wasm/09e3186a:wasm-function[95335]:0x188be02
+    at wasm://wasm/09e3186a:wasm-function[95386]:0x188dfef
+    at wasm://wasm/09e3186a:wasm-function[113979]:0x228e7f6
+    at wasm://wasm/09e3186a:wasm-function[111370]:0x222ffb4
+    at wasm://wasm/09e3186a:wasm-function[106132]:0x1fbc01c
+    at wasm://wasm/09e3186a:wasm-function[108946]:0x213310c
+    at wasm://wasm/09e3186a:wasm-function[108897]:0x2129ecd
+    at wasm://wasm/09e3186a:wasm-function[108897]:0x2129f40
+    at wasm://wasm/09e3186a:wasm-function[114331]:0x22a51fe
+    at wasm://wasm/09e3186a:wasm-function[114361]:0x22c1213
+    at browserIterationFunc (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:226118)
+    at callUserCallback (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:179690)
+    at Object.runIter (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:180930)
+    at Browser_mainLoop_runner (blob:https://taeshin11.github.io/6e5bd595-adbe-4dbf-8b37-0a20b1a89f89:10:179226)

@@ -36,6 +36,65 @@ public class CastleScene3D : MonoBehaviour
     private readonly Dictionary<string, GameObject> _npcObjects      = new();
     private readonly Dictionary<BuildingManager.BuildingType, GameObject> _buildingObjects = new();
 
+    // Cached primitive meshes — avoids calling GameObject.CreatePrimitive which
+    // auto-adds a Collider and crashes on WebGL builds where the Physics module
+    // is stripped ("Can't add component because class 'BoxCollider' doesn't exist"
+    // → null function pointer → wasm "null function" runtime error).
+    // We cache one mesh per primitive type and instantiate GameObjects manually
+    // with just MeshFilter + MeshRenderer, no Collider.
+    private static readonly System.Collections.Generic.Dictionary<PrimitiveType, Mesh> _primitiveMeshes = new();
+
+    private static Mesh GetPrimitiveMesh(PrimitiveType type)
+    {
+        if (_primitiveMeshes.TryGetValue(type, out var cached) && cached != null)
+            return cached;
+
+        // Create a throwaway GameObject via CreatePrimitive ONLY to extract its
+        // mesh, then destroy it. We do this once per primitive type, and only
+        // on platforms where CreatePrimitive works. For WebGL this would crash,
+        // so we guard with a safer path below.
+#if UNITY_EDITOR || !UNITY_WEBGL
+        var temp = GameObject.CreatePrimitive(type);
+        // Immediately strip the auto-added collider to avoid any Physics touch
+        var autoCollider = temp.GetComponent<Collider>();
+        if (autoCollider != null) DestroyImmediate(autoCollider);
+        var mesh = temp.GetComponent<MeshFilter>().sharedMesh;
+        _primitiveMeshes[type] = mesh;
+        DestroyImmediate(temp);
+        return mesh;
+#else
+        // WebGL path: load primitive mesh from Unity's built-in resources via
+        // Resources.GetBuiltinResource. This path does NOT touch Physics.
+        string meshName = type switch
+        {
+            PrimitiveType.Cube     => "Cube.fbx",
+            PrimitiveType.Sphere   => "Sphere.fbx",
+            PrimitiveType.Cylinder => "Cylinder.fbx",
+            PrimitiveType.Capsule  => "Capsule.fbx",
+            PrimitiveType.Plane    => "Plane.fbx",
+            PrimitiveType.Quad     => "Quad.fbx",
+            _ => "Cube.fbx"
+        };
+        var builtInMesh = Resources.GetBuiltinResource<Mesh>(meshName);
+        _primitiveMeshes[type] = builtInMesh;
+        return builtInMesh;
+#endif
+    }
+
+    /// <summary>
+    /// Creates a visual-only primitive GameObject: MeshFilter + MeshRenderer,
+    /// no Collider, no Rigidbody. Safe on WebGL where Physics is stripped.
+    /// Replaces GameObject.CreatePrimitive which crashes in that scenario.
+    /// </summary>
+    private static GameObject CreateVisualPrimitive(PrimitiveType type, string name = "Primitive")
+    {
+        var go = new GameObject(name);
+        var mf = go.AddComponent<MeshFilter>();
+        mf.sharedMesh = GetPrimitiveMesh(type);
+        go.AddComponent<MeshRenderer>();
+        return go;
+    }
+
     // Cached shared material — avoids new Material() per-object.
     // Tries several shaders in order of preference; falls through to Unlit/Color
     // which is ALWAYS included in WebGL builds. Standard and URP/Lit may not be
@@ -177,7 +236,7 @@ public class CastleScene3D : MonoBehaviour
     private void SetupTerrain()
     {
         // Ground plane
-        var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        var ground = CreateVisualPrimitive(PrimitiveType.Plane);
         ground.name = "Ground";
         ground.transform.SetParent(_terrainRoot);
         ground.transform.localScale = new Vector3(2f, 1f, 2f); // 20x20 units
@@ -205,7 +264,7 @@ public class CastleScene3D : MonoBehaviour
 
     private void CreateWall(Transform parent, Vector3 pos, Vector3 scale, Color color, string name)
     {
-        var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        var wall = CreateVisualPrimitive(PrimitiveType.Cube);
         wall.name = name;
         wall.transform.SetParent(parent);
         wall.transform.localPosition = pos;
@@ -215,7 +274,7 @@ public class CastleScene3D : MonoBehaviour
 
     private void CreateTower(Transform parent, Vector3 basePos, Color color)
     {
-        var tower = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        var tower = CreateVisualPrimitive(PrimitiveType.Cylinder);
         tower.name = "Tower";
         tower.transform.SetParent(parent);
         tower.transform.localPosition = basePos + Vector3.up * 1f;
@@ -223,7 +282,7 @@ public class CastleScene3D : MonoBehaviour
         ApplyColor(tower, color * 0.85f);
 
         // Parapet top
-        var top = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        var top = CreateVisualPrimitive(PrimitiveType.Cube);
         top.name = "TowerTop";
         top.transform.SetParent(tower.transform);
         top.transform.localPosition = new Vector3(0, 1.1f, 0);
@@ -257,21 +316,21 @@ public class CastleScene3D : MonoBehaviour
         keep.transform.SetParent(_buildingsRoot);
         keep.transform.localPosition = Vector3.zero;
 
-        var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        var body = CreateVisualPrimitive(PrimitiveType.Cube);
         body.transform.SetParent(keep.transform, false);
         body.transform.localPosition = new Vector3(0, 1.5f, 0);
         body.transform.localScale = new Vector3(2.5f, 3f, 2.5f);
         ApplyColor(body, new Color(0.42f, 0.38f, 0.35f));
 
         // Roof pyramid
-        var roof = GameObject.CreatePrimitive(PrimitiveType.Cube); // use cube as flat roof cap
+        var roof = CreateVisualPrimitive(PrimitiveType.Cube); // use cube as flat roof cap
         roof.transform.SetParent(keep.transform, false);
         roof.transform.localPosition = new Vector3(0, 3.2f, 0);
         roof.transform.localScale = new Vector3(2.6f, 0.4f, 2.6f);
         ApplyColor(roof, new Color(0.25f, 0.2f, 0.4f)); // Dark purple roof
 
         // Flag pole
-        var pole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        var pole = CreateVisualPrimitive(PrimitiveType.Cylinder);
         pole.transform.SetParent(keep.transform, false);
         pole.transform.localPosition = new Vector3(0, 4.5f, 0);
         pole.transform.localScale = new Vector3(0.05f, 0.7f, 0.05f);
@@ -289,7 +348,7 @@ public class CastleScene3D : MonoBehaviour
     {
         foreach (var pos in BuildingSlotPositions)
         {
-            var slot = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var slot = CreateVisualPrimitive(PrimitiveType.Cube);
             slot.name = "BuildingSlot";
             slot.transform.SetParent(_buildingsRoot);
             slot.transform.position = pos + Vector3.up * 0.05f;
@@ -322,7 +381,7 @@ public class CastleScene3D : MonoBehaviour
         Color c = Placeholder3DColors.Building(type);
 
         // Base
-        var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        var body = CreateVisualPrimitive(PrimitiveType.Cube);
         body.transform.SetParent(go.transform, false);
         body.transform.localPosition = new Vector3(0, 0.5f, 0);
         body.transform.localScale = new Vector3(1.4f, 1f, 1.4f);
@@ -334,7 +393,7 @@ public class CastleScene3D : MonoBehaviour
             case BuildingManager.BuildingType.Sawmill:
             case BuildingManager.BuildingType.Farm:
                 // Flat roof with chimney
-                var chimney = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                var chimney = CreateVisualPrimitive(PrimitiveType.Cube);
                 chimney.transform.SetParent(go.transform, false);
                 chimney.transform.localPosition = new Vector3(0.3f, 1.3f, 0.3f);
                 chimney.transform.localScale = new Vector3(0.2f, 0.4f, 0.2f);
@@ -345,7 +404,7 @@ public class CastleScene3D : MonoBehaviour
             case BuildingManager.BuildingType.Archery:
                 // Wider and shorter with battlement hint
                 body.transform.localScale = new Vector3(1.6f, 0.7f, 1.6f);
-                var top = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                var top = CreateVisualPrimitive(PrimitiveType.Cube);
                 top.transform.SetParent(go.transform, false);
                 top.transform.localPosition = new Vector3(0, 0.9f, 0);
                 top.transform.localScale = new Vector3(1.7f, 0.2f, 1.7f);
@@ -357,7 +416,7 @@ public class CastleScene3D : MonoBehaviour
                 // Tall tower
                 body.transform.localScale = new Vector3(0.8f, 2.2f, 0.8f);
                 body.transform.localPosition = new Vector3(0, 1.1f, 0);
-                var towerCap = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                var towerCap = CreateVisualPrimitive(PrimitiveType.Cylinder);
                 towerCap.transform.SetParent(go.transform, false);
                 towerCap.transform.localPosition = new Vector3(0, 2.6f, 0);
                 towerCap.transform.localScale = new Vector3(1f, 0.3f, 1f);
@@ -403,7 +462,7 @@ public class CastleScene3D : MonoBehaviour
         Color skinColor = new Color(0.85f, 0.72f, 0.58f);
 
         // Body (capsule)
-        var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        var body = CreateVisualPrimitive(PrimitiveType.Capsule);
         body.name = "Body";
         body.transform.SetParent(root.transform, false);
         body.transform.localPosition = new Vector3(0, 0.8f, 0);
@@ -411,7 +470,7 @@ public class CastleScene3D : MonoBehaviour
         ApplyColor(body, bodyColor);
 
         // Head (sphere)
-        var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        var head = CreateVisualPrimitive(PrimitiveType.Sphere);
         head.name = "Head";
         head.transform.SetParent(root.transform, false);
         head.transform.localPosition = new Vector3(0, 1.45f, 0);
@@ -419,7 +478,7 @@ public class CastleScene3D : MonoBehaviour
         ApplyColor(head, skinColor);
 
         // Tap collider (invisible flat cylinder at base for easy tap detection)
-        var tapCollider = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        var tapCollider = CreateVisualPrimitive(PrimitiveType.Cylinder);
         tapCollider.name = "TapCollider";
         tapCollider.transform.SetParent(root.transform, false);
         tapCollider.transform.localPosition = new Vector3(0, 0.05f, 0);
