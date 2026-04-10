@@ -151,8 +151,19 @@ public class CastleScene3D : MonoBehaviour
 
     private void Start()
     {
-        SetupTerrain();
-        SetupCastle();
+        // WebGL: skip all 3D scene construction. The 2D NPC card grid in
+        // CastleViewUI is the primary interaction surface; CastleScene3D is
+        // purely decorative and its primitive-creation path has had repeated
+        // wasm crashes across multiple Unity module stripping paths. Defer
+        // the 3D world to native/desktop builds where it's stable.
+#if UNITY_WEBGL && !UNITY_EDITOR
+        Debug.Log("[CastleScene3D] Skipping 3D scene construction on WebGL (2D UI handles gameplay)");
+        return;
+#else
+        try { SetupTerrain(); }
+        catch (System.Exception e) { Debug.LogError($"[CastleScene3D] SetupTerrain failed: {e.Message}"); }
+        try { SetupCastle(); }
+        catch (System.Exception e) { Debug.LogError($"[CastleScene3D] SetupCastle failed: {e.Message}"); }
 
         _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include);
 
@@ -177,6 +188,7 @@ public class CastleScene3D : MonoBehaviour
             InputHandler.Instance.OnPinchZoom += HandleZoom;
             InputHandler.Instance.OnSwipe     += HandlePan;
         }
+#endif
     }
 
     private void OnDestroy()

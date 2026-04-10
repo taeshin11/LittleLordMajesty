@@ -27,8 +27,10 @@ public class GeminiImageClient : MonoBehaviour
 {
     public static GeminiImageClient Instance { get; private set; }
 
-    // Use the stable model; fall back to the preview endpoint if the stable one 404s.
-    private const string IMAGE_MODEL = "gemini-2.5-flash-image-preview";
+    // Gemini 2.5 Flash Image ("nano banana") — the current stable model for
+    // image generation. The "-preview" variant has been removed from the API;
+    // calls to it return 404. https://ai.google.dev/gemini-api/docs/models
+    private const string IMAGE_MODEL = "gemini-2.5-flash-image";
     private const string API_URL =
         "https://generativelanguage.googleapis.com/v1beta/models/" + IMAGE_MODEL + ":generateContent";
 
