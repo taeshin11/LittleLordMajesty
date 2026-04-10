@@ -226,5 +226,7 @@
   "pause_title": "일시정지",
   "pause_resume": "계속하기",
   "pause_save": "저장",
-  "pause_main_menu": "메인 메뉴"
+  "pause_main_menu": "메인 메뉴",
+  "btn_talk": "대화",
+  "btn_build": "건설"
 }

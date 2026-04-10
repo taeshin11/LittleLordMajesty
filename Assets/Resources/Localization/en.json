@@ -226,5 +226,7 @@
   "pause_title": "PAUSED",
   "pause_resume": "Resume",
   "pause_save": "Save",
-  "pause_main_menu": "Main Menu"
+  "pause_main_menu": "Main Menu",
+  "btn_talk": "Talk",
+  "btn_build": "Build"
 }

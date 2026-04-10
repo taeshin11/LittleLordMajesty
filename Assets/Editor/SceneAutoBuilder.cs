@@ -1393,13 +1393,29 @@ public static class SceneAutoBuilder
 
     static TextMeshProUGUI FindTMP(Transform root, string name)
     {
-        var t = root.Find(name);
+        var t = FindDeep(root, name);
         return t != null ? t.GetComponent<TextMeshProUGUI>() : null;
     }
 
     static Button FindButton(Transform root, string name)
     {
-        var t = root.Find(name);
+        var t = FindDeep(root, name);
         return t != null ? t.GetComponent<Button>() : null;
+    }
+
+    /// <summary>
+    /// Depth-first child search by name. Transform.Find() only checks direct children,
+    /// which breaks for panels with nested hierarchies (EventPanel → EventCard → EventTitle).
+    /// </summary>
+    static Transform FindDeep(Transform root, string name)
+    {
+        if (root == null) return null;
+        if (root.name == name) return root;
+        for (int i = 0; i < root.childCount; i++)
+        {
+            var found = FindDeep(root.GetChild(i), name);
+            if (found != null) return found;
+        }
+        return null;
     }
 }

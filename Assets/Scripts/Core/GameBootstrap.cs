@@ -59,6 +59,7 @@ public class GameBootstrap : MonoBehaviour
         if (config != null) config.LoadFromEnvironment();
 
         EnsureManager<GameManager>("GameManager");
+        EnsureManager<TutorialSystem>("TutorialSystem");
         SetProgress(0.8f, "Game systems...");
         yield return null;
 
