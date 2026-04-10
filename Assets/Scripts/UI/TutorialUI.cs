@@ -85,7 +85,13 @@ public class TutorialUI : MonoBehaviour
                      || step.Type == TutorialSystem.TutorialStepType.Highlight;
 
         if (_nextButton != null) _nextButton.gameObject.SetActive(showNext);
-        if (_nextButtonText != null) _nextButtonText.text = step.StepId == "complete" ? "Start!" : "Next";
+        if (_nextButtonText != null)
+        {
+            var loc = LocalizationManager.Instance;
+            _nextButtonText.text = step.StepId == "complete"
+                ? (loc?.Get("btn_tutorial_start") ?? "Start!")
+                : (loc?.Get("btn_tutorial_next") ?? "Next");
+        }
 
         // Highlight target element
         UpdateHighlight(step);
@@ -179,29 +185,8 @@ public class TutorialUI : MonoBehaviour
 
     private string Localize(string key)
     {
-        if (LocalizationManager.Instance != null)
-        {
-            string val = LocalizationManager.Instance.Get(key);
-            if (!string.IsNullOrEmpty(val) && val != key) return val;
-        }
-        // Fallback to readable defaults
-        return key switch
-        {
-            "tutorial_welcome_title" => "Welcome, Young Lord!",
-            "tutorial_welcome_desc" => "You have inherited a small territory. Your people look to you for guidance. Let me show you the basics of ruling your domain.",
-            "tutorial_resources_title" => "Your Resources",
-            "tutorial_resources_desc" => "These are your resources: Wood, Food, and Gold. Keep them balanced to grow your territory and keep your people happy.",
-            "tutorial_npc_title" => "Meet Your Vassal",
-            "tutorial_npc_desc" => "Tap on Aldric, your loyal vassal. He can carry out your commands and provide counsel.",
-            "tutorial_command_title" => "Issue a Command",
-            "tutorial_command_desc" => "Type a command for your vassal. Try something like 'Gather wood from the forest' or 'Scout the nearby lands'.",
-            "tutorial_build_title" => "Build Your Territory",
-            "tutorial_build_desc" => "Tap the Build button to construct buildings. A Farm will produce food for your people each day.",
-            "tutorial_worldmap_title" => "The World Beyond",
-            "tutorial_worldmap_desc" => "The World Map shows neighboring territories. As you grow stronger, you can expand through diplomacy or conquest.",
-            "tutorial_complete_title" => "You Are Ready!",
-            "tutorial_complete_desc" => "You now know the basics. Rule wisely, Little Lord. Your decisions shape the fate of your people.",
-            _ => key
-        };
+        // All tutorial strings now live in Resources/Localization/{lang}.json.
+        // LocalizationManager.Get() already handles English fallback internally.
+        return LocalizationManager.Instance?.Get(key) ?? key;
     }
 }

@@ -1,9 +1,20 @@
 {
   "app_name": "Pequeño Señor Majestad",
+  "app_tagline": "Simulación de Reino Impulsada por IA",
+  "menu_subtitle": "Gobierna el reino con una sola palabra.",
+  "build_info": "Compilación Alpha WebGL",
+  "name_default_player": "Señor",
+
   "btn_new_game": "Nueva Partida",
   "btn_continue": "Continuar",
   "btn_settings": "Ajustes",
   "btn_quit": "Salir",
+  "btn_tutorial_start": "¡Comenzar!",
+  "btn_tutorial_next": "Siguiente",
+  "btn_tutorial_skip": "Saltar",
+  "btn_start": "Iniciar",
+  "btn_cancel": "Cancelar",
+  "btn_close": "Cerrar",
 
   "hud_wood": "Madera",
   "hud_food": "Comida",
@@ -12,6 +23,7 @@
 
   "npc_idle": "Inactivo",
   "npc_no_response": "No... puedo responder ahora mismo, mi señor.",
+  "npc_input_placeholder": "Introduce un comando...",
 
   "event_orc_raid_title": "¡Ataque Orco!",
   "event_conflict_title": "Conflicto",
@@ -30,5 +42,10 @@
   "title_majesty": "Majestad",
 
   "yes": "Sí",
-  "no": "No"
+  "no": "No",
+
+  "tutorial_welcome_title": "¡Bienvenido, joven Señor!",
+  "tutorial_welcome_desc": "Has heredado un pequeño territorio. Tu pueblo espera tu guía. Déjame mostrarte los fundamentos del gobierno.",
+  "tutorial_complete_title": "¡Estás listo!",
+  "tutorial_complete_desc": "Ya conoces lo básico. Gobierna con sabiduría, Pequeño Señor."
 }

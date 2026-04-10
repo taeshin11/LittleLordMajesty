@@ -1,9 +1,20 @@
 {
   "app_name": "Kleiner Lord Majestät",
+  "app_tagline": "KI-gesteuerte Königreich-Simulation",
+  "menu_subtitle": "Beherrsche das Reich mit einem einzigen Wort.",
+  "build_info": "WebGL Alpha-Build",
+  "name_default_player": "Lord",
+
   "btn_new_game": "Neues Spiel",
   "btn_continue": "Fortfahren",
   "btn_settings": "Einstellungen",
   "btn_quit": "Beenden",
+  "btn_tutorial_start": "Start!",
+  "btn_tutorial_next": "Weiter",
+  "btn_tutorial_skip": "Überspringen",
+  "btn_start": "Starten",
+  "btn_cancel": "Abbrechen",
+  "btn_close": "Schließen",
 
   "hud_wood": "Holz",
   "hud_food": "Nahrung",
@@ -12,6 +23,7 @@
 
   "npc_idle": "Untätig",
   "npc_no_response": "Ich... kann jetzt nicht antworten, mein Herr.",
+  "npc_input_placeholder": "Befehl eingeben...",
 
   "event_orc_raid_title": "Ork-Überfall!",
   "event_conflict_title": "Konflikt",
@@ -30,5 +42,10 @@
   "title_majesty": "Majestät",
 
   "yes": "Ja",
-  "no": "Nein"
+  "no": "Nein",
+
+  "tutorial_welcome_title": "Willkommen, junger Lord!",
+  "tutorial_welcome_desc": "Ihr habt ein kleines Gebiet geerbt. Euer Volk erwartet Eure Führung. Lasst mich Euch die Grundlagen der Herrschaft zeigen.",
+  "tutorial_complete_title": "Ihr seid bereit!",
+  "tutorial_complete_desc": "Ihr kennt nun die Grundlagen. Herrscht weise, Kleiner Lord."
 }

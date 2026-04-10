@@ -26,9 +26,12 @@ public class ProductionChainManager : MonoBehaviour
     public class ProductionNode
     {
         public string Id;
-        public string Name;
+        public string NameKey;            // Localization key for display name
         public string BuildingRequired;   // 필요 건물 타입
         public bool   IsBuilt;
+
+        public string LocalizedName =>
+            LocalizationManager.Instance?.Get(NameKey) ?? Id;
 
         // 입력 → 출력
         public ResourceAmount[] Inputs;
@@ -53,7 +56,7 @@ public class ProductionChainManager : MonoBehaviour
         // ── 식량 체인 ─────────────────────────────────────────────
         new() {
             Id = "wheat_field",
-            Name = "Wheat Field",
+            NameKey = "prod_chain_wheat_field",
             BuildingRequired = "Farm",
             Inputs = Array.Empty<ResourceAmount>(),
             Output = new() { Type = "wheat", Amount = 5 },
@@ -61,7 +64,7 @@ public class ProductionChainManager : MonoBehaviour
         },
         new() {
             Id = "windmill",
-            Name = "Windmill",
+            NameKey = "prod_chain_windmill",
             BuildingRequired = "Warehouse",
             Inputs = new[] { new ResourceAmount { Type = "wheat", Amount = 4 } },
             Output = new() { Type = "flour", Amount = 3 },
@@ -69,7 +72,7 @@ public class ProductionChainManager : MonoBehaviour
         },
         new() {
             Id = "bakery",
-            Name = "Bakery",
+            NameKey = "prod_chain_bakery",
             BuildingRequired = "Market",
             Inputs = new[] { new ResourceAmount { Type = "flour", Amount = 3 } },
             Output = new() { Type = "bread", Amount = 5 },
@@ -78,7 +81,7 @@ public class ProductionChainManager : MonoBehaviour
         // ── 음료 체인 ─────────────────────────────────────────────
         new() {
             Id = "hop_farm",
-            Name = "Hop Farm",
+            NameKey = "prod_chain_hop_farm",
             BuildingRequired = "Farm",
             Inputs = Array.Empty<ResourceAmount>(),
             Output = new() { Type = "hops", Amount = 4 },
@@ -86,7 +89,7 @@ public class ProductionChainManager : MonoBehaviour
         },
         new() {
             Id = "brewery",
-            Name = "Brewery",
+            NameKey = "prod_chain_brewery",
             BuildingRequired = "Market",
             Inputs = new[] { new ResourceAmount { Type = "hops", Amount = 3 } },
             Output = new() { Type = "ale", Amount = 3 },
@@ -95,7 +98,7 @@ public class ProductionChainManager : MonoBehaviour
         // ── 군수 체인 ─────────────────────────────────────────────
         new() {
             Id = "iron_smelter",
-            Name = "Iron Smelter",
+            NameKey = "prod_chain_iron_smelter",
             BuildingRequired = "Mine",
             Inputs = new[] { new ResourceAmount { Type = "wood", Amount = 2 } },
             Output = new() { Type = "iron", Amount = 2 },
@@ -103,7 +106,7 @@ public class ProductionChainManager : MonoBehaviour
         },
         new() {
             Id = "weaponsmith",
-            Name = "Weaponsmith",
+            NameKey = "prod_chain_weaponsmith",
             BuildingRequired = "Barracks",
             Inputs = new[] {
                 new ResourceAmount { Type = "iron", Amount = 2 },
@@ -115,7 +118,7 @@ public class ProductionChainManager : MonoBehaviour
         // ── 직물 체인 ─────────────────────────────────────────────
         new() {
             Id = "sheep_farm",
-            Name = "Sheep Farm",
+            NameKey = "prod_chain_sheep_farm",
             BuildingRequired = "Farm",
             Inputs = Array.Empty<ResourceAmount>(),
             Output = new() { Type = "wool", Amount = 3 },
@@ -123,7 +126,7 @@ public class ProductionChainManager : MonoBehaviour
         },
         new() {
             Id = "weaving_mill",
-            Name = "Weaving Mill",
+            NameKey = "prod_chain_weaving_mill",
             BuildingRequired = "Market",
             Inputs = new[] { new ResourceAmount { Type = "wool", Amount = 3 } },
             Output = new() { Type = "cloth", Amount = 2 },
@@ -196,7 +199,7 @@ public class ProductionChainManager : MonoBehaviour
         {
             if (!HasEnoughGoods(input.Type, input.Amount))
             {
-                Debug.Log($"[Production] {chain.Name}: missing {input.Amount}x {input.Type}");
+                Debug.Log($"[Production] {chain.Id}: missing {input.Amount}x {input.Type}");
                 return;
             }
         }
@@ -239,7 +242,8 @@ public class ProductionChainManager : MonoBehaviour
     {
         if (GeminiAPIClient.Instance == null)
         {
-            onResult?.Invoke("The steward nods and begins reassigning workers.");
+            onResult?.Invoke(LocalizationManager.Instance?.Get("steward_no_llm")
+                             ?? "The steward nods and begins reassigning workers.");
             yield break;
         }
 
@@ -307,8 +311,8 @@ public class ProductionChainManager : MonoBehaviour
             if (chain.BuildingRequired == buildingName)
             {
                 chain.IsBuilt = true;
-                OnChainActivated?.Invoke(chain.Name);
-                Debug.Log($"[Production] Chain unlocked: {chain.Name}");
+                OnChainActivated?.Invoke(chain.LocalizedName);
+                Debug.Log($"[Production] Chain unlocked: {chain.Id}");
             }
         }
         OnChainsUpdated?.Invoke();
@@ -381,7 +385,7 @@ public class ProductionChainManager : MonoBehaviour
         foreach (var c in _activeChains)
         {
             if (!c.IsBuilt) continue;
-            sb.AppendLine($"{c.Name}: workers={c.WorkerCount}, stored={c.StoredOutput} {c.Output.Type}");
+            sb.AppendLine($"{c.LocalizedName}: workers={c.WorkerCount}, stored={c.StoredOutput} {c.Output.Type}");
         }
         sb.AppendLine("\nProcessed goods stocks:");
         foreach (var kvp in _processedGoods)

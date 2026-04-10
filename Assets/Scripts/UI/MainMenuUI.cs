@@ -46,8 +46,8 @@ public class MainMenuUI : MonoBehaviour
         var loc = LocalizationManager.Instance;
 
         if (_titleText != null) _titleText.text = loc?.Get("app_name") ?? "Little Lord Majesty";
-        if (_subtitleText != null) _subtitleText.text = "Rule the realm with a single word.";
-        if (_versionText != null) _versionText.text = "v0.1.0 Alpha";
+        if (_subtitleText != null) _subtitleText.text = loc?.Get("menu_subtitle") ?? "Rule the realm with a single word.";
+        if (_versionText != null) _versionText.text = "v0.1.0 Alpha"; // Version string — exempt from localization
 
         // Button text
         SetButtonText(_newGameButton, loc?.Get("btn_new_game") ?? "New Game");
@@ -97,7 +97,8 @@ public class MainMenuUI : MonoBehaviour
     private void OnStartNewGameConfirmed()
     {
         string name = _playerNameInput?.text?.Trim();
-        if (string.IsNullOrEmpty(name)) name = "Lord";
+        if (string.IsNullOrEmpty(name))
+            name = LocalizationManager.Instance?.Get("name_default_player") ?? "Lord";
 
         SetPanelActive(_nameInputPanel, false);
         GameManager.Instance?.NewGame(name);

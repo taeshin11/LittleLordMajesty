@@ -125,11 +125,13 @@ public class GameBootstrap : MonoBehaviour
         bgRT.anchorMin = Vector2.zero; bgRT.anchorMax = Vector2.one;
         bgRT.offsetMin = Vector2.zero; bgRT.offsetMax = Vector2.zero;
 
+        var loc = LocalizationManager.Instance;
+
         // Title
         var titleGO = new GameObject("Title");
         titleGO.transform.SetParent(canvasGO.transform, false);
         var title = titleGO.AddComponent<TextMeshProUGUI>();
-        title.text = "Little Lord\nMajesty";
+        title.text = (loc?.Get("app_name") ?? "Little Lord Majesty").Replace(" ", "\n");
         title.fontSize = 72;
         title.alignment = TextAlignmentOptions.Center;
         title.color = new Color(0.9f, 0.75f, 0.2f);
@@ -141,7 +143,7 @@ public class GameBootstrap : MonoBehaviour
         var subGO = new GameObject("Subtitle");
         subGO.transform.SetParent(canvasGO.transform, false);
         var sub = subGO.AddComponent<TextMeshProUGUI>();
-        sub.text = "AI-Powered Kingdom Sim";
+        sub.text = loc?.Get("app_tagline") ?? "AI-Powered Kingdom Sim";
         sub.fontSize = 24;
         sub.alignment = TextAlignmentOptions.Center;
         sub.color = new Color(0.6f, 0.6f, 0.7f);
@@ -149,17 +151,19 @@ public class GameBootstrap : MonoBehaviour
         subRT.anchorMin = new Vector2(0.25f, 0.55f); subRT.anchorMax = new Vector2(0.75f, 0.6f);
         subRT.offsetMin = Vector2.zero; subRT.offsetMax = Vector2.zero;
 
+        string defaultName = loc?.Get("name_default_player") ?? "Lord";
+
         // New Game button
-        CreateButton(canvasGO.transform, "New Game", new Color(0.3f, 0.6f, 0.2f),
+        CreateButton(canvasGO.transform, loc?.Get("btn_new_game") ?? "New Game", new Color(0.3f, 0.6f, 0.2f),
             new Vector2(0.3f, 0.35f), new Vector2(0.7f, 0.45f), () =>
         {
             _statusText = "Starting new game...";
             Destroy(canvasGO);
-            GameManager.Instance?.NewGame("Lord Player");
+            GameManager.Instance?.NewGame(defaultName);
         });
 
         // Continue button
-        CreateButton(canvasGO.transform, "Continue", new Color(0.2f, 0.3f, 0.6f),
+        CreateButton(canvasGO.transform, loc?.Get("btn_continue") ?? "Continue", new Color(0.2f, 0.3f, 0.6f),
             new Vector2(0.3f, 0.22f), new Vector2(0.7f, 0.32f), () =>
         {
             if (SaveSystem.HasSaveFile())
@@ -173,7 +177,7 @@ public class GameBootstrap : MonoBehaviour
         var infoGO = new GameObject("Info");
         infoGO.transform.SetParent(canvasGO.transform, false);
         var info = infoGO.AddComponent<TextMeshProUGUI>();
-        info.text = "WebGL Alpha Build";
+        info.text = loc?.Get("build_info") ?? "WebGL Alpha Build";
         info.fontSize = 18;
         info.alignment = TextAlignmentOptions.Center;
         info.color = new Color(0.4f, 0.4f, 0.4f);

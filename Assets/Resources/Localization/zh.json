@@ -1,9 +1,20 @@
 {
   "app_name": "小领主陛下",
+  "app_tagline": "AI驱动的王国模拟",
+  "menu_subtitle": "一言治国。",
+  "build_info": "WebGL 测试版",
+  "name_default_player": "领主",
+
   "btn_new_game": "新游戏",
   "btn_continue": "继续",
   "btn_settings": "设置",
   "btn_quit": "退出",
+  "btn_tutorial_start": "开始！",
+  "btn_tutorial_next": "下一步",
+  "btn_tutorial_skip": "跳过",
+  "btn_start": "开始",
+  "btn_cancel": "取消",
+  "btn_close": "关闭",
 
   "hud_wood": "木材",
   "hud_food": "食物",
@@ -13,26 +24,50 @@
   "npc_idle": "空闲",
   "npc_opened_conversation": "您走近了{0}...",
   "npc_no_response": "现在...我无法回答，我的领主。",
+  "npc_input_placeholder": "输入命令...",
 
   "profession_vassal": "家臣",
   "profession_soldier": "士兵",
   "profession_merchant": "商人",
   "profession_farmer": "农民",
 
+  "quick_cmd_farmer_1": "收割作物",
+  "quick_cmd_farmer_2": "开垦新田",
+  "quick_cmd_farmer_3": "查看食物储备",
+  "quick_cmd_farmer_4": "收成如何？",
+  "quick_cmd_soldier_1": "训练士兵",
+  "quick_cmd_soldier_2": "巡视城墙",
+  "quick_cmd_soldier_3": "汇报威胁",
+  "quick_cmd_soldier_4": "准备好作战了吗？",
+  "quick_cmd_merchant_1": "你有什么商品？",
+  "quick_cmd_merchant_2": "贸易报告",
+  "quick_cmd_merchant_3": "采购物资",
+  "quick_cmd_merchant_4": "谈一笔交易",
+  "quick_cmd_vassal_1": "城堡状况报告",
+  "quick_cmd_vassal_2": "为我进言",
+  "quick_cmd_vassal_3": "处理纠纷",
+  "quick_cmd_vassal_4": "有何烦恼？",
+
   "event_orc_raid_title": "兽人袭击！",
   "event_conflict_title": "冲突",
   "event_visitor_title": "神秘访客",
   "event_famine_title": "粮食短缺！",
   "event_fire_title": "火灾！",
+  "event_rebellion_title": "叛乱！",
+  "event_weather_title": "风暴！",
 
   "territory_yours": "我方领土",
   "territory_neutral": "中立地区",
   "territory_hostile": "敌方领土",
+  "territory_owner_enemy": "敌军",
   "btn_scout": "侦察（10金币）",
   "btn_attack": "进攻",
+  "btn_send_army": "发动攻城",
 
   "battle_victory": "胜利！",
   "battle_defeat": "失败...",
+
+  "building_constructed": "{0}建造完成！",
 
   "title_little_lord": "小领主",
   "title_baron": "男爵",
@@ -42,5 +77,20 @@
 
   "day_format": "第{0}年第{1}天",
   "yes": "是",
-  "no": "否"
+  "no": "否",
+
+  "tutorial_welcome_title": "欢迎，年轻的领主！",
+  "tutorial_welcome_desc": "您继承了一片小领地。百姓期待您的指引。让我教您统治领地的基础。",
+  "tutorial_resources_title": "您的资源",
+  "tutorial_resources_desc": "这些是您的资源：木材、食物、金币。平衡使用以发展领地，让百姓满意。",
+  "tutorial_npc_title": "认识您的家臣",
+  "tutorial_npc_desc": "点击您忠诚的家臣阿尔德里克。他能执行您的命令并提供建议。",
+  "tutorial_command_title": "下达命令",
+  "tutorial_command_desc": "向家臣输入命令。试试「去森林采集木材」或「侦察附近土地」。",
+  "tutorial_build_title": "建设领地",
+  "tutorial_build_desc": "点击建造按钮建造建筑。农场每天为百姓生产食物。",
+  "tutorial_worldmap_title": "外面的世界",
+  "tutorial_worldmap_desc": "世界地图显示相邻领土。变强之后可通过外交或征服扩张。",
+  "tutorial_complete_title": "您已准备好！",
+  "tutorial_complete_desc": "您已掌握基础。明智地统治吧，小领主。您的决定将影响百姓的命运。"
 }

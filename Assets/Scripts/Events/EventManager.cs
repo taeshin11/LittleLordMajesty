@@ -103,13 +103,13 @@ public class EventManager : MonoBehaviour
             TimeToResolveSeconds = 120f // 2 minutes to respond
         };
 
-        string[] raidDescriptions = {
-            "A horde of Orcs has been spotted approaching from the east! They will reach the castle walls within the hour!",
-            "Orc scouts have been seen near the northern farmlands. A larger raid may follow!",
-            "An Orc war chief leads a massive assault on the castle gates!",
-            "Orc raiders have set fire to the outer village! Civilians are fleeing!"
+        var loc = LocalizationManager.Instance;
+        string[] raidDescKeys = {
+            "event_orc_raid_desc_1", "event_orc_raid_desc_2",
+            "event_orc_raid_desc_3", "event_orc_raid_desc_4"
         };
-        raidEvent.Description = raidDescriptions[UnityEngine.Random.Range(0, raidDescriptions.Length)];
+        string pickedKey = raidDescKeys[UnityEngine.Random.Range(0, raidDescKeys.Length)];
+        raidEvent.Description = loc?.Get(pickedKey) ?? "A horde of Orcs approaches!";
 
         TriggerEvent(raidEvent);
     }
@@ -148,8 +148,8 @@ public class EventManager : MonoBehaviour
                 Severity = severity,
                 Title = LocalizationManager.Instance?.Get("event_conflict_title") ?? "NPC Conflict",
                 Description = allNPCs.Count >= 2
-                    ? $"{allNPCs[0].Name} and {allNPCs[1].Name} are in a heated dispute over resource allocation."
-                    : "Two castle residents are in conflict.",
+                    ? LocalizationManager.Instance?.Get("event_conflict_desc_1") ?? $"{allNPCs[0].Name} and {allNPCs[1].Name} are in a heated dispute."
+                    : LocalizationManager.Instance?.Get("event_conflict_desc_2") ?? "Two castle residents are in conflict.",
                 InvolvedNPCIds = allNPCs.Count >= 2
                     ? new[] { allNPCs[0].Id, allNPCs[1].Id }
                     : Array.Empty<string>(),
@@ -161,7 +161,7 @@ public class EventManager : MonoBehaviour
                 Type = EventType.MysteriousVisitor,
                 Severity = severity,
                 Title = LocalizationManager.Instance?.Get("event_visitor_title") ?? "Mysterious Visitor",
-                Description = "A hooded stranger has appeared at the castle gates, seeking an audience.",
+                Description = LocalizationManager.Instance?.Get("event_visitor_desc") ?? "A hooded stranger has appeared at the castle gates, seeking an audience.",
                 OccurredAt = DateTime.UtcNow
             },
             EventType.FoodShortage => new GameEvent
@@ -170,7 +170,7 @@ public class EventManager : MonoBehaviour
                 Type = EventType.FoodShortage,
                 Severity = EventSeverity.Severe,
                 Title = LocalizationManager.Instance?.Get("event_famine_title") ?? "Food Shortage!",
-                Description = "The castle granary is running dangerously low. The people are beginning to starve.",
+                Description = LocalizationManager.Instance?.Get("event_famine_desc") ?? "The castle granary is running dangerously low.",
                 OccurredAt = DateTime.UtcNow,
                 TimeToResolveSeconds = 180f
             },
@@ -180,7 +180,7 @@ public class EventManager : MonoBehaviour
                 Type = EventType.Fire,
                 Severity = EventSeverity.Severe,
                 Title = LocalizationManager.Instance?.Get("event_fire_title") ?? "Fire!",
-                Description = "Fire has broken out in the castle storage! Quick action is needed to prevent catastrophic loss!",
+                Description = LocalizationManager.Instance?.Get("event_fire_desc") ?? "Fire has broken out in the castle storage!",
                 OccurredAt = DateTime.UtcNow,
                 TimeToResolveSeconds = 60f
             },
@@ -190,7 +190,7 @@ public class EventManager : MonoBehaviour
                 Type = EventType.Rebellion,
                 Severity = EventSeverity.Severe,
                 Title = LocalizationManager.Instance?.Get("event_rebellion_title") ?? "Rebellion!",
-                Description = "Disgruntled citizens have gathered in the courtyard, demanding change. Tensions are rising.",
+                Description = LocalizationManager.Instance?.Get("event_rebellion_desc") ?? "Disgruntled citizens have gathered in the courtyard.",
                 OccurredAt = DateTime.UtcNow,
                 TimeToResolveSeconds = 120f
             },
@@ -200,7 +200,7 @@ public class EventManager : MonoBehaviour
                 Type = EventType.WeatherDisaster,
                 Severity = EventSeverity.Moderate,
                 Title = LocalizationManager.Instance?.Get("event_weather_title") ?? "Severe Storm!",
-                Description = "A violent storm batters the castle. Roofs are damaged and crops are at risk!",
+                Description = LocalizationManager.Instance?.Get("event_weather_desc") ?? "A violent storm batters the castle.",
                 OccurredAt = DateTime.UtcNow,
                 TimeToResolveSeconds = 90f
             },

@@ -324,7 +324,7 @@ public class DebugConsole : MonoBehaviour
         var phGO = new GameObject("Placeholder");
         phGO.transform.SetParent(textAreaGO.transform, false);
         var ph = phGO.AddComponent<TextMeshProUGUI>();
-        ph.text = "Type command... (help for list)";
+        ph.text = LocalizationManager.Instance?.Get("debug_input_placeholder") ?? "Type command... (help for list)";
         ph.fontSize = 20;
         ph.color = new Color(0.5f, 0.5f, 0.5f);
         var phRT = phGO.GetComponent<RectTransform>();

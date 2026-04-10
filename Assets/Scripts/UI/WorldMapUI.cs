@@ -111,27 +111,31 @@ public class WorldMapUI : MonoBehaviour
         }
         else
         {
-            if (_defenseText != null) _defenseText.text = "???";
-            if (_garrisonText != null) _garrisonText.text = "???";
+            var loc = LocalizationManager.Instance;
+            if (_defenseText != null) _defenseText.text = loc?.Get("territory_unknown_defense") ?? "???";
+            if (_garrisonText != null) _garrisonText.text = loc?.Get("territory_unknown_garrison") ?? "???";
         }
 
         if (_ownerText != null)
         {
+            var loc = LocalizationManager.Instance;
             if (territory.State == WorldMapManager.ConquestState.Owned)
-                _ownerText.text = LocalizationManager.Instance?.Get("territory_yours") ?? "Your Territory";
+                _ownerText.text = loc?.Get("territory_yours") ?? "Your Territory";
             else if (!string.IsNullOrEmpty(territory.OwnerLordId))
             {
                 var lord = WorldMapManager.Instance?.GetAILords().Find(l => l.LordId == territory.OwnerLordId);
-                _ownerText.text = lord != null ? $"{lord.Title} {lord.Name}" : "Enemy";
+                _ownerText.text = lord != null ? $"{lord.Title} {lord.Name}"
+                                               : (loc?.Get("territory_owner_enemy") ?? "Enemy");
             }
             else
-                _ownerText.text = LocalizationManager.Instance?.Get("territory_neutral") ?? "Neutral";
+                _ownerText.text = loc?.Get("territory_neutral") ?? "Neutral";
         }
 
         if (_resourceBonusText != null)
             _resourceBonusText.text = territory.IsScouted ? $"+{territory.ResourceBonus}/day" : "?";
 
-        if (_scoutCostText != null) _scoutCostText.text = "10 🪙";
+        if (_scoutCostText != null)
+            _scoutCostText.text = LocalizationManager.Instance?.Get("territory_scout_cost", 10) ?? "Scout (10 Gold)";
 
         bool isOwned = territory.State == WorldMapManager.ConquestState.Owned;
         bool isHostile = territory.State == WorldMapManager.ConquestState.Hostile ||
@@ -163,7 +167,9 @@ public class WorldMapUI : MonoBehaviour
             _armySlider.value = maxSoldiers / 2;
             _armySlider.onValueChanged.AddListener(v =>
             {
-                if (_armyCountText != null) _armyCountText.text = $"{(int)v} soldiers";
+                if (_armyCountText != null)
+                    _armyCountText.text = LocalizationManager.Instance?.Get("territory_army_slider_format", (int)v)
+                                          ?? $"{(int)v} soldiers";
             });
         }
     }

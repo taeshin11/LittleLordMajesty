@@ -150,7 +150,10 @@ public class CastleViewUI : MonoBehaviour
             var talkBtn = item.transform.Find("TalkButton")?.GetComponent<Button>();
 
             if (nameText != null) nameText.text = npc.Name;
-            if (taskText != null) taskText.text = npc.CurrentTask ?? "Idle";
+            if (taskText != null)
+                taskText.text = string.IsNullOrEmpty(npc.CurrentTask)
+                    ? (LocalizationManager.Instance?.Get("npc_idle") ?? "Idle")
+                    : npc.CurrentTask;
             if (moodBar != null) moodBar.value = npc.MoodScore / 100f;
 
             string capturedId = npc.Id;
@@ -196,7 +199,9 @@ public class CastleViewUI : MonoBehaviour
             {
                 BuildingManager.Instance?.TryBuild(capturedType, built =>
                 {
-                    ShowNotification($"{built.Name} constructed!");
+                    string msg = LocalizationManager.Instance?.Get("building_constructed", built.Name)
+                                 ?? $"{built.Name} constructed!";
+                    ShowNotification(msg);
                     // Refresh building menu contents without toggle flicker
                     PopulateBuildingMenu();
                 });

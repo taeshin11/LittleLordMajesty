@@ -23,15 +23,20 @@ public class ResearchSystem : MonoBehaviour
     public class Technology
     {
         public string Id;
-        public string Name;
-        public string Description;
+        public string NameKey;             // Localization key for display name
+        public string DescriptionKey;      // Localization key for description
         public TechCategory Category;
         public TechStatus   Status;
         public string[]     Prerequisites; // 선행 기술 ID
         public int          ResearchDays;  // 연구에 걸리는 인게임 일수
         public int          DaysElapsed;
-        public string       Bonus;         // 효과 설명
+        public string       Bonus;         // 효과 설명 (TODO: localize — not on alpha test path)
         public string[]     Unlocks;       // 해금되는 건물/기능
+
+        public string LocalizedName =>
+            LocalizationManager.Instance?.Get(NameKey) ?? Id;
+        public string LocalizedDescription =>
+            LocalizationManager.Instance?.Get(DescriptionKey) ?? "";
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -41,72 +46,59 @@ public class ResearchSystem : MonoBehaviour
     private static readonly Technology[] TechTree =
     {
         // ── 군사 ──────────────────────────────────────────────────
-        new() { Id="iron_working",    Name="Iron Working",     Category=TechCategory.Military,
-                Description="Craft iron weapons for your soldiers.",
+        new() { Id="iron_working",    NameKey="tech_iron_working_name",    DescriptionKey="tech_iron_working_desc",    Category=TechCategory.Military,
                 Status=TechStatus.Available, Prerequisites=Array.Empty<string>(),
                 ResearchDays=5, Bonus="Soldier attack +15%", Unlocks=new[]{"Iron Smelter"} },
 
-        new() { Id="crossbow",        Name="Crossbow",         Category=TechCategory.Military,
-                Description="Long-range weapon capable of piercing heavy armor.",
+        new() { Id="crossbow",        NameKey="tech_crossbow_name",        DescriptionKey="tech_crossbow_desc",        Category=TechCategory.Military,
                 Status=TechStatus.Locked, Prerequisites=new[]{"iron_working"},
                 ResearchDays=8, Bonus="Archer range +50%, damage +25%", Unlocks=new[]{"Archery Range Upgrade"} },
 
-        new() { Id="siege_weapons",   Name="Siege Engineering",Category=TechCategory.Military,
-                Description="Construct trebuchets and battering rams for conquests.",
+        new() { Id="siege_weapons",   NameKey="tech_siege_weapons_name",   DescriptionKey="tech_siege_weapons_desc",   Category=TechCategory.Military,
                 Status=TechStatus.Locked, Prerequisites=new[]{"crossbow", "masonry"},
                 ResearchDays=12, Bonus="Siege attack +50%", Unlocks=new[]{"Siege Workshop"} },
 
-        new() { Id="cavalry",         Name="Cavalry Tactics",  Category=TechCategory.Military,
-                Description="Train mounted knights for rapid raids and flanking.",
+        new() { Id="cavalry",         NameKey="tech_cavalry_name",         DescriptionKey="tech_cavalry_desc",         Category=TechCategory.Military,
                 Status=TechStatus.Locked, Prerequisites=new[]{"iron_working"},
                 ResearchDays=7, Bonus="Scout speed x2, cavalry damage +30%", Unlocks=new[]{"Stable Upgrade"} },
 
         // ── 경제 ──────────────────────────────────────────────────
-        new() { Id="trade_routes",    Name="Trade Routes",     Category=TechCategory.Economy,
-                Description="Establish profitable trade networks with distant lands.",
+        new() { Id="trade_routes",    NameKey="tech_trade_routes_name",    DescriptionKey="tech_trade_routes_desc",    Category=TechCategory.Economy,
                 Status=TechStatus.Available, Prerequisites=Array.Empty<string>(),
                 ResearchDays=4, Bonus="Gold production +20%", Unlocks=new[]{"Trading Post"} },
 
-        new() { Id="banking",         Name="Banking",          Category=TechCategory.Economy,
-                Description="Manage gold reserves and offer loans.",
+        new() { Id="banking",         NameKey="tech_banking_name",         DescriptionKey="tech_banking_desc",         Category=TechCategory.Economy,
                 Status=TechStatus.Locked, Prerequisites=new[]{"trade_routes"},
                 ResearchDays=8, Bonus="Tax collection +25%, max gold capacity x2", Unlocks=new[]{"Bank"} },
 
-        new() { Id="guilds",          Name="Merchant Guilds",  Category=TechCategory.Economy,
-                Description="Organize merchants into powerful guilds.",
+        new() { Id="guilds",          NameKey="tech_guilds_name",          DescriptionKey="tech_guilds_desc",          Category=TechCategory.Economy,
                 Status=TechStatus.Locked, Prerequisites=new[]{"banking"},
                 ResearchDays=6, Bonus="Market output +30%, burgher pop growth +20%", Unlocks=new[]{"Guild Hall"} },
 
         // ── 건설 ──────────────────────────────────────────────────
-        new() { Id="masonry",         Name="Masonry",          Category=TechCategory.Construction,
-                Description="Cut and shape stone for stronger fortifications.",
+        new() { Id="masonry",         NameKey="tech_masonry_name",         DescriptionKey="tech_masonry_desc",         Category=TechCategory.Construction,
                 Status=TechStatus.Available, Prerequisites=Array.Empty<string>(),
                 ResearchDays=4, Bonus="Castle walls defense +30%", Unlocks=new[]{"Stone Quarry"} },
 
-        new() { Id="architecture",    Name="Architecture",     Category=TechCategory.Construction,
-                Description="Advanced building design for larger, more efficient structures.",
+        new() { Id="architecture",    NameKey="tech_architecture_name",    DescriptionKey="tech_architecture_desc",    Category=TechCategory.Construction,
                 Status=TechStatus.Locked, Prerequisites=new[]{"masonry"},
                 ResearchDays=7, Bonus="All buildings capacity +20%", Unlocks=new[]{"Cathedral"} },
 
         // ── 외교 ──────────────────────────────────────────────────
-        new() { Id="writing",         Name="Writing",          Category=TechCategory.Diplomacy,
-                Description="Formalize treaties and diplomatic protocols.",
+        new() { Id="writing",         NameKey="tech_writing_name",         DescriptionKey="tech_writing_desc",         Category=TechCategory.Diplomacy,
                 Status=TechStatus.Available, Prerequisites=Array.Empty<string>(),
                 ResearchDays=3, Bonus="Diplomatic reputation +10", Unlocks=new[]{"Library"} },
 
-        new() { Id="code_of_laws",    Name="Code of Laws",     Category=TechCategory.Diplomacy,
-                Description="Written laws reduce corruption and increase loyalty.",
+        new() { Id="code_of_laws",    NameKey="tech_code_of_laws_name",    DescriptionKey="tech_code_of_laws_desc",    Category=TechCategory.Diplomacy,
                 Status=TechStatus.Locked, Prerequisites=new[]{"writing"},
                 ResearchDays=8, Bonus="NPC loyalty +15, all satisfaction +10%", Unlocks=new[]{"Courthouse"} },
 
         // ── 자연/마법 ─────────────────────────────────────────────
-        new() { Id="herbalism",       Name="Herbalism",        Category=TechCategory.Nature,
-                Description="Use herbs for healing and food preservation.",
+        new() { Id="herbalism",       NameKey="tech_herbalism_name",       DescriptionKey="tech_herbalism_desc",       Category=TechCategory.Nature,
                 Status=TechStatus.Available, Prerequisites=Array.Empty<string>(),
                 ResearchDays=4, Bonus="Food storage +30%, hospital effectiveness +50%", Unlocks=new[]{"Herbalist"} },
 
-        new() { Id="astrology",       Name="Astrology",        Category=TechCategory.Nature,
-                Description="Read the stars for agricultural timing and event prediction.",
+        new() { Id="astrology",       NameKey="tech_astrology_name",       DescriptionKey="tech_astrology_desc",       Category=TechCategory.Nature,
                 Status=TechStatus.Locked, Prerequisites=new[]{"writing", "herbalism"},
                 ResearchDays=6, Bonus="Event warning +3 days advance notice", Unlocks=new[]{"Observatory"} },
     };
@@ -160,13 +152,14 @@ public class ResearchSystem : MonoBehaviour
     {
         if (GeminiAPIClient.Instance == null)
         {
-            onResponse?.Invoke("The scholar nods and retreats to the library...");
+            onResponse?.Invoke(LocalizationManager.Instance?.Get("research_scholar_no_llm")
+                               ?? "The scholar nods and retreats to the library...");
             yield break;
         }
 
         var available = GetAvailableTechs();
         var techList  = string.Join("\n", available.ConvertAll(t =>
-            $"- {t.Id}: {t.Name} ({t.ResearchDays} days) — {t.Description}"));
+            $"- {t.Id}: {t.LocalizedName} ({t.ResearchDays} days) — {t.LocalizedDescription}"));
 
         string prompt =
             $"You are the chief scholar. The lord says: \"{order}\"\n\n" +
@@ -194,11 +187,14 @@ public class ResearchSystem : MonoBehaviour
             if (data != null && !string.IsNullOrEmpty(data.techId))
             {
                 if (StartResearch(data.techId))
-                    return data.explanation ?? $"Research on {data.techId} has begun.";
+                    return data.explanation ??
+                           (LocalizationManager.Instance?.Get("research_started_default", data.techId)
+                            ?? $"Research on {data.techId} has begun.");
             }
         }
         catch { }
-        return "The scholar considers many possibilities and begins a promising study...";
+        return LocalizationManager.Instance?.Get("research_scholar_fallback")
+               ?? "The scholar considers many possibilities and begins a promising study...";
     }
 
     [Serializable] private class ResearchChoice
@@ -222,7 +218,7 @@ public class ResearchSystem : MonoBehaviour
         tech.Status        = TechStatus.Researching;
 
         OnResearchStarted?.Invoke(tech);
-        Debug.Log($"[Research] Started: {tech.Name}");
+        Debug.Log($"[Research] Started: {tech.Id}");
         return true;
     }
 
@@ -257,9 +253,11 @@ public class ResearchSystem : MonoBehaviour
         }
 
         OnResearchCompleted?.Invoke(tech);
-        Debug.Log($"[Research] Completed: {tech.Name}! Bonus: {tech.Bonus}");
+        Debug.Log($"[Research] Completed: {tech.Id}! Bonus: {tech.Bonus}");
 
-        ToastNotification.Show($"Research complete: {tech.Name}\n{tech.Bonus}");
+        string toast = LocalizationManager.Instance?.Get("research_completed_toast", tech.LocalizedName, tech.Bonus)
+                       ?? $"Research complete: {tech.LocalizedName}\n{tech.Bonus}";
+        ToastNotification.Show(toast);
 
         // 학자 NPC 보고
         TriggerScholarReport(tech);
@@ -267,9 +265,12 @@ public class ResearchSystem : MonoBehaviour
 
     private void TriggerScholarReport(Technology tech)
     {
-        string report = $"My lord! We have mastered {tech.Name}. {tech.Bonus}";
-        GameManager.Instance?.EventManager?.TriggerManualEvent(
-            $"Research Complete: {tech.Name}", report, EventManager.EventSeverity.Minor);
+        var loc = LocalizationManager.Instance;
+        string report = loc?.Get("research_scholar_report", tech.LocalizedName, tech.Bonus)
+                        ?? $"My lord! We have mastered {tech.LocalizedName}. {tech.Bonus}";
+        string title = loc?.Get("research_event_title", tech.LocalizedName)
+                       ?? $"Research Complete: {tech.LocalizedName}";
+        GameManager.Instance?.EventManager?.TriggerManualEvent(title, report, EventManager.EventSeverity.Minor);
         TTSManager.Instance?.Speak(report);
     }
 

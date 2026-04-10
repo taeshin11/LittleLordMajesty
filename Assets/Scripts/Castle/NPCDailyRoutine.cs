@@ -17,6 +17,10 @@ public class NPCDailyRoutine : MonoBehaviour
         public string LocationName;      // "밀밭", "대장간", "광장"
         public Vector3 WorldPosition;    // 이동할 3D 위치
         public int     ArriveAtHour;     // 도착 시간 (0-23)
+        // Internal metadata only — not currently read by player-visible UI.
+        // When this feature is wired to a player-facing location/activity hint,
+        // convert to ActivityDescKey and resolve via LocalizationManager.Get().
+        // Keys already exist in en.json/ko.json under "activity_*" (see Resources/Localization).
         public string  ActivityDesc;     // Gemini가 대화에 활용하는 현재 활동 설명
         public string  Animation;        // "harvest", "hammer", "idle_chat" 등
         public bool    CanBeInterrupted; // 영주가 말 걸 수 있는지

@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using TMPro;
 
 /// <summary>
 /// Dynamic localization system. NO hardcoded text - everything through this manager.
@@ -55,6 +56,29 @@ public class LocalizationManager : MonoBehaviour
         string saved = PlayerPrefs.GetString("SelectedLanguage", "");
         if (!string.IsNullOrEmpty(saved) && Enum.TryParse<Language>(saved, out var savedLang))
             _currentLanguage = savedLang;
+
+        // Safety belt: if the default TMP font can't render the detected language's glyphs
+        // (e.g. CJK font asset not yet generated on this machine), fall back to English.
+        // Otherwise the entire UI renders as empty boxes. This guard is a no-op once
+        // CJKFontSetup has wired NotoSansKR as a fallback on LiberationSans SDF.
+        if (IsCJK(_currentLanguage) && !CanRenderCJK())
+        {
+            Debug.LogWarning($"[Localization] Detected {_currentLanguage} but no CJK font fallback is wired. " +
+                             "Defaulting to English. Run 'LittleLordMajesty > Generate CJK Font Asset' in the Editor.");
+            _currentLanguage = Language.English;
+        }
+    }
+
+    private static bool IsCJK(Language lang) =>
+        lang == Language.Korean || lang == Language.Japanese || lang == Language.Chinese;
+
+    private static bool CanRenderCJK()
+    {
+        // LiberationSans SDF lives in TextMesh Pro's Resources folder — load it and
+        // ask whether '가' (U+AC00, the first Hangul syllable) resolves via any fallback.
+        var font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
+        if (font == null) return false;
+        return font.HasCharacter('가', searchFallbacks: true);
     }
 
     public void SetLanguage(Language language)

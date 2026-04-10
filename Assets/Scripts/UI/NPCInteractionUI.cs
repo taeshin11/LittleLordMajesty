@@ -43,13 +43,14 @@ public class NPCInteractionUI : MonoBehaviour
     private bool _isWaitingForResponse;
     private GameObject _thinkingBubble;
 
-    // Quick command templates per profession
-    private static readonly Dictionary<NPCPersona.NPCProfession, string[]> QuickCommands = new()
+    // Quick command template KEYS per profession — resolved via LocalizationManager at display time.
+    // Gemini handles any language, so the localized text is what we send as the command.
+    private static readonly Dictionary<NPCPersona.NPCProfession, string[]> QuickCommandKeys = new()
     {
-        { NPCPersona.NPCProfession.Farmer, new[] { "Harvest crops", "Plant new fields", "Check food stores", "How is the harvest?" } },
-        { NPCPersona.NPCProfession.Soldier, new[] { "Train the troops", "Patrol the walls", "Report on threats", "Are you ready for battle?" } },
-        { NPCPersona.NPCProfession.Merchant, new[] { "What goods do you have?", "Trade report", "Buy supplies", "Negotiate a deal" } },
-        { NPCPersona.NPCProfession.Vassal, new[] { "Castle status report", "Advise me", "Handle the dispute", "What troubles you?" } },
+        { NPCPersona.NPCProfession.Farmer,   new[] { "quick_cmd_farmer_1",   "quick_cmd_farmer_2",   "quick_cmd_farmer_3",   "quick_cmd_farmer_4"   } },
+        { NPCPersona.NPCProfession.Soldier,  new[] { "quick_cmd_soldier_1",  "quick_cmd_soldier_2",  "quick_cmd_soldier_3",  "quick_cmd_soldier_4"  } },
+        { NPCPersona.NPCProfession.Merchant, new[] { "quick_cmd_merchant_1", "quick_cmd_merchant_2", "quick_cmd_merchant_3", "quick_cmd_merchant_4" } },
+        { NPCPersona.NPCProfession.Vassal,   new[] { "quick_cmd_vassal_1",   "quick_cmd_vassal_2",   "quick_cmd_vassal_3",   "quick_cmd_vassal_4"   } },
     };
 
     private void Start()
@@ -119,16 +120,18 @@ public class NPCInteractionUI : MonoBehaviour
         foreach (Transform child in _quickCommandsParent)
             Destroy(child.gameObject);
 
-        if (!QuickCommands.TryGetValue(profession, out var commands)) return;
+        if (!QuickCommandKeys.TryGetValue(profession, out var keys)) return;
 
-        foreach (var cmd in commands)
+        var loc = LocalizationManager.Instance;
+        foreach (var key in keys)
         {
+            string localizedCmd = loc?.Get(key) ?? key;
             var btn = Instantiate(_quickCommandButtonPrefab, _quickCommandsParent);
             var btnText = btn.GetComponentInChildren<TextMeshProUGUI>();
-            if (btnText != null) btnText.text = cmd;
+            if (btnText != null) btnText.text = localizedCmd;
 
             var button = btn.GetComponent<Button>();
-            string capturedCmd = cmd;
+            string capturedCmd = localizedCmd;
             button?.onClick.AddListener(() => SendCommand(capturedCmd));
         }
     }
