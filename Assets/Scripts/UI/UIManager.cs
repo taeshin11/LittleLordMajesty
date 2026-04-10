@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using System;
 using System.Collections;
@@ -67,24 +68,33 @@ public class UIManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
-        // Defensive: SceneAutoBuilder in batch build mode produces MainCanvas with a
-        // RectTransform whose localScale is (0,0,0) — a Unity 2022.3 serialization quirk
-        // around root-level canvases created via `new GameObject() + AddComponent<Canvas>()`.
-        // ScreenSpaceOverlay still renders UI correctly (screen coords ignore scale), but
-        // the GraphicRaycaster computes hit tests in world space, so every child collapses
-        // to the origin and every click misses every button.
-        // Direct property assignment at runtime reliably fixes it — the editor-time fight
-        // with SerializedObject doesn't stick through SaveScene.
-        var rt = GetComponent<RectTransform>();
-        if (rt != null && rt.localScale.sqrMagnitude < 0.001f)
+        // Defensive: ensure there's a working EventSystem + input module at runtime.
+        // The project had `activeInputHandler: -1` (corrupted) for a while which left
+        // EventSystem.currentInputModule null in WebGL builds — every button click was
+        // silently dropped because no module was processing pointer events. This guard
+        // creates or re-enables a StandaloneInputModule on the scene's EventSystem so
+        // the game stays clickable even on fresh clones with stale ProjectSettings.
+        var es = EventSystem.current ?? FindObjectOfType<EventSystem>();
+        if (es == null)
         {
-            rt.localScale = Vector3.one;
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            Debug.LogWarning("[UIManager] Normalized zero-scale MainCanvas RectTransform at runtime.");
+            var esGO = new GameObject("EventSystem");
+            es = esGO.AddComponent<EventSystem>();
+            esGO.AddComponent<StandaloneInputModule>();
+            Debug.LogWarning("[UIManager] No EventSystem in scene — created one at runtime.");
+        }
+        else if (es.currentInputModule == null)
+        {
+            var existing = es.GetComponent<StandaloneInputModule>();
+            if (existing == null)
+            {
+                es.gameObject.AddComponent<StandaloneInputModule>();
+                Debug.LogWarning("[UIManager] EventSystem had no input module — added StandaloneInputModule.");
+            }
+            else if (!existing.enabled)
+            {
+                existing.enabled = true;
+                Debug.LogWarning("[UIManager] Re-enabled disabled StandaloneInputModule.");
+            }
         }
 
         DetectDeviceType();
