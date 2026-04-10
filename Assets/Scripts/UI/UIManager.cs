@@ -66,6 +66,27 @@ public class UIManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        // Defensive: SceneAutoBuilder in batch build mode produces MainCanvas with a
+        // RectTransform whose localScale is (0,0,0) — a Unity 2022.3 serialization quirk
+        // around root-level canvases created via `new GameObject() + AddComponent<Canvas>()`.
+        // ScreenSpaceOverlay still renders UI correctly (screen coords ignore scale), but
+        // the GraphicRaycaster computes hit tests in world space, so every child collapses
+        // to the origin and every click misses every button.
+        // Direct property assignment at runtime reliably fixes it — the editor-time fight
+        // with SerializedObject doesn't stick through SaveScene.
+        var rt = GetComponent<RectTransform>();
+        if (rt != null && rt.localScale.sqrMagnitude < 0.001f)
+        {
+            rt.localScale = Vector3.one;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            Debug.LogWarning("[UIManager] Normalized zero-scale MainCanvas RectTransform at runtime.");
+        }
+
         DetectDeviceType();
         ApplyResponsiveLayout();
     }

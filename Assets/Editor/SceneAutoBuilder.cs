@@ -957,12 +957,40 @@ public static class SceneAutoBuilder
 
     static GameObject CreateCanvas(string name, out CanvasScaler scaler)
     {
+        // CRITICAL: Direct property assignment on RectTransform fails to persist in batch
+        // mode (SaveScene writes the struct back as all-zero). The reliable path is
+        // SerializedObject.ApplyModifiedProperties(), which writes the field values
+        // through Unity's serialization pipeline so SaveScene picks them up.
+        //
+        // Symptom of a broken canvas: ScreenSpaceOverlay still renders UI correctly
+        // (screen-space projection ignores localScale), but GraphicRaycaster computes
+        // hit-tests in world coords — a zero-scale canvas collapses every child to
+        // the origin and silently drops every click. Cost hours to diagnose.
         var go = new GameObject(name);
         var canvas = go.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 0;
         scaler = go.AddComponent<CanvasScaler>();
         go.AddComponent<GraphicRaycaster>();
+
+        var rt = go.GetComponent<RectTransform>();
+        if (rt == null)
+            rt = go.AddComponent<RectTransform>();
+
+        // Normalise via SerializedObject — direct property assignment doesn't stick
+        // through SaveScene in batch mode.
+        var so = new SerializedObject(rt);
+        so.FindProperty("m_LocalScale").vector3Value = Vector3.one;
+        so.FindProperty("m_LocalPosition").vector3Value = Vector3.zero;
+        so.FindProperty("m_LocalRotation").quaternionValue = Quaternion.identity;
+        so.FindProperty("m_AnchorMin").vector2Value = Vector2.zero;
+        so.FindProperty("m_AnchorMax").vector2Value = Vector2.one;
+        so.FindProperty("m_AnchoredPosition").vector2Value = Vector2.zero;
+        so.FindProperty("m_SizeDelta").vector2Value = Vector2.zero;
+        so.FindProperty("m_Pivot").vector2Value = new Vector2(0.5f, 0.5f);
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        Debug.Log($"[SceneBuilder] CreateCanvas({name}): localScale = {rt.localScale}");
         return go;
     }
 
