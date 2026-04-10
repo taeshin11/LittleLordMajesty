@@ -140,7 +140,7 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnSettingsClicked()
     {
-        var settings = FindObjectOfType<SettingsUI>(true);
+        var settings = FindFirstObjectByType<SettingsUI>(FindObjectsInactive.Include);
         settings?.gameObject.SetActive(true);
     }
 

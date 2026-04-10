@@ -122,7 +122,9 @@ public class TutorialSystem : MonoBehaviour
         // We have to activate it BEFORE firing any events, so TutorialUI.Start has a
         // chance to register its listeners. The deferred-one-frame coroutine below
         // gives Unity time to run Awake/Start before the first step fires.
-        var tutorialUI = FindObjectOfType<TutorialUI>(includeInactive: true);
+        // Use FindFirstObjectByType (Unity 2022+) — the deprecated
+        // FindObjectOfType<T>(bool) overload has had IL2CPP signature issues.
+        var tutorialUI = FindFirstObjectByType<TutorialUI>(FindObjectsInactive.Include);
         if (tutorialUI != null && !tutorialUI.gameObject.activeSelf)
             tutorialUI.gameObject.SetActive(true);
 

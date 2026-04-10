@@ -2,7 +2,10 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+#if !UNITY_WEBGL || UNITY_EDITOR
 using System.IO;
+#endif
 using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
@@ -34,6 +37,13 @@ public class GeminiImageClient : MonoBehaviour
     private string _apiKey = "";
     private string _cacheDir;
 
+    // In-memory cache — always used. Disk cache is desktop/editor only.
+    // WebGL has broken System.IO.File behavior under IL2CPP: calls get stripped
+    // or mis-invoked with wrong signatures, producing wasm runtime errors like
+    // "null function or function signature mismatch". The browser caches
+    // fetch responses anyway, so skipping disk cache on WebGL loses nothing.
+    private readonly Dictionary<string, Texture2D> _memoryCache = new();
+
     public int GeneratedCount { get; private set; }
     public int CacheHits { get; private set; }
 
@@ -45,9 +55,11 @@ public class GeminiImageClient : MonoBehaviour
 
         LoadAPIKey();
 
+#if !UNITY_WEBGL || UNITY_EDITOR
         _cacheDir = Path.Combine(Application.persistentDataPath, CACHE_DIR_NAME);
         if (!Directory.Exists(_cacheDir))
             Directory.CreateDirectory(_cacheDir);
+#endif
     }
 
     private void LoadAPIKey()
@@ -71,27 +83,43 @@ public class GeminiImageClient : MonoBehaviour
             return null;
         }
 
-        // 1. Cache hit?
         string hash = Sha256(prompt);
-        string cachedPath = Path.Combine(_cacheDir, hash + ".png");
-        if (File.Exists(cachedPath))
+
+        // 1. In-memory cache hit?
+        if (_memoryCache.TryGetValue(hash, out var cachedTex) && cachedTex != null)
         {
             CacheHits++;
-            var tex = LoadTextureFromFile(cachedPath);
-            if (tex != null)
-            {
-                onSuccess?.Invoke(tex);
-                return null;
-            }
-            // corrupt cache — fall through and regenerate
-            File.Delete(cachedPath);
+            onSuccess?.Invoke(cachedTex);
+            return null;
         }
 
-        // 2. Miss — hit the API
-        return StartCoroutine(GenerateImageCoroutine(prompt, cachedPath, onSuccess, onError));
+        // 2. Disk cache hit (desktop/editor only — WebGL skips this entirely)
+        string cachedPath = null;
+#if !UNITY_WEBGL || UNITY_EDITOR
+        if (!string.IsNullOrEmpty(_cacheDir))
+        {
+            cachedPath = Path.Combine(_cacheDir, hash + ".png");
+            if (File.Exists(cachedPath))
+            {
+                CacheHits++;
+                var tex = LoadTextureFromFile(cachedPath);
+                if (tex != null)
+                {
+                    _memoryCache[hash] = tex;
+                    onSuccess?.Invoke(tex);
+                    return null;
+                }
+                // corrupt cache — fall through and regenerate
+                try { File.Delete(cachedPath); } catch { }
+            }
+        }
+#endif
+
+        // 3. Miss — hit the API
+        return StartCoroutine(GenerateImageCoroutine(prompt, hash, cachedPath, onSuccess, onError));
     }
 
-    private IEnumerator GenerateImageCoroutine(string prompt, string cachedPath,
+    private IEnumerator GenerateImageCoroutine(string prompt, string hash, string cachedPath,
         Action<Texture2D> onSuccess, Action<string> onError)
     {
         if (string.IsNullOrEmpty(_apiKey))
@@ -165,10 +193,7 @@ public class GeminiImageClient : MonoBehaviour
             yield break;
         }
 
-        // Write to cache
-        try { File.WriteAllBytes(cachedPath, pngBytes); }
-        catch (Exception e) { Debug.LogWarning($"[GeminiImage] Cache write failed: {e.Message}"); }
-
+        // Decode PNG to texture first — this is the most important step
         var texture = new Texture2D(2, 2);
         if (!texture.LoadImage(pngBytes))
         {
@@ -176,8 +201,22 @@ public class GeminiImageClient : MonoBehaviour
             yield break;
         }
 
+        // Always keep in memory cache
+        _memoryCache[hash] = texture;
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+        // Disk cache only on platforms where System.IO.File works reliably.
+        // WebGL is excluded because IL2CPP's System.IO stripping causes
+        // "null function or function signature mismatch" wasm errors.
+        if (!string.IsNullOrEmpty(cachedPath))
+        {
+            try { File.WriteAllBytes(cachedPath, pngBytes); }
+            catch (Exception e) { Debug.LogWarning($"[GeminiImage] Cache write failed: {e.Message}"); }
+        }
+#endif
+
         GeneratedCount++;
-        Debug.Log($"[GeminiImage] Generated #{GeneratedCount} ({pngBytes.Length / 1024} KB) — cached at {cachedPath}");
+        Debug.Log($"[GeminiImage] Generated #{GeneratedCount} ({pngBytes.Length / 1024} KB)");
         onSuccess?.Invoke(texture);
     }
 
@@ -192,6 +231,7 @@ public class GeminiImageClient : MonoBehaviour
         return sb.ToString();
     }
 
+#if !UNITY_WEBGL || UNITY_EDITOR
     private static Texture2D LoadTextureFromFile(string path)
     {
         try
@@ -206,17 +246,21 @@ public class GeminiImageClient : MonoBehaviour
             return null;
         }
     }
+#endif
 
     /// <summary>
-    /// Clear the disk cache. Call from a Settings screen or debug console.
+    /// Clear the cache. Memory cache always, disk cache on desktop/editor only.
     /// </summary>
     public void ClearCache()
     {
-        if (Directory.Exists(_cacheDir))
+        _memoryCache.Clear();
+#if !UNITY_WEBGL || UNITY_EDITOR
+        if (!string.IsNullOrEmpty(_cacheDir) && Directory.Exists(_cacheDir))
         {
             Directory.Delete(_cacheDir, recursive: true);
             Directory.CreateDirectory(_cacheDir);
         }
+#endif
         GeneratedCount = 0;
         CacheHits = 0;
         Debug.Log("[GeminiImage] Cache cleared");

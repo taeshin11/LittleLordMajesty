@@ -80,7 +80,7 @@ public class KeyboardShortcuts : MonoBehaviour
         // Open the rich NPC chat panel via NPCInteractionUI (single entry point).
         // Do NOT also call UIManager.OpenDialogue — that is the separate 3D-click path
         // and calling both would cause commands to double-fire.
-        var interactionUI = FindObjectOfType<NPCInteractionUI>(true);
+        var interactionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include);
         interactionUI?.OpenForNPC(npcs[0].Id);
     }
 

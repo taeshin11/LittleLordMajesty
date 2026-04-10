@@ -845,7 +845,7 @@ public static class SceneAutoBuilder
         templateRT.pivot = new Vector2(0.5f, 1);
         templateRT.anchoredPosition = new Vector2(0, 2);
         templateRT.sizeDelta = new Vector2(0, 200);
-        template.AddComponent<ScrollRect>();
+        var templateScrollRect = template.AddComponent<ScrollRect>();
 
         var viewport = new GameObject("Viewport");
         viewport.transform.SetParent(template.transform, false);
@@ -882,6 +882,15 @@ public static class SceneAutoBuilder
         var itemLabelRT = itemLabelGO.GetComponent<RectTransform>();
         itemLabelRT.anchorMin = Vector2.zero; itemLabelRT.anchorMax = Vector2.one;
         itemLabelRT.offsetMin = new Vector2(20, 0); itemLabelRT.offsetMax = new Vector2(-10, 0);
+
+        // Wire ScrollRect references — without these, TMP_Dropdown's template
+        // validation hits null references deep in UI runtime code and can cause
+        // wasm signature-mismatch crashes in WebGL IL2CPP builds.
+        templateScrollRect.content    = contentRT;
+        templateScrollRect.viewport   = vpRT;
+        templateScrollRect.horizontal = false;
+        templateScrollRect.vertical   = true;
+        templateScrollRect.movementType = ScrollRect.MovementType.Clamped;
 
         template.SetActive(false);
 

@@ -95,7 +95,7 @@ public class CastleScene3D : MonoBehaviour
         SetupTerrain();
         SetupCastle();
 
-        _npcInteractionUI = FindObjectOfType<NPCInteractionUI>(true);
+        _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include);
 
         // Spawn NPCs that already exist (if NPCManager initialized before we did)
         // plus subscribe to future additions.

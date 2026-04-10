@@ -40,7 +40,7 @@ public class PauseUI : MonoBehaviour
     {
         SaveSystem.Save();
         // Show a toast via CastleViewUI if available, otherwise just return to play.
-        var castle = FindObjectOfType<CastleViewUI>(includeInactive: true);
+        var castle = FindFirstObjectByType<CastleViewUI>(FindObjectsInactive.Include);
         castle?.ShowNotification(LocalizationManager.Instance?.Get("game_saved") ?? "Game Saved");
         GameManager.Instance?.SetGameState(GameManager.GameState.Castle);
     }

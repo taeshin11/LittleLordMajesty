@@ -53,7 +53,7 @@ public class CastleViewUI : MonoBehaviour
 
     private void Start()
     {
-        _npcInteractionUI = FindObjectOfType<NPCInteractionUI>(true);
+        _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include);
         SetupButtons();
         SubscribeToEvents();
         RefreshResourceHUD();
