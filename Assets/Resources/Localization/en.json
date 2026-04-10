@@ -221,5 +221,10 @@
   "research_scholar_report": "My lord! We have mastered {0}. {1}",
   "research_event_title": "Research Complete: {0}",
 
-  "steward_no_llm": "The steward nods and begins reassigning workers."
+  "steward_no_llm": "The steward nods and begins reassigning workers.",
+
+  "pause_title": "PAUSED",
+  "pause_resume": "Resume",
+  "pause_save": "Save",
+  "pause_main_menu": "Main Menu"
 }

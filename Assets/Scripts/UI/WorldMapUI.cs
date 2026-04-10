@@ -45,6 +45,9 @@ public class WorldMapUI : MonoBehaviour
     [SerializeField] private Image _hostileColor;
     [SerializeField] private Image _neutralColor;
 
+    [Header("Navigation")]
+    [SerializeField] private Button _closeButton;
+
     private string _selectedTerritoryId;
     private Dictionary<string, TerritoryTile> _tileMap = new();
 
@@ -57,24 +60,122 @@ public class WorldMapUI : MonoBehaviour
         if (_attackButton != null) _attackButton.onClick.AddListener(OnAttackClicked);
         if (_launchSiegeButton != null) _launchSiegeButton.onClick.AddListener(OnLaunchSiegeClicked);
         if (_cancelSiegeButton != null) _cancelSiegeButton.onClick.AddListener(() => SetPanelActive(_armyPanel, false));
+        if (_closeButton != null) _closeButton.onClick.AddListener(() =>
+            GameManager.Instance?.SetGameState(GameManager.GameState.Castle));
     }
 
     private void BuildMapGrid()
     {
-        if (_mapGridParent == null || _territoryTilePrefab == null) return;
+        if (_mapGridParent == null) return;
         var territories = WorldMapManager.Instance?.GetAllTerritories();
-        if (territories == null) return;
+        if (territories == null || territories.Count == 0) return;
+
+        // Ensure a GridLayoutGroup on the parent so procedural tiles auto-arrange.
+        var grid = _mapGridParent.GetComponent<GridLayoutGroup>();
+        if (grid == null)
+        {
+            grid = _mapGridParent.gameObject.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(240, 240);
+            grid.spacing = new Vector2(20, 20);
+            grid.padding = new RectOffset(20, 20, 20, 20);
+            grid.childAlignment = TextAnchor.UpperCenter;
+        }
 
         foreach (var territory in territories)
         {
-            var tile = Instantiate(_territoryTilePrefab, _mapGridParent);
-            var tileComp = tile.GetComponent<TerritoryTile>();
+            GameObject tileGO;
+            TerritoryTile tileComp;
+            if (_territoryTilePrefab != null)
+            {
+                tileGO = Instantiate(_territoryTilePrefab, _mapGridParent);
+                tileComp = tileGO.GetComponent<TerritoryTile>();
+            }
+            else
+            {
+                // Fallback: build a tile procedurally when no prefab is wired in the scene.
+                (tileGO, tileComp) = CreateProceduralTile(_mapGridParent);
+            }
+
             if (tileComp != null)
             {
                 tileComp.Initialize(territory, OnTerritoryTapped);
                 _tileMap[territory.TerritoryId] = tileComp;
             }
         }
+    }
+
+    /// <summary>
+    /// Procedural tile builder — used when no TerritoryTile prefab is wired in the scene.
+    /// Produces a square card with a colored background, territory name label, and a
+    /// full-surface Button that forwards taps.
+    /// </summary>
+    private (GameObject go, TerritoryTile tile) CreateProceduralTile(Transform parent)
+    {
+        var go = new GameObject("TerritoryTile");
+        go.transform.SetParent(parent, false);
+
+        var bgImg = go.AddComponent<Image>();
+        bgImg.color = new Color(0.3f, 0.5f, 0.3f);
+
+        // Ownership border — slightly inset colored frame
+        var borderGO = new GameObject("OwnershipBorder");
+        borderGO.transform.SetParent(go.transform, false);
+        var borderImg = borderGO.AddComponent<Image>();
+        borderImg.color = new Color(0.6f, 0.6f, 0.6f);
+        borderImg.raycastTarget = false;
+        var borderRT = borderGO.GetComponent<RectTransform>();
+        borderRT.anchorMin = Vector2.zero; borderRT.anchorMax = Vector2.one;
+        borderRT.offsetMin = new Vector2(-4, -4); borderRT.offsetMax = new Vector2(4, 4);
+        borderGO.transform.SetAsFirstSibling(); // render behind the main tile
+
+        // Name text
+        var nameGO = new GameObject("Name");
+        nameGO.transform.SetParent(go.transform, false);
+        var nameText = nameGO.AddComponent<TMPro.TextMeshProUGUI>();
+        nameText.text = "???";
+        nameText.alignment = TMPro.TextAlignmentOptions.Center;
+        nameText.fontSize = 22;
+        nameText.color = Color.white;
+        nameText.raycastTarget = false;
+        var nameRT = nameGO.GetComponent<RectTransform>();
+        nameRT.anchorMin = new Vector2(0, 0.3f); nameRT.anchorMax = new Vector2(1, 0.7f);
+        nameRT.offsetMin = new Vector2(8, 0); nameRT.offsetMax = new Vector2(-8, 0);
+
+        // Scouted indicator (small dot, shown when IsScouted)
+        var scouted = new GameObject("Scouted");
+        scouted.transform.SetParent(go.transform, false);
+        var scoutedImg = scouted.AddComponent<Image>();
+        scoutedImg.color = new Color(1f, 0.9f, 0.3f);
+        scoutedImg.raycastTarget = false;
+        var scoutedRT = scouted.GetComponent<RectTransform>();
+        scoutedRT.anchorMin = new Vector2(0.85f, 0.85f); scoutedRT.anchorMax = new Vector2(0.95f, 0.95f);
+        scoutedRT.offsetMin = Vector2.zero; scoutedRT.offsetMax = Vector2.zero;
+
+        // Click button uses the background image as its target graphic
+        var clickBtn = go.AddComponent<Button>();
+        clickBtn.targetGraphic = bgImg;
+        var colors = clickBtn.colors;
+        colors.highlightedColor = new Color(0.5f, 0.7f, 0.5f);
+        colors.pressedColor = new Color(0.2f, 0.4f, 0.2f);
+        clickBtn.colors = colors;
+
+        var tile = go.AddComponent<TerritoryTile>();
+
+        // Wire serialized fields via reflection (no SerializedObject in runtime builds)
+        SetPrivateField(tile, "_tileImage", bgImg);
+        SetPrivateField(tile, "_nameText", nameText);
+        SetPrivateField(tile, "_ownershipBorder", borderImg);
+        SetPrivateField(tile, "_scoutedIndicator", scouted);
+        SetPrivateField(tile, "_clickButton", clickBtn);
+
+        return (go, tile);
+    }
+
+    private static void SetPrivateField(object target, string name, object value)
+    {
+        var field = target.GetType().GetField(name,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        field?.SetValue(target, value);
     }
 
     private void SubscribeToEvents()

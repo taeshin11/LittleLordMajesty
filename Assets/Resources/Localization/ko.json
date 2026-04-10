@@ -221,5 +221,10 @@
   "research_scholar_report": "영주님! {0}을 완성하였습니다. {1}",
   "research_event_title": "연구 완료: {0}",
 
-  "steward_no_llm": "집사가 고개를 끄덕이며 일꾼들을 재배치하기 시작합니다."
+  "steward_no_llm": "집사가 고개를 끄덕이며 일꾼들을 재배치하기 시작합니다.",
+
+  "pause_title": "일시정지",
+  "pause_resume": "계속하기",
+  "pause_save": "저장",
+  "pause_main_menu": "메인 메뉴"
 }

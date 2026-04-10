@@ -13,6 +13,9 @@ public class CastleViewUI : MonoBehaviour
     // 3D castle scene is rendered by CastleScene3D (world space).
     // This UI is a screen-space overlay — no 2D NPC/building sprites here.
 
+    [Header("Background Art (Gemini-generated)")]
+    [SerializeField] private Image _backgroundArt;
+
     [Header("HUD Top Bar")]
     [SerializeField] private TextMeshProUGUI _lordTitleText;
     [SerializeField] private TextMeshProUGUI _dateText;
@@ -55,7 +58,43 @@ public class CastleViewUI : MonoBehaviour
         SubscribeToEvents();
         RefreshResourceHUD();
         UpdateLordInfo();
+        RequestBackgroundArt();
+        // Auto-open the NPC list drawer so characters are visible immediately
+        // instead of hiding behind the "NPCs" button.
+        if (_npcListPanel != null)
+        {
+            _npcListPanel.SetActive(true);
+            PopulateNPCList();
+        }
         // NPC 3D spawning is handled by CastleScene3D (world space)
+    }
+
+    /// <summary>
+    /// Kicks off Gemini background art generation for the castle courtyard. Cached
+    /// to disk after first generation so returning to the Castle scene is instant.
+    /// </summary>
+    private void RequestBackgroundArt()
+    {
+        if (_backgroundArt == null || GeminiImageClient.Instance == null) return;
+
+        const string prompt =
+            "Medieval fantasy castle courtyard at golden hour, painterly oil-painting style, " +
+            "warm torchlight, stone walls, wooden scaffolding, distant towers, dramatic sky, " +
+            "atmospheric depth, no characters, cinematic wide establishing shot, detailed background art.";
+
+        var targetImage = _backgroundArt;
+        GeminiImageClient.Instance.GenerateImage(prompt,
+            onSuccess: tex =>
+            {
+                if (targetImage == null) return;
+                var sprite = Sprite.Create(tex,
+                    new Rect(0, 0, tex.width, tex.height),
+                    new Vector2(0.5f, 0.5f));
+                targetImage.sprite = sprite;
+                targetImage.color = new Color(1f, 1f, 1f, 0.85f); // slight dim for HUD legibility
+                targetImage.preserveAspect = false;
+            },
+            onError: err => Debug.LogWarning($"[CastleView] Background art generation failed: {err}"));
     }
 
     private void SetupButtons()

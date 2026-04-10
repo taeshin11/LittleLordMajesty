@@ -372,6 +372,14 @@ public static class SceneAutoBuilder
         var panel = CreateFullscreenPanel(parent, "CastleViewPanel", new Color(0.08f, 0.06f, 0.12f));
         var castleUI = panel.AddComponent<CastleViewUI>();
 
+        // Full-screen background art layer — sits behind all HUD elements. Gemini
+        // fills this with a generated castle courtyard at runtime; until then, a
+        // subtle gradient placeholder.
+        var bgArt = CreateFullscreenPanel(panel.transform, "BackgroundArt",
+            new Color(0.12f, 0.10f, 0.18f, 1f));
+        var bgArtImg = bgArt.GetComponent<Image>();
+        bgArtImg.raycastTarget = false; // don't eat clicks
+
         // Top HUD bar
         var topHUD = CreatePanel(panel.transform, "TopHUD", new Color(0, 0, 0, 0.7f), new Vector2(1080, 120));
         var topRT = topHUD.GetComponent<RectTransform>();
@@ -486,6 +494,7 @@ public static class SceneAutoBuilder
         soCastle.FindProperty("_buildButton").objectReferenceValue          = buildBtn.GetComponent<Button>();
         soCastle.FindProperty("_saveButton").objectReferenceValue           = saveBtn.GetComponent<Button>();
         soCastle.FindProperty("_npcListButton").objectReferenceValue        = npcListBtn.GetComponent<Button>();
+        soCastle.FindProperty("_backgroundArt").objectReferenceValue        = bgArtImg;
         soCastle.FindProperty("_notificationBanner").objectReferenceValue   = notifBanner;
         soCastle.FindProperty("_notificationText").objectReferenceValue     = notifText.GetComponent<TextMeshProUGUI>();
         soCastle.FindProperty("_npcListPanel").objectReferenceValue         = npcListPanel;
@@ -697,6 +706,7 @@ public static class SceneAutoBuilder
     static GameObject BuildPausePanel(Transform parent)
     {
         var panel = CreateFullscreenPanel(parent, "PausePanel", new Color(0, 0, 0, 0.7f));
+        var pauseUI = panel.AddComponent<PauseUI>();
 
         var card = CreatePanel(panel.transform, "PauseCard",
             new Color(0.1f, 0.08f, 0.15f), new Vector2(500, 500));
@@ -713,6 +723,18 @@ public static class SceneAutoBuilder
         SetAnchored(resumeBtn, new Vector2(0, 60),  new Vector2(400, 75));
         SetAnchored(saveBtn,   new Vector2(0, -40), new Vector2(400, 75));
         SetAnchored(quitBtn,   new Vector2(0,-140), new Vector2(400, 75));
+
+        // Wire PauseUI serialized fields — without these the buttons have no click
+        // handlers and the pause menu becomes a deadlock.
+        var soPause = new SerializedObject(pauseUI);
+        soPause.FindProperty("_resumeButton").objectReferenceValue   = resumeBtn.GetComponent<Button>();
+        soPause.FindProperty("_saveButton").objectReferenceValue     = saveBtn.GetComponent<Button>();
+        soPause.FindProperty("_mainMenuButton").objectReferenceValue = quitBtn.GetComponent<Button>();
+        soPause.FindProperty("_titleText").objectReferenceValue      = header.GetComponent<TextMeshProUGUI>();
+        soPause.FindProperty("_resumeLabel").objectReferenceValue    = resumeBtn.GetComponentInChildren<TextMeshProUGUI>();
+        soPause.FindProperty("_saveLabel").objectReferenceValue      = saveBtn.GetComponentInChildren<TextMeshProUGUI>();
+        soPause.FindProperty("_mainMenuLabel").objectReferenceValue  = quitBtn.GetComponentInChildren<TextMeshProUGUI>();
+        soPause.ApplyModifiedProperties();
 
         return panel;
     }
@@ -763,6 +785,7 @@ public static class SceneAutoBuilder
 
         var soMap = new SerializedObject(panel.GetComponent<WorldMapUI>());
         soMap.FindProperty("_mapGridParent").objectReferenceValue = mapContainer.transform;
+        soMap.FindProperty("_closeButton").objectReferenceValue = closeBtn.GetComponent<Button>();
         soMap.ApplyModifiedProperties();
 
         return panel;
