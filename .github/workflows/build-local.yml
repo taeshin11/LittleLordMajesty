@@ -25,6 +25,20 @@ jobs:
           clean: true
           fetch-depth: 0
 
+      - name: Inject GameConfig (Gemini API key) from local dev copy
+        shell: bash
+        run: |
+          SRC_DIR="/c/MakingGames/LittleLordMajesty/Assets/Resources/Config"
+          DST_DIR="Assets/Resources/Config"
+          mkdir -p "$DST_DIR"
+          if [ -f "$SRC_DIR/GameConfig.asset" ]; then
+            cp "$SRC_DIR/GameConfig.asset"      "$DST_DIR/GameConfig.asset"
+            cp "$SRC_DIR/GameConfig.asset.meta" "$DST_DIR/GameConfig.asset.meta"
+            echo "Copied GameConfig.asset from local dev (Gemini API key present)"
+          else
+            echo "Warning: local GameConfig.asset not found at $SRC_DIR — build will have no Gemini API key"
+          fi
+
       - name: Build WebGL
         shell: bash
         run: |

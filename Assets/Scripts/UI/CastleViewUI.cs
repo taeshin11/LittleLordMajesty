@@ -202,26 +202,27 @@ public class CastleViewUI : MonoBehaviour
         foreach (Transform child in _npcListContent) Destroy(child.gameObject);
 
         var npcs = NPCManager.Instance?.GetAllNPCs();
-        if (npcs == null) return;
+        if (npcs == null || npcs.Count == 0) return;
 
-        // Ensure a vertical layout on the parent so cards stack nicely.
-        var vlg = _npcListContent.GetComponent<VerticalLayoutGroup>();
-        if (vlg == null)
+        // Grid layout: 4 columns, auto-wrap. Each card is large and prominent so
+        // NPCs are the VISUAL CENTERPIECE of the castle view — no more hidden
+        // drawer, no more "can't see the characters" feedback.
+        var grid = _npcListContent.GetComponent<GridLayoutGroup>();
+        if (grid == null)
         {
-            vlg = _npcListContent.gameObject.AddComponent<VerticalLayoutGroup>();
-            vlg.spacing = 12;
-            vlg.padding = new RectOffset(12, 12, 12, 12);
-            vlg.childForceExpandWidth = true;
-            vlg.childForceExpandHeight = false;
-            vlg.childControlWidth = true;
-            vlg.childControlHeight = false;
+            grid = _npcListContent.gameObject.AddComponent<GridLayoutGroup>();
+            grid.cellSize   = new Vector2(240, 280);
+            grid.spacing    = new Vector2(20, 20);
+            grid.padding    = new RectOffset(20, 20, 20, 20);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 4;
+            grid.childAlignment  = TextAnchor.MiddleCenter;
         }
-        var csf = _npcListContent.GetComponent<ContentSizeFitter>();
-        if (csf == null)
-        {
-            csf = _npcListContent.gameObject.AddComponent<ContentSizeFitter>();
-            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        }
+        // Remove any leftover vertical/content-size fitter from previous builds
+        var oldVlg = _npcListContent.GetComponent<VerticalLayoutGroup>();
+        if (oldVlg != null) Destroy(oldVlg);
+        var oldCsf = _npcListContent.GetComponent<ContentSizeFitter>();
+        if (oldCsf != null) Destroy(oldCsf);
 
         foreach (var npc in npcs)
             BuildNPCCard(npc);
@@ -234,23 +235,17 @@ public class CastleViewUI : MonoBehaviour
     /// </summary>
     private void BuildNPCCard(NPCManager.NPCData npc)
     {
-        const float CARD_W = 560f;
-        const float CARD_H = 130f;
+        const float CARD_W = 240f;
+        const float CARD_H = 280f;
 
-        // Card root — fixed size, LayoutElement tells the parent's VerticalLayoutGroup
-        // how much space to reserve. Do NOT rely on anchor stretch for width — the
-        // parent's RectTransform may not have width propagated at build time, which
-        // causes TMP to fall back to a 1-char-wide column and word-wrap every letter
-        // to its own line (the bug seen in the last screenshot).
+        // Card root — GridLayoutGroup controls size via cellSize, but we still set
+        // explicit sizeDelta + LayoutElement as a belt-and-suspenders measure.
         var card = new GameObject($"NPCCard_{npc.Id}");
         card.transform.SetParent(_npcListContent, false);
         var cardRT = card.AddComponent<RectTransform>();
-        cardRT.anchorMin = new Vector2(0.5f, 0.5f);
-        cardRT.anchorMax = new Vector2(0.5f, 0.5f);
-        cardRT.pivot     = new Vector2(0.5f, 0.5f);
         cardRT.sizeDelta = new Vector2(CARD_W, CARD_H);
         var cardBg = card.AddComponent<Image>();
-        cardBg.color = new Color(0.13f, 0.11f, 0.18f, 0.96f);
+        cardBg.color = new Color(0.14f, 0.12f, 0.20f, 0.96f);
 
         var layoutElem = card.AddComponent<LayoutElement>();
         layoutElem.preferredWidth  = CARD_W;
@@ -258,54 +253,89 @@ public class CastleViewUI : MonoBehaviour
         layoutElem.minWidth  = CARD_W;
         layoutElem.minHeight = CARD_H;
 
-        // Portrait — fixed-size square, anchored to left-center of the card
+        // Frame border — ornamental gold border around the card
+        var frameGO = new GameObject("Frame");
+        frameGO.transform.SetParent(card.transform, false);
+        var frameImg = frameGO.AddComponent<Image>();
+        frameImg.color = new Color(0.6f, 0.45f, 0.15f, 0.9f);
+        frameImg.raycastTarget = false;
+        var frameRT = frameGO.GetComponent<RectTransform>();
+        frameRT.anchorMin = Vector2.zero; frameRT.anchorMax = Vector2.one;
+        frameRT.offsetMin = new Vector2(-3, -3); frameRT.offsetMax = new Vector2(3, 3);
+        frameGO.transform.SetAsFirstSibling(); // render behind the card bg
+
+        // Big portrait area at the TOP of the card — square, prominent
         var portraitGO = new GameObject("Portrait");
         portraitGO.transform.SetParent(card.transform, false);
         var portraitImg = portraitGO.AddComponent<Image>();
-        portraitImg.color = ProfessionColor(npc.Profession); // placeholder tint
+        portraitImg.color = ProfessionColor(npc.Profession);
+        portraitImg.raycastTarget = false;
         var portraitRT = portraitGO.GetComponent<RectTransform>();
-        portraitRT.anchorMin = new Vector2(0, 0.5f);
-        portraitRT.anchorMax = new Vector2(0, 0.5f);
-        portraitRT.pivot     = new Vector2(0, 0.5f);
-        portraitRT.anchoredPosition = new Vector2(10, 0);
-        portraitRT.sizeDelta = new Vector2(110, 110);
+        portraitRT.anchorMin = new Vector2(0.5f, 1);
+        portraitRT.anchorMax = new Vector2(0.5f, 1);
+        portraitRT.pivot     = new Vector2(0.5f, 1);
+        portraitRT.anchoredPosition = new Vector2(0, -12);
+        portraitRT.sizeDelta = new Vector2(160, 160);
 
-        RequestPortrait(npc, portraitImg);
+        // Big initial letter overlay on the portrait — visible even without Gemini art.
+        // Uses the first character of the localized profession name if it's Latin,
+        // otherwise a Latin letter lookup based on the enum.
+        var initialGO = new GameObject("Initial");
+        initialGO.transform.SetParent(portraitGO.transform, false);
+        var initialText = initialGO.AddComponent<TextMeshProUGUI>();
+        initialText.text = ProfessionInitial(npc.Profession);
+        initialText.fontSize = 90;
+        initialText.fontStyle = FontStyles.Bold;
+        initialText.color = new Color(1f, 1f, 1f, 0.92f);
+        initialText.alignment = TextAlignmentOptions.Center;
+        initialText.enableWordWrapping = false;
+        initialText.raycastTarget = false;
+        var initialRT = initialGO.GetComponent<RectTransform>();
+        initialRT.anchorMin = Vector2.zero; initialRT.anchorMax = Vector2.one;
+        initialRT.offsetMin = Vector2.zero; initialRT.offsetMax = Vector2.zero;
 
-        // Name — fixed size, no word wrap
+        // Kick off Gemini portrait generation in the background — when ready, it
+        // replaces the colored-circle placeholder. If Gemini isn't available
+        // (no API key), the letter-on-color placeholder stays and the card is
+        // still clearly readable.
+        RequestPortrait(npc, portraitImg, initialText);
+
+        // Name below portrait
         var nameText = CreateCardLabel(card.transform, "Name", npc.Name,
-            fontSize: 24, bold: true, color: new Color(1f, 0.9f, 0.6f));
+            fontSize: 22, bold: true, color: new Color(1f, 0.92f, 0.65f));
+        nameText.alignment = TextAlignmentOptions.Center;
         var nameRT = nameText.GetComponent<RectTransform>();
-        nameRT.anchorMin = new Vector2(0, 0.5f);
-        nameRT.anchorMax = new Vector2(0, 0.5f);
-        nameRT.pivot     = new Vector2(0, 0.5f);
-        nameRT.anchoredPosition = new Vector2(135, 35);
-        nameRT.sizeDelta = new Vector2(CARD_W - 145, 30);
+        nameRT.anchorMin = new Vector2(0, 0);
+        nameRT.anchorMax = new Vector2(1, 0);
+        nameRT.pivot     = new Vector2(0.5f, 0);
+        nameRT.anchoredPosition = new Vector2(0, 82);
+        nameRT.sizeDelta = new Vector2(0, 30);
 
-        // Profession label
+        // Profession label under the name
         string profKey = $"profession_{npc.Profession.ToString().ToLower()}";
         string professionText = LocalizationManager.Instance?.Get(profKey) ?? npc.Profession.ToString();
         var profText = CreateCardLabel(card.transform, "Profession", professionText,
-            fontSize: 18, bold: false, color: new Color(0.75f, 0.75f, 0.82f));
+            fontSize: 17, bold: false, color: new Color(0.78f, 0.78f, 0.85f));
+        profText.alignment = TextAlignmentOptions.Center;
         var profRT = profText.GetComponent<RectTransform>();
-        profRT.anchorMin = new Vector2(0, 0.5f);
-        profRT.anchorMax = new Vector2(0, 0.5f);
-        profRT.pivot     = new Vector2(0, 0.5f);
-        profRT.anchoredPosition = new Vector2(135, 8);
-        profRT.sizeDelta = new Vector2(CARD_W - 145, 22);
+        profRT.anchorMin = new Vector2(0, 0);
+        profRT.anchorMax = new Vector2(1, 0);
+        profRT.pivot     = new Vector2(0.5f, 0);
+        profRT.anchoredPosition = new Vector2(0, 58);
+        profRT.sizeDelta = new Vector2(0, 24);
 
-        // Mood bar background
+        // Mood bar background — sits under the profession label
         var moodBg = new GameObject("MoodBarBg");
         moodBg.transform.SetParent(card.transform, false);
         var moodBgImg = moodBg.AddComponent<Image>();
         moodBgImg.color = new Color(0.22f, 0.22f, 0.28f);
         moodBgImg.raycastTarget = false;
         var moodBgRT = moodBg.GetComponent<RectTransform>();
-        moodBgRT.anchorMin = new Vector2(0, 0.5f);
-        moodBgRT.anchorMax = new Vector2(0, 0.5f);
-        moodBgRT.pivot     = new Vector2(0, 0.5f);
-        moodBgRT.anchoredPosition = new Vector2(135, -18);
-        moodBgRT.sizeDelta = new Vector2(CARD_W - 260, 14);
+        moodBgRT.anchorMin = new Vector2(0, 0);
+        moodBgRT.anchorMax = new Vector2(0, 0);
+        moodBgRT.pivot     = new Vector2(0, 0);
+        moodBgRT.anchoredPosition = new Vector2(16, 46);
+        moodBgRT.sizeDelta = new Vector2(CARD_W - 32, 10);
 
         var moodFill = new GameObject("MoodBarFill");
         moodFill.transform.SetParent(moodBg.transform, false);
@@ -320,19 +350,24 @@ public class CastleViewUI : MonoBehaviour
         moodFillRT.offsetMin = Vector2.zero;
         moodFillRT.offsetMax = Vector2.zero;
 
-        // Talk button — fixed position at right side of card
+        // Full-width Talk button at the bottom
         var talkGO = new GameObject("TalkButton");
         talkGO.transform.SetParent(card.transform, false);
         var talkImg = talkGO.AddComponent<Image>();
-        talkImg.color = new Color(0.3f, 0.55f, 0.25f);
+        talkImg.color = new Color(0.28f, 0.58f, 0.26f);
         var talkBtn = talkGO.AddComponent<Button>();
         talkBtn.targetGraphic = talkImg;
+        var talkColors = talkBtn.colors;
+        talkColors.highlightedColor = new Color(0.38f, 0.72f, 0.36f);
+        talkColors.pressedColor     = new Color(0.20f, 0.45f, 0.18f);
+        talkBtn.colors = talkColors;
+
         var talkRT = talkGO.GetComponent<RectTransform>();
-        talkRT.anchorMin = new Vector2(1, 0.5f);
-        talkRT.anchorMax = new Vector2(1, 0.5f);
-        talkRT.pivot     = new Vector2(1, 0.5f);
-        talkRT.anchoredPosition = new Vector2(-12, 0);
-        talkRT.sizeDelta = new Vector2(100, 44);
+        talkRT.anchorMin = new Vector2(0, 0);
+        talkRT.anchorMax = new Vector2(1, 0);
+        talkRT.pivot     = new Vector2(0.5f, 0);
+        talkRT.anchoredPosition = new Vector2(0, 8);
+        talkRT.sizeDelta = new Vector2(-24, 34);
 
         var talkLabel = CreateCardLabel(talkGO.transform, "Label",
             LocalizationManager.Instance?.Get("btn_talk") ?? "Talk",
@@ -347,10 +382,33 @@ public class CastleViewUI : MonoBehaviour
         string capturedId = npc.Id;
         talkBtn.onClick.AddListener(() =>
         {
-            _npcListPanel.SetActive(false);
             _npcInteractionUI?.OpenForNPC(capturedId);
         });
     }
+
+    /// <summary>
+    /// Returns a single letter to display on the portrait placeholder until
+    /// Gemini fills in a real character art. Using English initials means the
+    /// letter renders reliably even when the CJK font fallback hasn't loaded.
+    /// </summary>
+    private static string ProfessionInitial(NPCPersona.NPCProfession p) => p switch
+    {
+        NPCPersona.NPCProfession.Soldier          => "⚔",
+        NPCPersona.NPCProfession.Farmer           => "F",
+        NPCPersona.NPCProfession.Merchant         => "M",
+        NPCPersona.NPCProfession.Vassal           => "V",
+        NPCPersona.NPCProfession.Scholar          => "S",
+        NPCPersona.NPCProfession.Priest           => "✝",
+        NPCPersona.NPCProfession.Spy              => "?",
+        NPCPersona.NPCProfession.Blacksmith       => "B",
+        NPCPersona.NPCProfession.Healer           => "H",
+        NPCPersona.NPCProfession.Scout            => "Sc",
+        NPCPersona.NPCProfession.Guard            => "G",
+        NPCPersona.NPCProfession.Builder          => "Bu",
+        NPCPersona.NPCProfession.Mage             => "M",
+        NPCPersona.NPCProfession.MysteriousVisitor=> "?",
+        _                                          => "N",
+    };
 
     /// <summary>
     /// Helper: creates a TMP label with word-wrap DISABLED. Critical — without
@@ -387,15 +445,15 @@ public class CastleViewUI : MonoBehaviour
     };
 
     /// <summary>
-    /// Kicks off Gemini portrait generation for a single NPC card. Swaps the sprite
-    /// onto the provided Image when ready; caches per-NPC id.
+    /// Kicks off Gemini portrait generation for a single NPC card. When ready,
+    /// swaps the sprite onto the provided Image and fades out the placeholder
+    /// initial letter. No-op (placeholder remains) if GeminiImageClient isn't
+    /// available — typical for CI builds where the API key isn't injected.
     /// </summary>
-    private void RequestPortrait(NPCManager.NPCData npc, Image target)
+    private void RequestPortrait(NPCManager.NPCData npc, Image target, TextMeshProUGUI initialLabel = null)
     {
         if (target == null || GeminiImageClient.Instance == null) return;
 
-        string profKey = $"profession_{npc.Profession.ToString().ToLower()}";
-        string professionLoc = LocalizationManager.Instance?.Get(profKey) ?? npc.Profession.ToString();
         string prompt =
             $"Square medieval fantasy character portrait of {npc.Name}, a {npc.Profession} in a small lord's castle. " +
             $"Head-and-shoulders framing, painterly oil-painting style, warm torchlight, earthy colors, " +
@@ -410,6 +468,8 @@ public class CastleViewUI : MonoBehaviour
                     new Vector2(0.5f, 0.5f));
                 target.color = Color.white;
                 target.preserveAspect = true;
+                // Hide the placeholder initial letter now that real art is in
+                if (initialLabel != null) initialLabel.enabled = false;
             },
             onError: err => Debug.LogWarning($"[CastleView] Portrait failed for {npc.Name}: {err}"));
     }

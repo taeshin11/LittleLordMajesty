@@ -376,14 +376,19 @@ public static class SceneAutoBuilder
 
     static GameObject BuildCastleViewPanel(Transform parent)
     {
-        var panel = CreateFullscreenPanel(parent, "CastleViewPanel", new Color(0.08f, 0.06f, 0.12f));
+        // Fully transparent root panel so the 3D castle scene (CastleScene3D) is
+        // visible behind the UI — without this the scene is hidden under a solid
+        // dark fill and players complain they "can't see the characters".
+        var panel = CreateFullscreenPanel(parent, "CastleViewPanel", new Color(0, 0, 0, 0));
+        var panelImg = panel.GetComponent<Image>();
+        panelImg.raycastTarget = false;
         var castleUI = panel.AddComponent<CastleViewUI>();
 
         // Full-screen background art layer — sits behind all HUD elements. Gemini
-        // fills this with a generated castle courtyard at runtime; until then, a
-        // subtle gradient placeholder.
+        // fills this with a generated castle courtyard at runtime. Semi-transparent
+        // so the 3D scene shows through even before Gemini art arrives.
         var bgArt = CreateFullscreenPanel(panel.transform, "BackgroundArt",
-            new Color(0.12f, 0.10f, 0.18f, 1f));
+            new Color(0.10f, 0.09f, 0.15f, 0.55f));
         var bgArtImg = bgArt.GetComponent<Image>();
         bgArtImg.raycastTarget = false; // don't eat clicks
 
@@ -419,19 +424,27 @@ public static class SceneAutoBuilder
         SetAnchored(goldTxt, new Vector2( 120, 0), new Vector2(200, 50));
         SetAnchored(popTxt,  new Vector2( 370, 0), new Vector2(200, 50));
 
-        // NPC container (castle interior area)
-        var npcContainer = new GameObject("NPCContainer");
-        npcContainer.transform.SetParent(panel.transform, false);
-        var npcContRT = npcContainer.AddComponent<RectTransform>();
-        npcContRT.anchorMin = new Vector2(0, 0.15f); npcContRT.anchorMax = new Vector2(1, 0.75f);
-        npcContRT.offsetMin = Vector2.zero; npcContRT.offsetMax = Vector2.zero;
+        // Objective banner — single-line hint at the top telling the player what to do.
+        var objective = CreateTMPText(panel.transform, "ObjectiveText",
+            "영주님의 성에 오신 것을 환영합니다. 아래 신하 카드를 눌러 대화를 시작하세요.",
+            26, TextAlignmentOptions.Center, new Color(1f, 0.95f, 0.65f));
+        SetAnchored(objective, new Vector2(0, 680), new Vector2(1000, 60));
+        objective.GetComponent<TextMeshProUGUI>().enableWordWrapping = false;
 
-        // Building container
-        var buildingContainer = new GameObject("BuildingContainer");
-        buildingContainer.transform.SetParent(panel.transform, false);
-        var buildContRT = buildingContainer.AddComponent<RectTransform>();
-        buildContRT.anchorMin = new Vector2(0, 0); buildContRT.anchorMax = new Vector2(1, 0.15f);
-        buildContRT.offsetMin = Vector2.zero; buildContRT.offsetMax = Vector2.zero;
+        // Central NPC grid — big, ALWAYS visible. No more hidden drawer.
+        // Fills most of the middle of the screen so NPCs are immediately obvious.
+        var npcGrid = new GameObject("NPCGrid");
+        npcGrid.transform.SetParent(panel.transform, false);
+        var npcGridRT = npcGrid.AddComponent<RectTransform>();
+        npcGridRT.anchorMin = new Vector2(0.5f, 0.5f);
+        npcGridRT.anchorMax = new Vector2(0.5f, 0.5f);
+        npcGridRT.pivot     = new Vector2(0.5f, 0.5f);
+        npcGridRT.sizeDelta = new Vector2(1020, 780);
+        npcGridRT.anchoredPosition = new Vector2(0, 20);
+        // Fully transparent background so Gemini art shows through
+        var npcGridImg = npcGrid.AddComponent<Image>();
+        npcGridImg.color = new Color(0, 0, 0, 0);
+        npcGridImg.raycastTarget = false;
 
         // Bottom action bar
         var actionBar = CreatePanel(panel.transform, "ActionBar", new Color(0, 0, 0, 0.8f), new Vector2(1080, 100));
@@ -465,16 +478,11 @@ public static class SceneAutoBuilder
         ntRT.anchorMin = Vector2.zero; ntRT.anchorMax = Vector2.one;
         ntRT.offsetMin = new Vector2(10, 0); ntRT.offsetMax = new Vector2(-10, 0);
 
-        // NPC List drawer
-        var npcListPanel = CreatePanel(panel.transform, "NPCListPanel",
-            new Color(0.08f, 0.08f, 0.15f, 0.98f), new Vector2(600, 800));
-        var nlpRT = npcListPanel.GetComponent<RectTransform>();
-        nlpRT.anchorMin = new Vector2(0, 0); nlpRT.anchorMax = new Vector2(0, 1);
-        nlpRT.pivot = new Vector2(0, 0.5f);
-        nlpRT.offsetMin = Vector2.zero; nlpRT.offsetMax = new Vector2(600, 0);
-        npcListPanel.SetActive(false);
-
-        var (npcScrollRect, npcListContent) = CreateScrollView(npcListPanel.transform, "NPCListScroll");
+        // NPC list panel is now an alias for the central grid — the old drawer concept
+        // is gone. The grid's RectTransform is both the panel reference (for the
+        // active-toggle logic in CastleViewUI) and the content parent.
+        var npcListPanel = npcGrid;
+        var npcListContent = npcGrid.transform;
 
         // Building menu panel
         var buildMenuPanel = CreatePanel(panel.transform, "BuildingMenuPanel",
