@@ -228,5 +228,6 @@
   "pause_save": "저장",
   "pause_main_menu": "메인 메뉴",
   "btn_talk": "대화",
-  "btn_build": "건설"
+  "btn_build": "건설",
+  "welcome_hint": "영주님의 성에 오신 것을 환영합니다! 왼쪽 NPC 카드를 눌러 명령을 내리거나, Build 버튼으로 건물을 지으세요."
 }

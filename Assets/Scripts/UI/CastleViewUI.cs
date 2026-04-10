@@ -66,7 +66,17 @@ public class CastleViewUI : MonoBehaviour
             _npcListPanel.SetActive(true);
             PopulateNPCList();
         }
+        // Welcome hint for first-time players — explains the basic loop even if
+        // the tutorial fails to fire for any reason.
+        ShowWelcomeHint();
         // NPC 3D spawning is handled by CastleScene3D (world space)
+    }
+
+    private void ShowWelcomeHint()
+    {
+        string msg = LocalizationManager.Instance?.Get("welcome_hint")
+                     ?? "Welcome to your castle! Tap an NPC card to give commands, or use Build to construct buildings.";
+        ShowNotification(msg);
     }
 
     /// <summary>
@@ -155,11 +165,25 @@ public class CastleViewUI : MonoBehaviour
         if (_populationText != null) _populationText.text = $"{rm.Population}/{rm.MaxPopulation}";
     }
 
+    private static string FormatLordDisplay(string title, string name)
+    {
+        // Avoid "Little Lord Lord" when the player used the default name "Lord"
+        // (or any name that duplicates the current title, e.g. "Baron Baron").
+        if (string.IsNullOrEmpty(name)) return title ?? "";
+        if (string.IsNullOrEmpty(title)) return name;
+        if (string.Equals(name, title, System.StringComparison.OrdinalIgnoreCase))
+            return title;
+        if (title.EndsWith(name, System.StringComparison.OrdinalIgnoreCase) ||
+            name.EndsWith(title, System.StringComparison.OrdinalIgnoreCase))
+            return title;
+        return $"{title} {name}";
+    }
+
     private void UpdateLordInfo()
     {
         var gm = GameManager.Instance;
         if (_lordTitleText != null)
-            _lordTitleText.text = $"{gm?.LordTitle} {gm?.PlayerName}";
+            _lordTitleText.text = FormatLordDisplay(gm?.LordTitle, gm?.PlayerName);
         if (_dateText != null)
             _dateText.text = gm?.GetFormattedDate() ?? "";
     }
@@ -210,69 +234,78 @@ public class CastleViewUI : MonoBehaviour
     /// </summary>
     private void BuildNPCCard(NPCManager.NPCData npc)
     {
-        // Card root
+        const float CARD_W = 560f;
+        const float CARD_H = 130f;
+
+        // Card root — fixed size, LayoutElement tells the parent's VerticalLayoutGroup
+        // how much space to reserve. Do NOT rely on anchor stretch for width — the
+        // parent's RectTransform may not have width propagated at build time, which
+        // causes TMP to fall back to a 1-char-wide column and word-wrap every letter
+        // to its own line (the bug seen in the last screenshot).
         var card = new GameObject($"NPCCard_{npc.Id}");
         card.transform.SetParent(_npcListContent, false);
         var cardRT = card.AddComponent<RectTransform>();
-        cardRT.sizeDelta = new Vector2(0, 130);
+        cardRT.anchorMin = new Vector2(0.5f, 0.5f);
+        cardRT.anchorMax = new Vector2(0.5f, 0.5f);
+        cardRT.pivot     = new Vector2(0.5f, 0.5f);
+        cardRT.sizeDelta = new Vector2(CARD_W, CARD_H);
         var cardBg = card.AddComponent<Image>();
         cardBg.color = new Color(0.13f, 0.11f, 0.18f, 0.96f);
 
         var layoutElem = card.AddComponent<LayoutElement>();
-        layoutElem.preferredHeight = 130;
-        layoutElem.minHeight = 130;
+        layoutElem.preferredWidth  = CARD_W;
+        layoutElem.preferredHeight = CARD_H;
+        layoutElem.minWidth  = CARD_W;
+        layoutElem.minHeight = CARD_H;
 
-        // Portrait (Gemini fills this at runtime)
+        // Portrait — fixed-size square, anchored to left-center of the card
         var portraitGO = new GameObject("Portrait");
         portraitGO.transform.SetParent(card.transform, false);
         var portraitImg = portraitGO.AddComponent<Image>();
         portraitImg.color = ProfessionColor(npc.Profession); // placeholder tint
         var portraitRT = portraitGO.GetComponent<RectTransform>();
-        portraitRT.anchorMin = new Vector2(0, 0); portraitRT.anchorMax = new Vector2(0, 1);
-        portraitRT.pivot = new Vector2(0, 0.5f);
-        portraitRT.offsetMin = new Vector2(10, 10); portraitRT.offsetMax = new Vector2(120, -10);
-        portraitRT.sizeDelta = new Vector2(110, 0);
+        portraitRT.anchorMin = new Vector2(0, 0.5f);
+        portraitRT.anchorMax = new Vector2(0, 0.5f);
+        portraitRT.pivot     = new Vector2(0, 0.5f);
+        portraitRT.anchoredPosition = new Vector2(10, 0);
+        portraitRT.sizeDelta = new Vector2(110, 110);
 
         RequestPortrait(npc, portraitImg);
 
-        // Name
-        var nameGO = new GameObject("Name");
-        nameGO.transform.SetParent(card.transform, false);
-        var nameText = nameGO.AddComponent<TextMeshProUGUI>();
-        nameText.text = npc.Name;
-        nameText.fontSize = 24;
-        nameText.color = new Color(1f, 0.9f, 0.6f);
-        nameText.fontStyle = FontStyles.Bold;
-        nameText.raycastTarget = false;
-        var nameRT = nameGO.GetComponent<RectTransform>();
-        nameRT.anchorMin = new Vector2(0, 1); nameRT.anchorMax = new Vector2(1, 1);
-        nameRT.pivot = new Vector2(0, 1);
-        nameRT.offsetMin = new Vector2(135, -40); nameRT.offsetMax = new Vector2(-10, -10);
+        // Name — fixed size, no word wrap
+        var nameText = CreateCardLabel(card.transform, "Name", npc.Name,
+            fontSize: 24, bold: true, color: new Color(1f, 0.9f, 0.6f));
+        var nameRT = nameText.GetComponent<RectTransform>();
+        nameRT.anchorMin = new Vector2(0, 0.5f);
+        nameRT.anchorMax = new Vector2(0, 0.5f);
+        nameRT.pivot     = new Vector2(0, 0.5f);
+        nameRT.anchoredPosition = new Vector2(135, 35);
+        nameRT.sizeDelta = new Vector2(CARD_W - 145, 30);
 
-        // Profession
-        var profGO = new GameObject("Profession");
-        profGO.transform.SetParent(card.transform, false);
-        var profText = profGO.AddComponent<TextMeshProUGUI>();
+        // Profession label
         string profKey = $"profession_{npc.Profession.ToString().ToLower()}";
-        profText.text = LocalizationManager.Instance?.Get(profKey) ?? npc.Profession.ToString();
-        profText.fontSize = 18;
-        profText.color = new Color(0.75f, 0.75f, 0.8f);
-        profText.raycastTarget = false;
-        var profRT = profGO.GetComponent<RectTransform>();
-        profRT.anchorMin = new Vector2(0, 1); profRT.anchorMax = new Vector2(1, 1);
-        profRT.pivot = new Vector2(0, 1);
-        profRT.offsetMin = new Vector2(135, -65); profRT.offsetMax = new Vector2(-10, -40);
+        string professionText = LocalizationManager.Instance?.Get(profKey) ?? npc.Profession.ToString();
+        var profText = CreateCardLabel(card.transform, "Profession", professionText,
+            fontSize: 18, bold: false, color: new Color(0.75f, 0.75f, 0.82f));
+        var profRT = profText.GetComponent<RectTransform>();
+        profRT.anchorMin = new Vector2(0, 0.5f);
+        profRT.anchorMax = new Vector2(0, 0.5f);
+        profRT.pivot     = new Vector2(0, 0.5f);
+        profRT.anchoredPosition = new Vector2(135, 8);
+        profRT.sizeDelta = new Vector2(CARD_W - 145, 22);
 
-        // Mood bar (simple filled rect)
+        // Mood bar background
         var moodBg = new GameObject("MoodBarBg");
         moodBg.transform.SetParent(card.transform, false);
         var moodBgImg = moodBg.AddComponent<Image>();
-        moodBgImg.color = new Color(0.2f, 0.2f, 0.25f);
+        moodBgImg.color = new Color(0.22f, 0.22f, 0.28f);
         moodBgImg.raycastTarget = false;
         var moodBgRT = moodBg.GetComponent<RectTransform>();
-        moodBgRT.anchorMin = new Vector2(0, 0); moodBgRT.anchorMax = new Vector2(1, 0);
-        moodBgRT.pivot = new Vector2(0, 0);
-        moodBgRT.offsetMin = new Vector2(135, 15); moodBgRT.offsetMax = new Vector2(-110, 28);
+        moodBgRT.anchorMin = new Vector2(0, 0.5f);
+        moodBgRT.anchorMax = new Vector2(0, 0.5f);
+        moodBgRT.pivot     = new Vector2(0, 0.5f);
+        moodBgRT.anchoredPosition = new Vector2(135, -18);
+        moodBgRT.sizeDelta = new Vector2(CARD_W - 260, 14);
 
         var moodFill = new GameObject("MoodBarFill");
         moodFill.transform.SetParent(moodBg.transform, false);
@@ -284,9 +317,10 @@ public class CastleViewUI : MonoBehaviour
         var moodFillRT = moodFill.GetComponent<RectTransform>();
         moodFillRT.anchorMin = Vector2.zero;
         moodFillRT.anchorMax = new Vector2(Mathf.Clamp01(npc.MoodScore / 100f), 1f);
-        moodFillRT.offsetMin = Vector2.zero; moodFillRT.offsetMax = Vector2.zero;
+        moodFillRT.offsetMin = Vector2.zero;
+        moodFillRT.offsetMax = Vector2.zero;
 
-        // Talk button
+        // Talk button — fixed position at right side of card
         var talkGO = new GameObject("TalkButton");
         talkGO.transform.SetParent(card.transform, false);
         var talkImg = talkGO.AddComponent<Image>();
@@ -294,22 +328,21 @@ public class CastleViewUI : MonoBehaviour
         var talkBtn = talkGO.AddComponent<Button>();
         talkBtn.targetGraphic = talkImg;
         var talkRT = talkGO.GetComponent<RectTransform>();
-        talkRT.anchorMin = new Vector2(1, 0); talkRT.anchorMax = new Vector2(1, 0);
-        talkRT.pivot = new Vector2(1, 0);
-        talkRT.offsetMin = new Vector2(-100, 10); talkRT.offsetMax = new Vector2(-10, 50);
-        talkRT.sizeDelta = new Vector2(90, 40);
+        talkRT.anchorMin = new Vector2(1, 0.5f);
+        talkRT.anchorMax = new Vector2(1, 0.5f);
+        talkRT.pivot     = new Vector2(1, 0.5f);
+        talkRT.anchoredPosition = new Vector2(-12, 0);
+        talkRT.sizeDelta = new Vector2(100, 44);
 
-        var talkLabelGO = new GameObject("Label");
-        talkLabelGO.transform.SetParent(talkGO.transform, false);
-        var talkLabel = talkLabelGO.AddComponent<TextMeshProUGUI>();
-        talkLabel.text = LocalizationManager.Instance?.Get("btn_talk") ?? "Talk";
-        talkLabel.fontSize = 18;
+        var talkLabel = CreateCardLabel(talkGO.transform, "Label",
+            LocalizationManager.Instance?.Get("btn_talk") ?? "Talk",
+            fontSize: 18, bold: true, color: Color.white);
         talkLabel.alignment = TextAlignmentOptions.Center;
-        talkLabel.color = Color.white;
-        talkLabel.raycastTarget = false;
-        var talkLabelRT = talkLabelGO.GetComponent<RectTransform>();
-        talkLabelRT.anchorMin = Vector2.zero; talkLabelRT.anchorMax = Vector2.one;
-        talkLabelRT.offsetMin = Vector2.zero; talkLabelRT.offsetMax = Vector2.zero;
+        var talkLabelRT = talkLabel.GetComponent<RectTransform>();
+        talkLabelRT.anchorMin = Vector2.zero;
+        talkLabelRT.anchorMax = Vector2.one;
+        talkLabelRT.offsetMin = Vector2.zero;
+        talkLabelRT.offsetMax = Vector2.zero;
 
         string capturedId = npc.Id;
         talkBtn.onClick.AddListener(() =>
@@ -317,6 +350,28 @@ public class CastleViewUI : MonoBehaviour
             _npcListPanel.SetActive(false);
             _npcInteractionUI?.OpenForNPC(capturedId);
         });
+    }
+
+    /// <summary>
+    /// Helper: creates a TMP label with word-wrap DISABLED. Critical — without
+    /// this, a label whose RectTransform width can't be resolved at build time
+    /// (because the parent hasn't run its layout pass yet) ends up 1 pixel wide
+    /// and TMP wraps every character to its own line.
+    /// </summary>
+    private static TextMeshProUGUI CreateCardLabel(Transform parent, string name, string text,
+        int fontSize, bool bold, Color color)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        var tmp = go.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = fontSize;
+        tmp.color = color;
+        tmp.fontStyle = bold ? FontStyles.Bold : FontStyles.Normal;
+        tmp.enableWordWrapping = false;
+        tmp.overflowMode = TextOverflowModes.Ellipsis;
+        tmp.raycastTarget = false;
+        return tmp;
     }
 
     private static Color ProfessionColor(NPCPersona.NPCProfession p) => p switch

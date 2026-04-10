@@ -228,5 +228,6 @@
   "pause_save": "Save",
   "pause_main_menu": "Main Menu",
   "btn_talk": "Talk",
-  "btn_build": "Build"
+  "btn_build": "Build",
+  "welcome_hint": "Welcome to your castle! Tap an NPC card to give commands, or use Build to construct buildings."
 }

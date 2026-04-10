@@ -116,6 +116,16 @@ public class TutorialSystem : MonoBehaviour
 
         _tutorialActive = true;
         _currentStepIndex = -1;
+
+        // CRITICAL: TutorialUI lives on an inactive TutorialOverlay GameObject, which
+        // means its Start() never runs and it never subscribes to OnStepStarted.
+        // We have to activate it BEFORE firing any events, so TutorialUI.Start has a
+        // chance to register its listeners. The deferred-one-frame coroutine below
+        // gives Unity time to run Awake/Start before the first step fires.
+        var tutorialUI = FindObjectOfType<TutorialUI>(includeInactive: true);
+        if (tutorialUI != null && !tutorialUI.gameObject.activeSelf)
+            tutorialUI.gameObject.SetActive(true);
+
         // Defer first step to end of frame so UI subscribers (TutorialUI.Start) have time to register
         StartCoroutine(DeferredAdvanceStep());
     }
