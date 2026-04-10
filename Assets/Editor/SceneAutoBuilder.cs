@@ -344,15 +344,24 @@ public static class SceneAutoBuilder
         SetAnchored(settBtn,  new Vector2(0, -180),  new Vector2(500, 80));
         SetAnchored(quitBtn,  new Vector2(0, -280),  new Vector2(500, 80));
 
+        // Version label (baked into panel, updated by MainMenuUI at runtime)
+        var ver = CreateTMPText(panel.transform, "VersionText", "v0.1.0 Alpha",
+            18, TextAlignmentOptions.Center, new Color(0.4f, 0.4f, 0.5f));
+        SetAnchored(ver, new Vector2(0, -400), new Vector2(400, 30));
+
         // Wire MainMenuUI
         var mmu = panel.GetComponent<MainMenuUI>();
         var soMM = new SerializedObject(mmu);
-        soMM.FindProperty("_startButton").objectReferenceValue    = startBtn.GetComponent<Button>();
-        soMM.FindProperty("_continueButton").objectReferenceValue = contBtn.GetComponent<Button>();
-        soMM.FindProperty("_settingsButton").objectReferenceValue = settBtn.GetComponent<Button>();
-        soMM.FindProperty("_quitButton").objectReferenceValue     = quitBtn.GetComponent<Button>();
+        // The visible green button is the player's "start a new game" click — wire it to
+        // _newGameButton so MainMenuUI.OnNewGameClicked() fires (not the modal confirm path).
+        soMM.FindProperty("_newGameButton").objectReferenceValue   = startBtn.GetComponent<Button>();
+        soMM.FindProperty("_continueButton").objectReferenceValue  = contBtn.GetComponent<Button>();
+        soMM.FindProperty("_settingsButton").objectReferenceValue  = settBtn.GetComponent<Button>();
+        soMM.FindProperty("_quitButton").objectReferenceValue      = quitBtn.GetComponent<Button>();
         soMM.FindProperty("_playerNameInput").objectReferenceValue = nameInput.GetComponent<TMP_InputField>();
-        soMM.FindProperty("_titleText").objectReferenceValue      = title.GetComponent<TextMeshProUGUI>();
+        soMM.FindProperty("_titleText").objectReferenceValue       = title.GetComponent<TextMeshProUGUI>();
+        soMM.FindProperty("_subtitleText").objectReferenceValue    = sub.GetComponent<TextMeshProUGUI>();
+        soMM.FindProperty("_versionText").objectReferenceValue     = ver.GetComponent<TextMeshProUGUI>();
         soMM.ApplyModifiedProperties();
 
         return panel;

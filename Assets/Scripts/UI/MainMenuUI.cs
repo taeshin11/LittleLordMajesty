@@ -89,20 +89,17 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnNewGameClicked()
     {
-        SetPanelActive(_nameInputPanel, true);
-        _playerNameInput?.Select();
-        _playerNameInput?.ActivateInputField();
-    }
-
-    private void OnStartNewGameConfirmed()
-    {
+        // Name input is inline in the main menu (no modal), so clicking New Game
+        // directly reads the field and starts the game. The old modal flow
+        // (_nameInputPanel + _startButton confirm) is unused.
         string name = _playerNameInput?.text?.Trim();
         if (string.IsNullOrEmpty(name))
             name = LocalizationManager.Instance?.Get("name_default_player") ?? "Lord";
 
-        SetPanelActive(_nameInputPanel, false);
         GameManager.Instance?.NewGame(name);
     }
+
+    private void OnStartNewGameConfirmed() => OnNewGameClicked();
 
     private void OnContinueClicked()
     {

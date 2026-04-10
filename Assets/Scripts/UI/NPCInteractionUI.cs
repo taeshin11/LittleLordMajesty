@@ -76,6 +76,7 @@ public class NPCInteractionUI : MonoBehaviour
         gameObject.SetActive(true);
         PopulateNPCInfo(npc);
         PopulateQuickCommands(npc.Profession);
+        RequestPortrait(npc);
         ClearChat();
 
         // Welcome message
@@ -83,6 +84,44 @@ public class NPCInteractionUI : MonoBehaviour
             ?? $"You approach {npc.Name}...");
 
         _commandInput?.ActivateInputField();
+    }
+
+    /// <summary>
+    /// Fire-and-forget portrait generation via Gemini 2.5 Flash Image. Served from disk
+    /// cache on repeat calls (zero API cost), generated once otherwise. The Image.sprite
+    /// swaps in when ready; the placeholder avatar stays visible until then.
+    /// </summary>
+    private void RequestPortrait(NPCManager.NPCData npc)
+    {
+        if (_npcAvatar == null || GeminiImageClient.Instance == null) return;
+
+        // Build a deterministic prompt per NPC so the hash stays stable across sessions
+        // and the same NPC always resolves from cache after first generation.
+        string professionKey = $"profession_{npc.Profession.ToString().ToLower()}";
+        string professionLoc = LocalizationManager.Instance?.Get(professionKey) ?? npc.Profession.ToString();
+        string prompt =
+            $"Medieval fantasy character portrait of {npc.Name}, a {npc.Profession} in a small lord's castle. " +
+            $"Head-and-shoulders view, looking slightly off-camera, painterly oil-painting style, " +
+            $"warm torchlight, earthy medieval colors, detailed face, subtle background of castle stone. " +
+            $"Character ID: {npc.Id}.";
+
+        // Cache the target Image so we don't swap the wrong portrait if the user closes
+        // the panel and opens a different NPC while generation is in flight.
+        var targetImage = _npcAvatar;
+        string requestedNpcId = npc.Id;
+
+        GeminiImageClient.Instance.GenerateImage(prompt,
+            onSuccess: tex =>
+            {
+                // Guard: only apply if the user is still viewing the same NPC.
+                if (_currentNPCId != requestedNpcId || targetImage == null) return;
+                var sprite = Sprite.Create(tex,
+                    new Rect(0, 0, tex.width, tex.height),
+                    new Vector2(0.5f, 0.5f));
+                targetImage.sprite = sprite;
+                targetImage.color = Color.white; // clear any placeholder tint
+            },
+            onError: err => Debug.LogWarning($"[NPCPortrait] Generation failed for {npc.Name}: {err}"));
     }
 
     private void PopulateNPCInfo(NPCManager.NPCData npc)

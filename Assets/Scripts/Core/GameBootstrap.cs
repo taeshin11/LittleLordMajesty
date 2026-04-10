@@ -45,6 +45,7 @@ public class GameBootstrap : MonoBehaviour
         yield return null;
 
         EnsureManager<GeminiAPIClient>("GeminiAPIClient");
+        EnsureManager<GeminiImageClient>("GeminiImageClient");
         SetProgress(0.4f, "AI system...");
         yield return null;
 
