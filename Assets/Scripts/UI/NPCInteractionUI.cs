@@ -221,10 +221,28 @@ public class NPCInteractionUI : MonoBehaviour
         });
     }
 
+    // The PlayerMessage/NPCMessage prefabs ship with root anchors pinned to
+    // (0.5, 0.5)+sizeDelta (100,100). Inside a VerticalLayoutGroup with
+    // childForceExpandWidth=true, the layout group ONLY expands the rect when
+    // the child's anchors are horizontal-stretch — otherwise the child stays
+    // 100 px wide and the TMP text word-wraps one character per line on any
+    // viewport narrower than the Editor's default. Force-stretch at instantiate
+    // time so we don't have to touch the prefab YAML on every ripple.
+    private static void ForceChatMessageStretch(GameObject msg)
+    {
+        var rt = msg.GetComponent<RectTransform>();
+        if (rt == null) return;
+        rt.anchorMin = new Vector2(0f, 0.5f);
+        rt.anchorMax = new Vector2(1f, 0.5f);
+        rt.pivot     = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(0f, rt.sizeDelta.y);
+    }
+
     private void AddPlayerMessage(string text)
     {
         if (_playerMessagePrefab == null) return;
         var msg = Instantiate(_playerMessagePrefab, _chatContentParent);
+        ForceChatMessageStretch(msg);
         var tmp = msg.GetComponentInChildren<TextMeshProUGUI>();
         if (tmp != null) tmp.text = text;
         ScrollToBottom();
@@ -233,8 +251,8 @@ public class NPCInteractionUI : MonoBehaviour
     private void AddNPCMessage(string text)
     {
         if (_npcMessagePrefab == null) return;
-        var npc = NPCManager.Instance?.GetNPC(_currentNPCId);
         var msg = Instantiate(_npcMessagePrefab, _chatContentParent);
+        ForceChatMessageStretch(msg);
         var tmp = msg.GetComponentInChildren<TextMeshProUGUI>();
         if (tmp != null) StartCoroutine(TypewriterEffect(tmp, text, 0.025f));
         ScrollToBottom();
@@ -264,6 +282,7 @@ public class NPCInteractionUI : MonoBehaviour
         if (show && _thinkingBubblePrefab != null)
         {
             _thinkingBubble = Instantiate(_thinkingBubblePrefab, _chatContentParent);
+            ForceChatMessageStretch(_thinkingBubble);
             ScrollToBottom();
         }
         else if (!show && _thinkingBubble != null)

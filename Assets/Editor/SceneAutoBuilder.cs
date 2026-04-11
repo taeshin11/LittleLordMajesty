@@ -445,7 +445,6 @@ public static class SceneAutoBuilder
             "",
             22, TextAlignmentOptions.Center, new Color(1f, 0.95f, 0.65f));
         SetAnchored(objective, new Vector2(0, 680), new Vector2(900, 60));
-        objective.GetComponent<TextMeshProUGUI>().enableWordWrapping = true;
 
         // Central NPC grid — big, ALWAYS visible. No more hidden drawer.
         // Fills most of the middle of the screen so NPCs are immediately obvious.
@@ -733,7 +732,6 @@ public static class SceneAutoBuilder
             "Event description appears here...",
             26, TextAlignmentOptions.Center, new Color(0.40f, 0.28f, 0.18f)); // Warm brown event desc
         SetAnchored(desc, new Vector2(0, 50), new Vector2(820, 250));
-        desc.GetComponent<TextMeshProUGUI>().enableWordWrapping = true;
 
         var responseField = CreateInputField(bg.transform, "ResponseField", "How do you respond?");
         SetAnchored(responseField, new Vector2(0, -200), new Vector2(820, 80));
@@ -1073,13 +1071,14 @@ public static class SceneAutoBuilder
             32, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown tutorial title
         SetAnchored(title, new Vector2(0, 100), new Vector2(800, 50));
 
-        // Description — multi-line, must wrap inside the dialogue box
+        // Description — multi-line, must wrap inside the dialogue box.
+        // 820 < 900 box width leaves 40 px margin each side. Word wrap is the
+        // default on CreateTMPText now; overflowMode=Ellipsis kicks in only if
+        // a single line physically can't fit.
         var desc = CreateTMPText(box.transform, "TutorialDesc", "",
             22, TextAlignmentOptions.TopLeft, new Color(0.40f, 0.28f, 0.18f)); // Warm brown tutorial desc
         SetAnchored(desc, new Vector2(0, 10), new Vector2(820, 180));
-        var descTMP = desc.GetComponent<TextMeshProUGUI>();
-        descTMP.enableWordWrapping = true;
-        descTMP.overflowMode       = TextOverflowModes.Ellipsis;
+        desc.GetComponent<TextMeshProUGUI>().overflowMode = TextOverflowModes.Ellipsis;
 
         // Next button
         var nextBtn = CreateButton(box.transform, "NextButton", "Next",
@@ -1263,6 +1262,20 @@ public static class SceneAutoBuilder
         return go;
     }
 
+    // When a RectTransform is auto-added via AddComponent<Image/TMP>() on a brand-new
+    // GameObject, Unity's default is anchors (0,0)-(1,1) stretch. Combined with a
+    // sizeDelta like (900,300), the rect balloons to parent_width+900 — symptom was
+    // the tutorial dialogue text and the NPC chat content overflowing the panel on
+    // mobile portrait. Every Create* helper below pins anchors + pivot to center
+    // so sizeDelta means "actual pixel size" and SetAnchored is deterministic.
+    static void PinCenterRect(RectTransform rt, Vector2 size)
+    {
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot     = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = size;
+    }
+
     static GameObject CreatePanel(Transform parent, string name, Color color, Vector2 size)
     {
         var go = new GameObject(name);
@@ -1272,8 +1285,7 @@ public static class SceneAutoBuilder
         // Defensive: a fully-transparent Image is almost never meant to be a click target.
         // Without this, invisible overlays silently eat clicks from everything beneath.
         if (color.a <= 0.001f) img.raycastTarget = false;
-        var rt = go.GetComponent<RectTransform>();
-        rt.sizeDelta = size;
+        PinCenterRect(go.GetComponent<RectTransform>(), size);
         return go;
     }
 
@@ -1287,12 +1299,16 @@ public static class SceneAutoBuilder
         tmp.fontSize = fontSize;
         tmp.alignment = align;
         tmp.color = color;
-        tmp.enableWordWrapping = false;
+        // Word wrap is ON by default — nothing in this project wants horizontal
+        // overflow, and having wrap=false as the default was how long labels
+        // shot off-screen right before SetAnchored pinned their width.
+        tmp.enableWordWrapping = true;
         // Rich text parser hits a stripped delegate in IL2CPP WebGL builds
         // (TMP_Text.ParseInputText → null function crash). None of our
         // procedural labels use <color>/<b>/<size> tags — disable richText
         // to force the short-circuit plain-text path.
         tmp.richText = false;
+        PinCenterRect(go.GetComponent<RectTransform>(), new Vector2(100, 30));
         return go;
     }
 
