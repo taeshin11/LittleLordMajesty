@@ -1073,10 +1073,13 @@ public static class SceneAutoBuilder
             32, TextAlignmentOptions.Center, new Color(0.95f, 0.85f, 0.4f));
         SetAnchored(title, new Vector2(0, 100), new Vector2(800, 50));
 
-        // Description
+        // Description — multi-line, must wrap inside the dialogue box
         var desc = CreateTMPText(box.transform, "TutorialDesc", "",
             22, TextAlignmentOptions.TopLeft, new Color(0.85f, 0.82f, 0.75f));
-        SetAnchored(desc, new Vector2(0, 20), new Vector2(800, 120));
+        SetAnchored(desc, new Vector2(0, 10), new Vector2(820, 180));
+        var descTMP = desc.GetComponent<TextMeshProUGUI>();
+        descTMP.enableWordWrapping = true;
+        descTMP.overflowMode       = TextOverflowModes.Ellipsis;
 
         // Next button
         var nextBtn = CreateButton(box.transform, "NextButton", "Next",

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
+using TMPro;
 
 /// <summary>
 /// Loads pre-generated NPC dialogue lines from
@@ -16,6 +17,7 @@ public static class LocalDialogueBank
 
     private static Dictionary<string, Dictionary<string, List<string>>> _bank;
     private static bool _loaded;
+    private static bool? _canRenderHangul;
 
     private static readonly System.Random _rng = new System.Random();
 
@@ -74,11 +76,29 @@ public static class LocalDialogueBank
     {
         EnsureLoaded();
         if (_bank == null) return null;
+        // Every line in the bank is Korean. If the default TMP font asset can't
+        // render Hangul (i.e. NotoSansKR isn't wired as a fallback yet), feeding
+        // a Korean string to TMP crashes the wasm runtime in
+        // TMP_FontAsset.TryAddCharacterInternal — so silently return null and
+        // let the caller fall back to English/Gemini.
+        if (!CanRenderHangul()) return null;
         if (!_professionToRole.TryGetValue(profession, out string roleId)) return null;
         if (!_bank.TryGetValue(roleId, out var slots)) return null;
         if (!_contextKeys.TryGetValue(context, out string ctxKey)) return null;
         if (!slots.TryGetValue(ctxKey, out var lines) || lines.Count == 0) return null;
         return lines[_rng.Next(lines.Count)];
+    }
+
+    private static bool CanRenderHangul()
+    {
+        if (_canRenderHangul.HasValue) return _canRenderHangul.Value;
+        // Probe the default TMP font for U+AC00 ('가') including the fallback
+        // chain. Returns true only if some font in the chain has the glyph.
+        var font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
+        _canRenderHangul = font != null && font.HasCharacter('\uAC00', searchFallbacks: true);
+        if (!_canRenderHangul.Value)
+            Debug.Log("[LocalDialogueBank] Hangul fallback font not present — Korean lines disabled");
+        return _canRenderHangul.Value;
     }
 
     /// <summary>True iff the bank has at least one line for the given slot.</summary>
