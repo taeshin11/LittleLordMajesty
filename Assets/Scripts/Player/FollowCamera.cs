@@ -15,7 +15,7 @@ public class FollowCamera : MonoBehaviour
     [SerializeField] private Transform _target;
     [Tooltip("World-space offset from target. Default gives a 3-quarter " +
              "isometric framing (above, behind, looking down).")]
-    [SerializeField] private Vector3 _offset = new Vector3(0f, 8f, -6f);
+    [SerializeField] private Vector3 _offset = new Vector3(0f, 10f, -7f);
     [Tooltip("Higher = snappier follow. 5 feels good at 60 FPS.")]
     [SerializeField] private float _smooth = 5f;
     [Tooltip("Point the camera at target.position + this. Slight upward " +

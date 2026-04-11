@@ -65,11 +65,101 @@ public class RoamingBootstrap : MonoBehaviour
         if (GameManager.Instance == null) return;
         if (GameManager.Instance.CurrentState != GameManager.GameState.Castle) return;
 
+        // M16-07 retire: hide the card-grid CastleViewPanel and legacy
+        // DialoguePanel. They're still in the scene (UIManager references
+        // survive), but they're inactive so the 3D roaming world is visible.
+        RetireLegacyCardUI();
+        // The old tutorial flow ('tap on Aldric') assumes card taps — skip
+        // it entirely on the roaming path until we author a walk-around
+        // tutorial.
+        SuppressLegacyTutorial();
+
+        BuildGround();
+        BuildRoamingCamera();
         BuildPlayer();
         WireCamera();
         SpawnNPCs();
         _spawned = true;
-        Debug.Log("[RoamingBootstrap] Player + follow camera + NPCs spawned");
+        Debug.Log("[RoamingBootstrap] Retired legacy UI, built roaming world");
+    }
+
+    private void RetireLegacyCardUI()
+    {
+        // Walk all UI panels and kill the ones that are part of the
+        // pre-pivot card experience. Identify by GameObject name instead
+        // of adding a new tag — avoids scene YAML churn.
+        string[] retireNames = {
+            "CastleViewPanel",
+            "DialoguePanel",
+        };
+        foreach (var name in retireNames)
+        {
+            var go = GameObject.Find(name);
+            if (go != null)
+            {
+                go.SetActive(false);
+                Debug.Log($"[RoamingBootstrap] Retired legacy UI: {name}");
+            }
+        }
+    }
+
+    private void SuppressLegacyTutorial()
+    {
+        var overlay = GameObject.Find("TutorialOverlay");
+        if (overlay != null)
+        {
+            overlay.SetActive(false);
+            Debug.Log("[RoamingBootstrap] Suppressed legacy tutorial overlay");
+        }
+        // Also tell TutorialSystem to consider it done so it doesn't
+        // reassert itself next frame.
+        var tut = TutorialSystem.Instance;
+        if (tut != null)
+        {
+            try { tut.enabled = false; } catch { }
+        }
+    }
+
+    private void BuildGround()
+    {
+        // A single flat quad at y=0 showing the pastel castle courtyard.
+        // No Unity Primitive API (the legacy CastleScene3D path crashed on
+        // WebGL with CreatePrimitive stripped colliders). Just a world-space
+        // sprite renderer rotated to lie flat. Lives in the active scene,
+        // not under the DontDestroyOnLoad bootstrap host.
+        var ground = new GameObject("RoamingGround");
+        ground.transform.position = Vector3.zero;
+        ground.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        ground.transform.localScale = new Vector3(30f, 18f, 1f);
+        var sr = ground.AddComponent<SpriteRenderer>();
+        var bg = Resources.Load<Sprite>("Art/Generated/bg_castle_courtyard");
+        if (bg != null) sr.sprite = bg;
+        else sr.color = new Color(0.75f, 0.85f, 0.65f); // pastel green fallback
+        sr.sortingOrder = -100;
+    }
+
+    private Camera _roamingCam;
+
+    private void BuildRoamingCamera()
+    {
+        // Disable any existing MainCamera so Camera.main resolves to ours.
+        // This also stops the legacy camera-pan crash path cold because
+        // nothing touches the old camera transform anymore.
+        var oldMain = Camera.main;
+        if (oldMain != null) oldMain.gameObject.SetActive(false);
+
+        var camGO = new GameObject("RoamingCamera");
+        // NOTE: don't parent under this GameObject (which gets DontDestroyOnLoad)
+        // — the camera must live in the active scene so it renders correctly.
+        _roamingCam = camGO.AddComponent<Camera>();
+        _roamingCam.clearFlags = CameraClearFlags.SolidColor;
+        _roamingCam.backgroundColor = new Color(0.78f, 0.92f, 0.96f); // pastel sky
+        _roamingCam.fieldOfView = 55f;
+        _roamingCam.nearClipPlane = 0.1f;
+        _roamingCam.farClipPlane = 500f;
+        _roamingCam.depth = 10; // draw after any existing cameras
+        try { camGO.tag = "MainCamera"; } catch { /* tag might be unused */ }
+        camGO.AddComponent<FollowCamera>();
     }
 
     private void SpawnNPCs()
@@ -113,6 +203,7 @@ public class RoamingBootstrap : MonoBehaviour
 
     private void BuildPlayer()
     {
+        // Spawn in the active scene, not under the DontDestroyOnLoad host.
         _player = new GameObject("Player");
         _player.transform.position = _playerSpawn;
 
@@ -158,9 +249,9 @@ public class RoamingBootstrap : MonoBehaviour
 
     private void WireCamera()
     {
-        var cam = Camera.main;
-        if (cam == null) return;
-        var follow = cam.GetComponent<FollowCamera>() ?? cam.gameObject.AddComponent<FollowCamera>();
+        if (_roamingCam == null) return;
+        var follow = _roamingCam.GetComponent<FollowCamera>()
+                  ?? _roamingCam.gameObject.AddComponent<FollowCamera>();
         follow.SetTarget(_player.transform);
     }
 }
