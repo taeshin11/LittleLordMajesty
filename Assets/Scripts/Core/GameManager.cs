@@ -77,18 +77,31 @@ public class GameManager : MonoBehaviour
     }
 
 #if !UNITY_EDITOR
-    // WebGL debug overlay — shows game state to diagnose black screen
+    // WebGL debug overlay — shows game state to diagnose black screen.
+    // GUIStyle is lazily cached (GUI.skin is not safe to touch before first OnGUI),
+    // and the Canvas reference is cached to avoid per-frame FindObjectOfType allocations.
+    private static GUIStyle _debugStyle;
+    private Canvas _cachedCanvas;
+    private float _nextCanvasRefresh;
+
     private void OnGUI()
     {
-        var style = new GUIStyle(GUI.skin.label) { fontSize = 18 };
-        style.normal.textColor = Color.yellow;
+        if (_debugStyle == null)
+        {
+            _debugStyle = new GUIStyle(GUI.skin.label) { fontSize = 18 };
+            _debugStyle.normal.textColor = Color.yellow;
+        }
+        if (_cachedCanvas == null && Time.unscaledTime >= _nextCanvasRefresh)
+        {
+            _cachedCanvas = FindFirstObjectByType<Canvas>();
+            _nextCanvasRefresh = Time.unscaledTime + 1f;
+        }
         float y = 10;
-        GUI.Label(new Rect(10, y, 800, 30), $"State: {_currentState}", style); y += 25;
-        GUI.Label(new Rect(10, y, 800, 30), $"UIManager: {(UIManager.Instance != null ? "OK" : "NULL")}", style); y += 25;
-        GUI.Label(new Rect(10, y, 800, 30), $"Scene: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}", style); y += 25;
-        GUI.Label(new Rect(10, y, 800, 30), $"Cameras: {Camera.allCamerasCount}", style); y += 25;
-        var canvas = FindObjectOfType<Canvas>();
-        GUI.Label(new Rect(10, y, 800, 30), $"Canvas: {(canvas != null ? canvas.name + " " + canvas.renderMode : "NULL")}", style); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), "State: " + _currentState, _debugStyle); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), "UIManager: " + (UIManager.Instance != null ? "OK" : "NULL"), _debugStyle); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), "Scene: " + UnityEngine.SceneManagement.SceneManager.GetActiveScene().name, _debugStyle); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), "Cameras: " + Camera.allCamerasCount, _debugStyle); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), _cachedCanvas != null ? "Canvas: " + _cachedCanvas.name + " " + _cachedCanvas.renderMode : "Canvas: NULL", _debugStyle);
     }
 #endif
 

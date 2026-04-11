@@ -140,22 +140,35 @@ public class TutorialUI : MonoBehaviour
         }
     }
 
+    private Canvas _rootCanvas;
+
     private GameObject FindUIElement(string elementName)
     {
         // Unity fake-null: destroyed objects pass C# null check but fail Unity ==
         if (_uiElementCache.TryGetValue(elementName, out var cached))
         {
             if (cached != null) return cached;
-            _uiElementCache.Remove(elementName); // Stale entry after scene reload
+            _uiElementCache.Remove(elementName);
         }
 
-        foreach (var obj in FindObjectsByType<RectTransform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        // Walk only the root Canvas hierarchy instead of scanning every RectTransform in the scene.
+        // The scene scan was the main alloc hotspot on tutorial step transitions.
+        if (_rootCanvas == null) _rootCanvas = GetComponentInParent<Canvas>();
+        var root = _rootCanvas != null ? _rootCanvas.transform : transform.root;
+        var found = FindInChildren(root, elementName);
+        if (found != null) _uiElementCache[elementName] = found;
+        return found;
+    }
+
+    private static GameObject FindInChildren(Transform parent, string name)
+    {
+        if (parent == null) return null;
+        if (parent.name == name) return parent.gameObject;
+        int count = parent.childCount;
+        for (int i = 0; i < count; i++)
         {
-            if (obj.gameObject.name == elementName)
-            {
-                _uiElementCache[elementName] = obj.gameObject;
-                return obj.gameObject;
-            }
+            var hit = FindInChildren(parent.GetChild(i), name);
+            if (hit != null) return hit;
         }
         return null;
     }

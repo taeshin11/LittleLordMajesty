@@ -9,6 +9,24 @@ public class KeyboardShortcuts : MonoBehaviour
 {
 #if !UNITY_ANDROID && !UNITY_IOS
 
+    // Cached lazily on first keypress — never re-searched once resolved.
+    private CastleViewUI _cachedCastleUI;
+    private NPCInteractionUI _cachedInteractionUI;
+
+    private CastleViewUI GetCastleUI()
+    {
+        if (_cachedCastleUI == null)
+            _cachedCastleUI = FindFirstObjectByType<CastleViewUI>(FindObjectsInactive.Include);
+        return _cachedCastleUI;
+    }
+
+    private NPCInteractionUI GetInteractionUI()
+    {
+        if (_cachedInteractionUI == null)
+            _cachedInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include);
+        return _cachedInteractionUI;
+    }
+
     private void Update()
     {
         if (GameManager.Instance == null) return;
@@ -36,10 +54,7 @@ public class KeyboardShortcuts : MonoBehaviour
         {
             // B = Open build menu
             if (Input.GetKeyDown(KeyCode.B))
-            {
-                var castleUI = FindObjectOfType<CastleViewUI>();
-                castleUI?.ToggleBuildingMenuFromKeyboard();
-            }
+                GetCastleUI()?.ToggleBuildingMenuFromKeyboard();
 
             // M = World Map
             if (Input.GetKeyDown(KeyCode.M))
@@ -47,10 +62,7 @@ public class KeyboardShortcuts : MonoBehaviour
 
             // N = NPC list
             if (Input.GetKeyDown(KeyCode.N))
-            {
-                var castleUI = FindObjectOfType<CastleViewUI>();
-                castleUI?.ToggleNPCListFromKeyboard();
-            }
+                GetCastleUI()?.ToggleNPCListFromKeyboard();
 
             // Tab = Cycle through NPCs
             if (Input.GetKeyDown(KeyCode.Tab))
@@ -80,8 +92,7 @@ public class KeyboardShortcuts : MonoBehaviour
         // Open the rich NPC chat panel via NPCInteractionUI (single entry point).
         // Do NOT also call UIManager.OpenDialogue — that is the separate 3D-click path
         // and calling both would cause commands to double-fire.
-        var interactionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include);
-        interactionUI?.OpenForNPC(npcs[0].Id);
+        GetInteractionUI()?.OpenForNPC(npcs[0].Id);
     }
 
 #endif

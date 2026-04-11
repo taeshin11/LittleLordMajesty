@@ -328,8 +328,8 @@ public class CastleViewUI : MonoBehaviour
         nameRT.anchoredPosition = new Vector2(0, 82);
         nameRT.sizeDelta = new Vector2(0, 30);
 
-        // Profession label under the name
-        string profKey = $"profession_{npc.Profession.ToString().ToLower()}";
+        // Profession label under the name (cached localization key — no per-card alloc)
+        string profKey = NPCManager.GetProfessionLocKey(npc.Profession);
         string professionText = LocalizationManager.Instance?.Get(profKey) ?? npc.Profession.ToString();
         var profText = CreateCardLabel(card.transform, "Profession", professionText,
             fontSize: 17, bold: false, color: new Color(0.78f, 0.78f, 0.85f));
@@ -410,12 +410,15 @@ public class CastleViewUI : MonoBehaviour
     /// </summary>
     private static string ProfessionInitial(NPCPersona.NPCProfession p) => p switch
     {
-        NPCPersona.NPCProfession.Soldier          => "⚔",
+        // NOTE: Keep every glyph in the basic Latin range. LiberationSans SDF has no
+        // glyph for ⚔/✝/♥/⚙/➤/☰, and TMP's dynamic font-fallback path hits a null
+        // function pointer on WebGL IL2CPP → "RuntimeError: null function".
+        NPCPersona.NPCProfession.Soldier          => "So",
         NPCPersona.NPCProfession.Farmer           => "F",
         NPCPersona.NPCProfession.Merchant         => "M",
         NPCPersona.NPCProfession.Vassal           => "V",
         NPCPersona.NPCProfession.Scholar          => "S",
-        NPCPersona.NPCProfession.Priest           => "✝",
+        NPCPersona.NPCProfession.Priest           => "P",
         NPCPersona.NPCProfession.Spy              => "?",
         NPCPersona.NPCProfession.Blacksmith       => "B",
         NPCPersona.NPCProfession.Healer           => "H",

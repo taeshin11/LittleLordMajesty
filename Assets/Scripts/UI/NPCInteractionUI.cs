@@ -97,7 +97,7 @@ public class NPCInteractionUI : MonoBehaviour
 
         // Build a deterministic prompt per NPC so the hash stays stable across sessions
         // and the same NPC always resolves from cache after first generation.
-        string professionKey = $"profession_{npc.Profession.ToString().ToLower()}";
+        string professionKey = NPCManager.GetProfessionLocKey(npc.Profession);
         string professionLoc = LocalizationManager.Instance?.Get(professionKey) ?? npc.Profession.ToString();
         string prompt =
             $"Medieval fantasy character portrait of {npc.Name}, a {npc.Profession} in a small lord's castle. " +
@@ -130,7 +130,7 @@ public class NPCInteractionUI : MonoBehaviour
             _npcName.text = npc.Name;
 
         if (_npcProfession != null)
-            _npcProfession.text = LocalizationManager.Instance?.Get($"profession_{npc.Profession.ToString().ToLower()}")
+            _npcProfession.text = LocalizationManager.Instance?.Get(NPCManager.GetProfessionLocKey(npc.Profession))
                                   ?? npc.Profession.ToString();
 
         if (_moodSlider != null) _moodSlider.value = npc.MoodScore / 100f;
@@ -143,7 +143,7 @@ public class NPCInteractionUI : MonoBehaviour
         }
 
         if (_loyaltyText != null)
-            _loyaltyText.text = $"♥ {npc.LoyaltyToLord}/100";
+            _loyaltyText.text = $"Loyalty {npc.LoyaltyToLord}/100";
 
         if (_currentTaskText != null)
             _currentTaskText.text = string.IsNullOrEmpty(npc.CurrentTask)

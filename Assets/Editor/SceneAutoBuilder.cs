@@ -457,8 +457,11 @@ public static class SceneAutoBuilder
         var saveBtn     = CreateButton(actionBar.transform, "SaveButton",    "Save",     new Color(0.2f, 0.5f, 0.3f));
         var npcListBtn  = CreateButton(actionBar.transform, "NPCListButton", "NPCs",     new Color(0.4f, 0.2f, 0.6f));
         var worldMapBtn = CreateButton(actionBar.transform, "WorldMapButton","Map",      new Color(0.5f, 0.3f, 0.1f));
-        var settingsBtn = CreateButton(actionBar.transform, "SettingsButton","⚙",        new Color(0.25f, 0.25f, 0.30f));
-        var menuBtn     = CreateButton(actionBar.transform, "MenuButton",    "☰",        new Color(0.25f, 0.25f, 0.25f));
+        // NOTE: Do NOT use ⚙ (U+2699). LiberationSans SDF has no glyph for it, and the
+        // TMP dynamic font-fallback lookup path hits a null function pointer on WebGL IL2CPP,
+        // crashing the main loop with "RuntimeError: null function or function signature mismatch".
+        var settingsBtn = CreateButton(actionBar.transform, "SettingsButton","*",        new Color(0.25f, 0.25f, 0.30f));
+        var menuBtn     = CreateButton(actionBar.transform, "MenuButton",    "=",        new Color(0.25f, 0.25f, 0.25f));
 
         SetAnchored(buildBtn,    new Vector2(-430, 0), new Vector2(150, 70));
         SetAnchored(saveBtn,     new Vector2(-270, 0), new Vector2(130, 70));
@@ -572,7 +575,7 @@ public static class SceneAutoBuilder
         SetupSliderVisuals(moodBarGO, moodSlider, new Color(0.2f, 0.8f, 0.3f));
 
         // Close button
-        var closeBtn = CreateButton(infoBar.transform, "CloseButton", "✕", new Color(0.5f, 0.2f, 0.2f));
+        var closeBtn = CreateButton(infoBar.transform, "CloseButton", "X", new Color(0.5f, 0.2f, 0.2f));
         SetAnchored(closeBtn, new Vector2(480, 0), new Vector2(70, 70));
 
         // Chat scroll view
@@ -647,7 +650,7 @@ public static class SceneAutoBuilder
         var cmdInput = CreateInputField(inputBar.transform, "CommandInput", "Issue a command...");
         SetAnchored(cmdInput, new Vector2(-90, 0), new Vector2(850, 75));
 
-        var sendBtn = CreateButton(inputBar.transform, "SendButton", "➤", new Color(0.3f, 0.6f, 0.2f));
+        var sendBtn = CreateButton(inputBar.transform, "SendButton", ">", new Color(0.3f, 0.6f, 0.2f));
         SetAnchored(sendBtn, new Vector2(440, 0), new Vector2(85, 75));
 
         // TTS toggle
@@ -772,7 +775,7 @@ public static class SceneAutoBuilder
             48, TextAlignmentOptions.Center, Color.white);
         SetAnchored(header, new Vector2(0, 800), new Vector2(600, 80));
 
-        var closeBtn = CreateButton(panel.transform, "CloseButton", "✕", new Color(0.3f, 0.3f, 0.3f));
+        var closeBtn = CreateButton(panel.transform, "CloseButton", "X", new Color(0.3f, 0.3f, 0.3f));
         SetAnchored(closeBtn, new Vector2(-450, 800), new Vector2(90, 70));
 
         // Language row
@@ -972,7 +975,7 @@ public static class SceneAutoBuilder
             40, TextAlignmentOptions.Center, new Color(0.7f, 0.9f, 0.7f));
         SetAnchored(header, new Vector2(0, 850), new Vector2(600, 70));
 
-        var closeBtn = CreateButton(panel.transform, "CloseButton", "← Castle", new Color(0.2f, 0.3f, 0.2f));
+        var closeBtn = CreateButton(panel.transform, "CloseButton", "< Castle", new Color(0.2f, 0.3f, 0.2f));
         SetAnchored(closeBtn, new Vector2(-400, 850), new Vector2(220, 65));
 
         var mapContainer = new GameObject("MapContainer"); mapContainer.transform.SetParent(panel.transform, false);

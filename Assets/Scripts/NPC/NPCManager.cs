@@ -271,6 +271,20 @@ public class NPCManager : MonoBehaviour
     public NPCData GetNPC(string id) =>
         _npcLookup.TryGetValue(id, out var npc) ? npc : null;
 
+    // Cached lowercased enum names for the "profession_{key}" localization lookup.
+    // Without this, every NPC card build allocated two strings per NPC per refresh
+    // (Profession.ToString() + .ToLower()).
+    private static readonly Dictionary<NPCPersona.NPCProfession, string> _professionKeys = BuildProfessionKeys();
+    private static Dictionary<NPCPersona.NPCProfession, string> BuildProfessionKeys()
+    {
+        var map = new Dictionary<NPCPersona.NPCProfession, string>();
+        foreach (NPCPersona.NPCProfession p in Enum.GetValues(typeof(NPCPersona.NPCProfession)))
+            map[p] = "profession_" + p.ToString().ToLowerInvariant();
+        return map;
+    }
+    public static string GetProfessionLocKey(NPCPersona.NPCProfession p) =>
+        _professionKeys.TryGetValue(p, out var k) ? k : "profession_unknown";
+
     public void RegisterRoutine(NPCDailyRoutine routine)
     {
         if (routine == null || string.IsNullOrEmpty(routine.NpcId)) return;

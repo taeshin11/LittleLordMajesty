@@ -401,8 +401,10 @@ public class GeminiAPIClient : MonoBehaviour
 
         if (webRequest.result == UnityWebRequest.Result.Success)
         {
-            // Parse SSE response — each chunk is "data: {json}\n\n"
-            string fullText = "";
+            // Parse SSE response — each chunk is "data: {json}\n\n".
+            // Use StringBuilder instead of += concatenation; the old path was O(n²)
+            // over a stream that can be 10+ chunks per response.
+            var fullText = new StringBuilder(512);
             string[] lines = webRequest.downloadHandler.text.Split('\n');
             foreach (string line in lines)
             {
@@ -416,13 +418,13 @@ public class GeminiAPIClient : MonoBehaviour
                     string partText = chunk?.candidates?[0]?.content?.parts?[0]?.text ?? "";
                     if (!string.IsNullOrEmpty(partText))
                     {
-                        fullText += partText;
+                        fullText.Append(partText);
                         onChunk?.Invoke(partText);
                     }
                 }
                 catch { /* skip malformed chunks */ }
             }
-            onComplete?.Invoke(fullText);
+            onComplete?.Invoke(fullText.ToString());
         }
         else
         {
