@@ -21,59 +21,85 @@ from __future__ import annotations
 import argparse, os, sys, time
 from pathlib import Path
 
+# Force UTF-8 on stdout/stderr so non-ASCII prints (arrows, em-dashes) from
+# diffusers/transformers warnings don't crash on Windows cp949 consoles.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+import faulthandler
+faulthandler.enable()
+
 OUT_DIR = Path(__file__).resolve().parents[2] / "Assets" / "Resources" / "Art" / "Generated"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # (filename_stem, prompt, width, height)
+#
+# Style target: Zelda Echoes of Wisdom — bright pastel toy diorama, isometric
+# 3-quarter view, soft Nintendo-style lighting, chibi proportions, no
+# painterly/oil/cinematic vocabulary. Anchors duplicated up front because
+# SDXL base 1.0 weights early tokens more heavily.
+STYLE_BG = (
+    "cute isometric diorama, miniature toy world, pastel storybook colors, "
+    "soft Nintendo style, bright sky blue and pastel green, thick clean outlines, "
+    "low-poly stylized shapes, soft cel-shaded lighting, no harsh shadows, "
+    "Zelda Echoes of Wisdom inspired, charming cozy mood"
+)
 BACKGROUNDS = [
     ("bg_main_menu",
-     "Dramatic medieval fantasy kingdom painting, a young lord standing on a high "
-     "castle balcony at dusk overlooking a vast kingdom with rolling hills, distant "
-     "villages, glowing sunset sky, painterly oil-painting style, cinematic lighting, "
-     "warm golden tones, atmospheric haze, highly detailed, epic mood, "
-     "wide establishing shot",
+     f"{STYLE_BG}, tiny medieval castle on a small grassy hill floating like a "
+     f"toy island, fluffy round clouds, pastel sunset gradient sky, distant "
+     f"miniature village rooftops, friendly cozy fantasy kingdom, "
+     f"3-quarter top-down isometric view, no text",
      1024, 576),
     ("bg_castle_courtyard",
-     "Medieval fantasy castle courtyard at golden hour, painterly oil-painting style, "
-     "warm torchlight, stone walls, wooden scaffolding, distant towers, dramatic sky, "
-     "atmospheric depth, no characters, cinematic wide establishing shot, "
-     "detailed background art, fantasy concept art",
+     f"{STYLE_BG}, tiny stylized medieval castle courtyard, smooth pastel cobblestones, "
+     f"small wooden market stalls, round potted plants, tiny banners, soft daylight, "
+     f"no characters, 3-quarter top-down isometric view, no text",
      1024, 576),
     ("bg_world_map",
-     "Medieval fantasy hand-drawn world map on weathered parchment, rolling hills, "
-     "dark forests, distant mountains, small castle icons, faded ink lines, "
-     "subtle compass rose in the corner, sepia tones, cartographer's style, "
-     "no text or labels",
+     f"{STYLE_BG}, tiny stylized fantasy world map seen as a 3D toy diorama, "
+     f"pastel green rolling hills, mint forests, small puffy mountains, tiny "
+     f"castle and village icons sitting on the terrain, soft pastel ocean, "
+     f"3-quarter top-down isometric view, no text or labels",
      1024, 576),
     ("bg_battle_field",
-     "Medieval fantasy battlefield at dusk, churned mud, tattered banners, "
-     "smoke drifting across, distant siege towers, dramatic stormy sky, "
-     "painterly oil-painting style, no characters foreground, cinematic wide shot",
+     f"{STYLE_BG}, tiny stylized open meadow with soft pastel grass, scattered "
+     f"colorful flags planted in the ground, round bushes, distant rolling hills, "
+     f"friendly and adventurous mood (NOT scary), no characters, "
+     f"3-quarter top-down isometric view, no text",
      1024, 576),
 ]
 
 # (npc_id, npc_name, profession_word, vibe_words)
 PORTRAITS = [
     ("vassal_01",   "Aldric", "elderly steward",
-     "wise, pragmatic, gray beard, kind eyes, simple noble robes"),
-    ("soldier_01",  "Bram",   "young soldier",
-     "eager, brave, short brown hair, scarred chin, leather and chainmail"),
-    ("farmer_01",   "Marta",  "middle-aged farmer woman",
-     "sturdy, weathered face, tied-back brown hair, sun-tanned skin, simple linen dress"),
+     "kind grandpa, white beard, rosy cheeks, soft purple robes, gentle smile"),
+    ("soldier_01",  "Bram",   "young guard",
+     "brave kid, short brown hair, freckles, light blue tunic, tiny round wooden shield"),
+    ("farmer_01",   "Marta",  "cheerful farmer",
+     "round friendly woman, braided brown hair, pink apron, holding a tiny basket of fruit"),
     ("merchant_01", "Sivaro", "traveling merchant",
-     "shrewd, slim, dark goatee, calculating eyes, colorful traveling cloak with coin pouches"),
+     "skinny smiling man, small goatee, bright teal traveling coat, big floppy hat with a feather"),
 ]
 
+STYLE_PORTRAIT = (
+    "cute chibi character, big head small body, oversized round eyes, soft pastel colors, "
+    "thick clean outlines, soft cel-shaded toon shading, friendly expression, "
+    "Zelda Echoes of Wisdom inspired, Nintendo soft palette, charming storybook style, "
+    "low-poly stylized figurine look"
+)
 PORTRAIT_PROMPT_TEMPLATE = (
-    "Medieval fantasy character portrait of {name}, a {profession} in a small lord's castle. "
-    "{vibe}. Head-and-shoulders view, looking slightly off-camera, painterly oil-painting style, "
-    "warm torchlight, earthy medieval colors, detailed face, subtle background of castle stone, "
-    "concept art quality"
+    f"{STYLE_PORTRAIT}, full body chibi portrait of {{name}}, a {{profession}} in a small "
+    f"medieval kingdom. {{vibe}}. Standing on a tiny round pastel grass tile, plain soft "
+    f"pastel mint background, centered, no text"
 )
 
 NEGATIVE = (
-    "modern clothes, cars, neon, anime, cartoon, watermark, signature, text, "
-    "letters, blurry, low quality, deformed face, extra limbs, frame, border"
+    "photorealistic, oil painting, dark, gritty, scary, dramatic shadows, "
+    "cinematic, concept art, painterly, ugly, deformed, watermark, signature, "
+    "text, letters, blurry, low quality, extra limbs, frame, border"
 )
 
 
@@ -87,11 +113,19 @@ def load_pipe():
         variant="fp16",
         use_safetensors=True,
     )
-    # 24 GB VRAM on the 4090 — keep the whole pipe on GPU instead of cpu_offload.
+    # Use cpu_offload when other jobs (e.g. xray training) already occupy the
+    # 4090 — keeps peak VRAM under ~4 GB at the cost of a few seconds per image.
     if torch.cuda.is_available():
-        pipe.to("cuda")
-        print(f"[img] CUDA: {torch.cuda.get_device_name(0)} "
-              f"({torch.cuda.get_device_properties(0).total_memory // (1024**3)} GB)")
+        free_b, _ = torch.cuda.mem_get_info()
+        free_gb = free_b / (1024**3)
+        print(f"[img] CUDA: {torch.cuda.get_device_name(0)} - free {free_gb:.1f} GB",
+              flush=True)
+        # Always use model_cpu_offload: the xray training job on the same
+        # GPU can spike VRAM unpredictably, and a silent CUDA OOM on Windows
+        # kills python with exit 1 and no traceback. Offload trades ~2-3s
+        # per image for robustness.
+        print("[img] Enabling model_cpu_offload (shared GPU)", flush=True)
+        pipe.enable_model_cpu_offload()
     else:
         print("[img] WARNING: no CUDA, running on CPU (very slow)")
     return pipe
@@ -135,7 +169,7 @@ def main():
             gen_image(pipe, prompt, 512, 512, out,
                       seed=hash(npc_id) & 0x7fffffff, steps=args.steps)
 
-    print(f"[img] DONE → {OUT_DIR}")
+    print(f"[img] DONE -> {OUT_DIR}")
 
 
 if __name__ == "__main__":
