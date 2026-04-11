@@ -414,10 +414,13 @@ public static class SceneAutoBuilder
         rsRT.pivot = new Vector2(0.5f, 1);
         rsRT.offsetMin = new Vector2(0, -180); rsRT.offsetMax = new Vector2(0, -120);
 
-        var woodTxt = CreateTMPText(resStrip.transform, "WoodText",  "🪵 500", 24, TextAlignmentOptions.Center, new Color(0.7f, 0.5f, 0.3f));
-        var foodTxt = CreateTMPText(resStrip.transform, "FoodText",  "🌾 500", 24, TextAlignmentOptions.Center, new Color(0.4f, 0.8f, 0.3f));
-        var goldTxt = CreateTMPText(resStrip.transform, "GoldText",  "💰 200", 24, TextAlignmentOptions.Center, new Color(0.9f, 0.75f, 0.1f));
-        var popTxt  = CreateTMPText(resStrip.transform, "PopulationText", "👥 20/50", 24, TextAlignmentOptions.Center, Color.white);
+        // NOTE: All resource labels use PLAIN ASCII only. Emoji glyphs (wood/food/gold/people)
+        // are NOT in LiberationSans SDF and hit the TMP dynamic-fallback null-function crash
+        // on WebGL IL2CPP. The colored label acts as the visual cue instead of an icon.
+        var woodTxt = CreateTMPText(resStrip.transform, "WoodText",  "Wood 500", 24, TextAlignmentOptions.Center, new Color(0.85f, 0.62f, 0.35f));
+        var foodTxt = CreateTMPText(resStrip.transform, "FoodText",  "Food 500", 24, TextAlignmentOptions.Center, new Color(0.55f, 0.9f,  0.35f));
+        var goldTxt = CreateTMPText(resStrip.transform, "GoldText",  "Gold 200", 24, TextAlignmentOptions.Center, new Color(1.00f, 0.85f, 0.20f));
+        var popTxt  = CreateTMPText(resStrip.transform, "PopulationText", "Pop 20/50", 24, TextAlignmentOptions.Center, Color.white);
 
         SetAnchored(woodTxt, new Vector2(-380, 0), new Vector2(200, 50));
         SetAnchored(foodTxt, new Vector2(-130, 0), new Vector2(200, 50));
@@ -425,8 +428,9 @@ public static class SceneAutoBuilder
         SetAnchored(popTxt,  new Vector2( 370, 0), new Vector2(200, 50));
 
         // Objective banner — single-line hint at the top telling the player what to do.
+        // Plain ASCII default; CastleViewUI swaps in the localized string at runtime.
         var objective = CreateTMPText(panel.transform, "ObjectiveText",
-            "영주님의 성에 오신 것을 환영합니다. 아래 신하 카드를 눌러 대화를 시작하세요.",
+            "Welcome to your castle. Tap a vassal card below to begin.",
             26, TextAlignmentOptions.Center, new Color(1f, 0.95f, 0.65f));
         SetAnchored(objective, new Vector2(0, 680), new Vector2(1000, 60));
         objective.GetComponent<TextMeshProUGUI>().enableWordWrapping = false;
@@ -460,15 +464,20 @@ public static class SceneAutoBuilder
         // NOTE: Do NOT use ⚙ (U+2699). LiberationSans SDF has no glyph for it, and the
         // TMP dynamic font-fallback lookup path hits a null function pointer on WebGL IL2CPP,
         // crashing the main loop with "RuntimeError: null function or function signature mismatch".
-        var settingsBtn = CreateButton(actionBar.transform, "SettingsButton","*",        new Color(0.25f, 0.25f, 0.30f));
-        var menuBtn     = CreateButton(actionBar.transform, "MenuButton",    "=",        new Color(0.25f, 0.25f, 0.25f));
+        // Plain-ASCII word labels instead of * and = placeholders — far more legible
+        // and avoids any ambiguity about what the icon-like button does.
+        var settingsBtn = CreateButton(actionBar.transform, "SettingsButton","Options",  new Color(0.30f, 0.30f, 0.38f));
+        var menuBtn     = CreateButton(actionBar.transform, "MenuButton",    "Pause",    new Color(0.30f, 0.30f, 0.30f));
 
-        SetAnchored(buildBtn,    new Vector2(-430, 0), new Vector2(150, 70));
-        SetAnchored(saveBtn,     new Vector2(-270, 0), new Vector2(130, 70));
-        SetAnchored(npcListBtn,  new Vector2(-100, 0), new Vector2(150, 70));
-        SetAnchored(worldMapBtn, new Vector2(  80, 0), new Vector2(150, 70));
-        SetAnchored(settingsBtn, new Vector2( 250, 0), new Vector2( 90, 70));
-        SetAnchored(menuBtn,     new Vector2( 400, 0), new Vector2( 90, 70));
+        // Uniform button widths so the action bar reads as a single row of equals.
+        // Previously settings/menu were crammed into 90-wide slots that truncated their
+        // labels; now they match the others at 150.
+        SetAnchored(buildBtn,    new Vector2(-480, 0), new Vector2(150, 72));
+        SetAnchored(saveBtn,     new Vector2(-320, 0), new Vector2(150, 72));
+        SetAnchored(npcListBtn,  new Vector2(-160, 0), new Vector2(150, 72));
+        SetAnchored(worldMapBtn, new Vector2(   0, 0), new Vector2(150, 72));
+        SetAnchored(settingsBtn, new Vector2( 160, 0), new Vector2(150, 72));
+        SetAnchored(menuBtn,     new Vector2( 320, 0), new Vector2(150, 72));
 
         // Notification banner
         var notifBanner = CreatePanel(panel.transform, "NotificationBanner",
@@ -557,8 +566,10 @@ public static class SceneAutoBuilder
             22, TextAlignmentOptions.Left, new Color(0.6f, 0.6f, 0.8f));
         SetAnchored(npcProf, new Vector2(-250, -5), new Vector2(300, 35));
 
-        var loyaltyTxt = CreateTMPText(infoBar.transform, "LoyaltyText", "♥ 75/100",
-            20, TextAlignmentOptions.Right, new Color(0.9f, 0.4f, 0.4f));
+        // Plain-ASCII "Loyalty" prefix — the heart glyph has no LiberationSans SDF entry
+        // and would trip the TMP fallback null-function crash on WebGL IL2CPP.
+        var loyaltyTxt = CreateTMPText(infoBar.transform, "LoyaltyText", "Loyalty 75/100",
+            20, TextAlignmentOptions.Right, new Color(0.95f, 0.55f, 0.55f));
         SetAnchored(loyaltyTxt, new Vector2(400, 35), new Vector2(200, 35));
 
         var taskTxt = CreateTMPText(infoBar.transform, "CurrentTask", "Idle",
@@ -574,9 +585,9 @@ public static class SceneAutoBuilder
         moodRT.sizeDelta = new Vector2(200, 16);
         SetupSliderVisuals(moodBarGO, moodSlider, new Color(0.2f, 0.8f, 0.3f));
 
-        // Close button
-        var closeBtn = CreateButton(infoBar.transform, "CloseButton", "X", new Color(0.5f, 0.2f, 0.2f));
-        SetAnchored(closeBtn, new Vector2(480, 0), new Vector2(70, 70));
+        // Close button — word label instead of a lone X. Wider slot so the text fits.
+        var closeBtn = CreateButton(infoBar.transform, "CloseButton", "Close", new Color(0.55f, 0.25f, 0.25f));
+        SetAnchored(closeBtn, new Vector2(460, 0), new Vector2(130, 60));
 
         // Chat scroll view
         var chatScroll = new GameObject("ChatScrollRect"); chatScroll.transform.SetParent(panel.transform, false);
@@ -650,8 +661,8 @@ public static class SceneAutoBuilder
         var cmdInput = CreateInputField(inputBar.transform, "CommandInput", "Issue a command...");
         SetAnchored(cmdInput, new Vector2(-90, 0), new Vector2(850, 75));
 
-        var sendBtn = CreateButton(inputBar.transform, "SendButton", ">", new Color(0.3f, 0.6f, 0.2f));
-        SetAnchored(sendBtn, new Vector2(440, 0), new Vector2(85, 75));
+        var sendBtn = CreateButton(inputBar.transform, "SendButton", "Send", new Color(0.32f, 0.62f, 0.25f));
+        SetAnchored(sendBtn, new Vector2(435, 0), new Vector2(120, 75));
 
         // TTS toggle
         var ttsToggleGO = new GameObject("TTSToggle"); ttsToggleGO.transform.SetParent(inputBar.transform, false);
@@ -775,8 +786,8 @@ public static class SceneAutoBuilder
             48, TextAlignmentOptions.Center, Color.white);
         SetAnchored(header, new Vector2(0, 800), new Vector2(600, 80));
 
-        var closeBtn = CreateButton(panel.transform, "CloseButton", "X", new Color(0.3f, 0.3f, 0.3f));
-        SetAnchored(closeBtn, new Vector2(-450, 800), new Vector2(90, 70));
+        var closeBtn = CreateButton(panel.transform, "CloseButton", "Close", new Color(0.32f, 0.32f, 0.36f));
+        SetAnchored(closeBtn, new Vector2(-430, 800), new Vector2(150, 70));
 
         // Language row
         var langLabel = CreateTMPText(panel.transform, "LangLabel", "Language",
@@ -975,8 +986,9 @@ public static class SceneAutoBuilder
             40, TextAlignmentOptions.Center, new Color(0.7f, 0.9f, 0.7f));
         SetAnchored(header, new Vector2(0, 850), new Vector2(600, 70));
 
-        var closeBtn = CreateButton(panel.transform, "CloseButton", "< Castle", new Color(0.2f, 0.3f, 0.2f));
-        SetAnchored(closeBtn, new Vector2(-400, 850), new Vector2(220, 65));
+        // Back-to-castle button — plain ASCII word, no angle-bracket glyph.
+        var closeBtn = CreateButton(panel.transform, "CloseButton", "Back to Castle", new Color(0.22f, 0.32f, 0.22f));
+        SetAnchored(closeBtn, new Vector2(-400, 850), new Vector2(260, 70));
 
         var mapContainer = new GameObject("MapContainer"); mapContainer.transform.SetParent(panel.transform, false);
         var mapContRT = mapContainer.AddComponent<RectTransform>();

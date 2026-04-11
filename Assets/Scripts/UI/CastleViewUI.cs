@@ -549,7 +549,9 @@ public class CastleViewUI : MonoBehaviour
         var costGO = new GameObject("Cost");
         costGO.transform.SetParent(card.transform, false);
         var costText = costGO.AddComponent<TextMeshProUGUI>();
-        costText.text = $"🪵 {building.WoodCost}   💰 {building.GoldCost}";
+        // Plain ASCII labels — emoji glyphs (wood log, money bag) are missing from
+        // LiberationSans SDF and trip the WebGL IL2CPP TMP dynamic-font null crash.
+        costText.text = $"Wood {building.WoodCost}   Gold {building.GoldCost}";
         costText.fontSize = 17;
         costText.color = new Color(0.85f, 0.8f, 0.65f);
         costText.raycastTarget = false;
