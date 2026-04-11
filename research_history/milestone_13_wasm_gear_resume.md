@@ -160,3 +160,134 @@ m13 wasm 크래시 수정 세션 이어받아. research_history/milestone_13_was
 milestone_13_wasm_crash_resolved.md 써.
 ```
 
+
+---
+
+# Session 3 — WASM null-function crash bisect (18 attempts)
+
+**Date:** 2026-04-11 (continuation of Session 2)
+
+## Summary of what's been proven
+
+**The ⚙ gear warning is definitely gone** — confirmed across every
+iteration. The null-function crash is UNRELATED to missing glyphs.
+The real bug is in the Canvas rendering of the CastleViewPanel's
+first-frame layout rebuild on WebGL IL2CPP.
+
+## Bisect results (crash = ❌, no crash = ✓)
+
+| # | State | Result |
+|---|---|---|
+| 1 | Purge runtime emoji (UIManager/Toast/WorldMap/DebugConsole) + add link.xml | ❌ |
+| 2 | Crash-bisect logs added in Update + StartTutorial | ❌ |
+| 3 | Disable CastleScene3D LateUpdate on WebGL (`enabled=false`) | ❌ |
+| 4 | Bisect logs in every Update method | ❌ |
+| 5 | Success-path logs in CastleViewUI.Start | ❌ |
+| 6 | Skip RequestBackgroundArt + PopulateNPCList + ShowWelcomeHint | ❌ |
+| 7 | Also skip StartTutorial | ❌ |
+| 8 | Also skip `SetPanelActive(_castleViewPanel, true)` | ✓ **NO CRASH** |
+| 9 | Re-enable panel, disable ActionBar+TopHUD+ResourceStrip+Objective subtrees | ✓ **NO CRASH** |
+| 10 | Re-enable TopHUD+ResourceStrip+Objective (keep ActionBar off) | ❌ |
+| 11 | Keep ActionBar+ResourceStrip off | ❌ |
+| 12 | Keep ActionBar+TopHUD off | ❌ |
+| 13 | Keep ActionBar+**ObjectiveText** off | ✓ **NO CRASH** |
+| 14 | Permanent fix in SceneAutoBuilder: empty `ObjectiveText` text, shrink font, enable word-wrap | ✓ (with bisect skips still in place) |
+| 15 | Re-enable every crash-bisect skip → ObjectiveText fix alone | ❌ |
+| 16 | Defer `PopulateNPCList` by 2 frames via coroutine on WebGL | ❌ |
+| 17 | Also skip `StartTutorial` on WebGL | ❌ |
+| 18 | Also skip `ShowWelcomeHint` on WebGL | ❌ |
+
+## Confirmed findings
+
+1. **ObjectiveText was ONE culprit** — the baked single-line TMP label
+   with `fontSize=26`, width=1000, wordWrap=false, 58-character default
+   text reproducibly trips the wasm null-function crash on first render.
+   Fixed in `SceneAutoBuilder.BuildCastleViewPanel` → now empty text,
+   smaller font, word-wrap enabled, narrower rect.
+
+2. **There is at least one MORE culprit** — after fixing ObjectiveText,
+   the crash still fires even with:
+   - Tutorial skipped on WebGL
+   - PopulateNPCList deferred 2 frames via coroutine
+   - ShowWelcomeHint skipped on WebGL
+   - All emoji removed from runtime strings
+   - `link.xml` preserving TMP/UI/InputSystem assemblies
+   - CastleScene3D disabled on WebGL
+
+3. **The crash fires consistently right after frame 0 LateUpdate** —
+   i.e. during Canvas layout/rendering for the first time the
+   CastleViewPanel is active. `invoke_viii` in the stack indicates
+   a 2-int-arg delegate being called on a null function-table slot.
+
+4. **Attempt 9 proved the crash originates inside the baked
+   CastleViewPanel subtree** — fully disabling ActionBar + TopHUD +
+   ResourceStrip + Objective (leaving only BackgroundArt + NPCGrid
+   + inactive NotificationBanner + inactive BuildingMenuPanel) made
+   the crash disappear. Re-enabling ObjectiveText alone brought it back.
+
+## What to try next session
+
+1. **Re-run the attempt-9 state + selective re-enable** of EACH of
+   TopHUD, ResourceStrip, ObjectiveText, ActionBar individually (not
+   in combination). The bisect I did combined them; a cleaner one
+   might reveal multiple independent crashers.
+
+2. **Check `CreateTMPText` default `overflowMode`** — it's unset in
+   SceneAutoBuilder, which means it defaults to `Overflow`. On WebGL
+   IL2CPP, TMP's Overflow path with dense long text may be the
+   common denominator across multiple labels.
+
+3. **Try building with `managedStrippingLevel: Disabled`** (it's at
+   `Low` = level 0 now per ProjectSettings.asset:780, which may still
+   strip). Or switch `il2cppCodeGeneration` to "OptimizeSize" vs
+   "OptimizeSpeed" — one of them has known stripping pathologies.
+
+4. **Nuke `Library/` on the CI runner** manually before a build —
+   the self-hosted runner caches Library outside the repo, and
+   stale IL2CPP artifact cache has been a suspect throughout.
+
+5. **Download `WebGL.framework.js` from the live build and grep for
+   `wasm-function[61469]`** — the specific function index that
+   appears as the innermost crash frame. It may map to a known TMP
+   internal method (via symbol-less Emscripten naming).
+
+6. **Bisect the `ui: button polish` commit (`6ed7c96`)** — the
+   Outline + TMP autosize additions to `CreateButton` were the first
+   thing that happened in this session before the crash became the
+   dominant issue. Revert it locally and test whether the crash
+   survives without it.
+
+7. **Write a one-button minimal repro scene** that just activates
+   the CastleViewPanel subtree built procedurally, outside NewGame.
+   Easier to iterate than editing NewGame flow.
+
+## Commits pushed this session
+
+| Hash | Subject |
+|---|---|
+| f0ec949 | Purge runtime emoji + add link.xml |
+| 8e1c815 | crash-bisect logs in Update + StartTutorial |
+| c934708 | kill CastleScene3D LateUpdate on WebGL |
+| 2068b2c | bisect logs in every Update + GameManager.LateUpdate |
+| 8b918ea | bisect logs in CastleViewUI.Start step-by-step |
+| e778bc7 | skip heavy CastleViewUI.Start steps on WebGL |
+| 66fcf40 | skip StartTutorial on WebGL (bisect) |
+| 3829e7b | skip CastleViewPanel activation on WebGL (bisect) |
+| 03bc20d | disable ActionBar+TopHUD+ResourceStrip+Objective subtrees |
+| 93d75a6 | disable ActionBar only (re-enable HUD strips) |
+| c18d090 | disable ActionBar + ResourceStrip |
+| eafd7dd | disable ActionBar + TopHUD |
+| a650aae | disable ActionBar + ObjectiveText (isolation) |
+| d2e780d | **fix SceneAutoBuilder ObjectiveText bake** (partial fix) |
+| 9c8a4e1 | re-enable all bisect-skipped code paths |
+| a2da998 | defer PopulateNPCList 2 frames on WebGL |
+| 000760e | skip StartTutorial on WebGL |
+| 77cd5a3 | skip ShowWelcomeHint on WebGL |
+
+## Current state of the live build
+
+- ObjectiveText fix is LIVE (permanent SceneAutoBuilder change)
+- StartTutorial, ShowWelcomeHint skipped on WebGL (permanent workarounds)
+- PopulateNPCList deferred 2 frames on WebGL (permanent workaround)
+- Crash STILL reproduces on https://taeshin11.github.io/LittleLordMajesty/
+  → `Build/WebGL.wasm` Last-Modified ~ 2026-04-11 03:06:05 GMT
