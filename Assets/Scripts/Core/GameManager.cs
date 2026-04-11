@@ -62,10 +62,25 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         // DayCycle starts only when entering Castle/WorldMap, not during MainMenu
+
+        // Crash-bisect: hook Canvas rebuild phases so we know whether the
+        // frame-0 wasm crash fires before, during, or after UI render.
+        Canvas.willRenderCanvases += OnWillRenderCanvases_Bisect;
+    }
+
+    private int _willRenderLogsRemaining = 4;
+    private void OnWillRenderCanvases_Bisect()
+    {
+        if (_willRenderLogsRemaining > 0)
+        {
+            _willRenderLogsRemaining--;
+            Debug.Log($"[Crash-Bisect] willRenderCanvases fired (remaining={_willRenderLogsRemaining})");
+        }
     }
 
     private void OnDestroy()
     {
+        Canvas.willRenderCanvases -= OnWillRenderCanvases_Bisect;
         if (_dayCycleCoroutine != null)
             StopCoroutine(_dayCycleCoroutine);
     }
@@ -89,7 +104,10 @@ public class GameManager : MonoBehaviour
     private void LateUpdate()
     {
         if (_currentState == GameState.Castle && _framesSinceCastleEntry < 8)
-            Debug.Log($"[Crash-Bisect] Castle frame #{_framesSinceCastleEntry} LateUpdate");
+        {
+            Debug.Log($"[Crash-Bisect] Castle frame #{_framesSinceCastleEntry} LateUpdate ENTER");
+            Debug.Log($"[Crash-Bisect] Castle frame #{_framesSinceCastleEntry} LateUpdate EXIT");
+        }
     }
 
 #if !UNITY_EDITOR
