@@ -106,3 +106,6 @@ GoogleService-Info.plist
 tools/playwright_test/node_modules/
 tools/playwright_test/package-lock.json
 tools/playwright_test/screenshots/
+
+# VS Code workspace settings (machine-local)
+.vscode/
