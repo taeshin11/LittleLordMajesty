@@ -83,6 +83,13 @@ public class NPCInteractionUI : MonoBehaviour
         AddSystemMessage(LocalizationManager.Instance?.Get("npc_opened_conversation", npc.Name)
             ?? $"You approach {npc.Name}...");
 
+        // Pre-generated greeting from EXAONE-built dialogue bank — zero API
+        // cost, instant feedback. Falls through to silence if the bank
+        // doesn't have a line for this profession (e.g. Blacksmith).
+        var greeting = LocalDialogueBank.GetRandom(npc.Profession, LocalDialogueBank.Context.Greeting);
+        if (!string.IsNullOrEmpty(greeting))
+            AddNPCMessage(greeting);
+
         _commandInput?.ActivateInputField();
     }
 
@@ -93,7 +100,20 @@ public class NPCInteractionUI : MonoBehaviour
     /// </summary>
     private void RequestPortrait(NPCManager.NPCData npc)
     {
-        if (_npcAvatar == null || GeminiImageClient.Instance == null) return;
+        if (_npcAvatar == null) return;
+
+        // First try the offline-baked SDXL Turbo portrait (zero API cost).
+        // tools/image_gen/generate.py builds portrait_<npc_id>.png into
+        // Resources/Art/Generated/.
+        var local = LocalArtBank.GetNPCPortrait(npc.Id);
+        if (local != null)
+        {
+            _npcAvatar.sprite = local;
+            _npcAvatar.preserveAspect = true;
+            return;
+        }
+
+        if (GeminiImageClient.Instance == null) return;
 
         // Build a deterministic prompt per NPC so the hash stays stable across sessions
         // and the same NPC always resolves from cache after first generation.
