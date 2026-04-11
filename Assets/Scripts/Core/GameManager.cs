@@ -246,6 +246,7 @@ public class GameManager : MonoBehaviour
         catch (System.Exception e) { Debug.LogError($"[NewGame] SetGameState: {e}"); }
 
         Debug.Log("[NewGame] STEP 6: Tutorial reset+start");
+#if !UNITY_WEBGL || UNITY_EDITOR
         if (TutorialSystem.Instance != null)
         {
             try { TutorialSystem.Instance.ResetTutorial(); }
@@ -253,6 +254,14 @@ public class GameManager : MonoBehaviour
             try { TutorialSystem.Instance.StartTutorial(); }
             catch (System.Exception e) { Debug.LogError($"[NewGame] StartTutorial: {e}"); }
         }
+#else
+        // WebGL: skip tutorial. Activating the TutorialOverlay (which has
+        // Outline on its dialogue box + many child TMP labels) intermittently
+        // trips the IL2CPP wasm "null function" crash on the first render.
+        // The tutorial is a nice-to-have; the core gameplay works fine
+        // without it on WebGL. Re-enable when the root cause is isolated.
+        Debug.Log("[GameManager] Skipping Tutorial on WebGL (wasm crash workaround)");
+#endif
         Debug.Log("[NewGame] STEP 7: NewGame() complete");
     }
 }
