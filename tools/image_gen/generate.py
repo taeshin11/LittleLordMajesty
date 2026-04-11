@@ -153,6 +153,12 @@ def main():
     ap.add_argument("--steps", type=int, default=30)
     args = ap.parse_args()
 
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+    from gpu_lock import acquire as gpu_acquire
+    if not gpu_acquire("LittleLordMajesty_image_gen", vram_mb=12000, on_busy="wait"):
+        print("GPU busy, exiting")
+        sys.exit(0)
+
     pipe = load_pipe()
 
     if args.only in ("all", "bg"):

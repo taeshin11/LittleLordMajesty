@@ -12,6 +12,7 @@ Requirements: ollama running locally with model `exaone3.5:7.8b` pulled.
 """
 from __future__ import annotations
 import argparse, json, os, sys, time, hashlib
+from pathlib import Path
 import requests
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
@@ -142,6 +143,12 @@ def main():
     ap.add_argument("--only-role",
                     help="comma-separated role_ids to regenerate (e.g. vassal,soldier)")
     args = ap.parse_args()
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+    from gpu_lock import acquire as gpu_acquire
+    if not gpu_acquire("LittleLordMajesty_dialogue_gen", vram_mb=8000, on_busy="wait"):
+        print("GPU busy, exiting")
+        sys.exit(0)
 
     target_roles = ROLES
     if args.only_role:

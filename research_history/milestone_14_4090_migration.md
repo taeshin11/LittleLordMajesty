@@ -1,9 +1,9 @@
 ---
 name: M14 4090 PC migration
-description: Migrating LittleLordMajesty dev environment from RTX 4050 6 GB laptop to RTX 4090 24 GB desktop. Unlocks SDXL base / EXAONE 32B / faster Unity builds. Most of the work done; only Unity Editor install left, blocked on UAC handling - see session_handoff_m14.md for the resume sequence.
+description: Migrated LittleLordMajesty dev environment from RTX 4050 6 GB laptop to RTX 4090 24 GB desktop. Unlocked SDXL base 1.0 and faster Unity builds. EXAONE 32B dialogue regen reverted to 7.8B (partial-offload instability). Full details in session_handoff_m14.md.
 type: project
 date: 2026-04-11
-status: IN_PROGRESS
+status: DONE
 ---
 
 # M14 — 4090 PC migration
