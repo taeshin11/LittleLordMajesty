@@ -55,24 +55,33 @@ public class CastleViewUI : MonoBehaviour
     {
         // Defensive: every step is wrapped so a single failure doesn't take
         // out the whole castle entry. Logged warnings tell us which step
-        // tripped without crashing the wasm runtime.
+        // tripped without crashing the wasm runtime. Crash-bisect logs tag
+        // each successful step so we can see which one was the LAST to
+        // run before the wasm null-function crash.
+        Debug.Log("[Crash-Bisect] CastleViewUI.Start entry");
         try { _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] Find NPCInteractionUI: {e.Message}"); }
+        Debug.Log("[Crash-Bisect] CastleViewUI Start: after FindNPCInteractionUI");
 
         try { SetupButtons(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] SetupButtons: {e.Message}"); }
+        Debug.Log("[Crash-Bisect] CastleViewUI Start: after SetupButtons");
 
         try { SubscribeToEvents(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] SubscribeToEvents: {e.Message}"); }
+        Debug.Log("[Crash-Bisect] CastleViewUI Start: after SubscribeToEvents");
 
         try { RefreshResourceHUD(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] RefreshResourceHUD: {e.Message}"); }
+        Debug.Log("[Crash-Bisect] CastleViewUI Start: after RefreshResourceHUD");
 
         try { UpdateLordInfo(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] UpdateLordInfo: {e.Message}"); }
+        Debug.Log("[Crash-Bisect] CastleViewUI Start: after UpdateLordInfo");
 
         try { RequestBackgroundArt(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] RequestBackgroundArt: {e.Message}"); }
+        Debug.Log("[Crash-Bisect] CastleViewUI Start: after RequestBackgroundArt");
 
         // Auto-open the NPC card grid so characters are visible immediately.
         try
@@ -84,9 +93,11 @@ public class CastleViewUI : MonoBehaviour
             }
         }
         catch (System.Exception e) { Debug.LogError($"[CastleView] PopulateNPCList: {e.Message}\n{e.StackTrace}"); }
+        Debug.Log("[Crash-Bisect] CastleViewUI Start: after PopulateNPCList");
 
         try { ShowWelcomeHint(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] ShowWelcomeHint: {e.Message}"); }
+        Debug.Log("[Crash-Bisect] CastleViewUI Start: COMPLETE");
     }
 
     private void ShowWelcomeHint()
