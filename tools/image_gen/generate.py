@@ -59,16 +59,18 @@ BACKGROUNDS = [
      f"no characters, 3-quarter top-down isometric view, no text",
      1024, 576),
     ("bg_world_map",
-     f"{STYLE_BG}, tiny stylized fantasy world map seen as a 3D toy diorama, "
-     f"pastel green rolling hills, mint forests, small puffy mountains, tiny "
-     f"castle and village icons sitting on the terrain, soft pastel ocean, "
-     f"3-quarter top-down isometric view, no text or labels",
+     f"{STYLE_BG}, parchment-style overworld kingdom map laid flat, multiple "
+     f"distinct pastel territory regions separated by mint rivers and pastel "
+     f"coastlines, several tiny castle icons and village hut icons on separate "
+     f"islands of land, winding dirt paths connecting territories, compass rose "
+     f"in the corner, pale parchment edges, top-down map view, no characters, no text",
      1024, 576),
     ("bg_battle_field",
-     f"{STYLE_BG}, tiny stylized open meadow with soft pastel grass, scattered "
-     f"colorful flags planted in the ground, round bushes, distant rolling hills, "
-     f"friendly and adventurous mood (NOT scary), no characters, "
-     f"3-quarter top-down isometric view, no text",
+     f"{STYLE_BG}, wide stylized battlefield with two opposing encampments, "
+     f"pastel blue tents on the left hill and pastel red tents on the right hill, "
+     f"tiny colorful banners planted in the trampled pastel grass between them, "
+     f"scattered round shields, wooden palisades, dramatic cozy dusk sky, "
+     f"no characters, 3-quarter top-down isometric view, no text",
      1024, 576),
 ]
 
