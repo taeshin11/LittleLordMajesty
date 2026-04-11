@@ -70,8 +70,18 @@ public class GameManager : MonoBehaviour
             StopCoroutine(_dayCycleCoroutine);
     }
 
+    // Crash-bisect: count frames after first entering Castle so the log tells us
+    // exactly which frame the null-function crash fires on. We also tag the
+    // "about to run PlayTimeSeconds++" line so stack order is unambiguous.
+    private int _framesSinceCastleEntry = -1;
+
     private void Update()
     {
+        if (_currentState == GameState.Castle && _framesSinceCastleEntry < 8)
+        {
+            _framesSinceCastleEntry++;
+            Debug.Log($"[Crash-Bisect] Castle frame #{_framesSinceCastleEntry}");
+        }
         if (_currentState != GameState.Paused && _currentState != GameState.MainMenu)
             PlayTimeSeconds += Time.deltaTime;
     }

@@ -108,6 +108,7 @@ public class TutorialSystem : MonoBehaviour
 
     public void StartTutorial()
     {
+        Debug.Log("[Crash-Bisect] TutorialSystem.StartTutorial entry");
         if (PlayerPrefs.GetInt("TutorialCompleted", 0) == 1)
         {
             Debug.Log("[Tutorial] Already completed, skipping.");
@@ -116,6 +117,7 @@ public class TutorialSystem : MonoBehaviour
 
         _tutorialActive = true;
         _currentStepIndex = -1;
+        Debug.Log("[Crash-Bisect] StartTutorial: about to activate TutorialUI");
 
         // CRITICAL: TutorialUI lives on an inactive TutorialOverlay GameObject, which
         // means its Start() never runs and it never subscribes to OnStepStarted.
@@ -128,13 +130,17 @@ public class TutorialSystem : MonoBehaviour
         if (tutorialUI != null && !tutorialUI.gameObject.activeSelf)
             tutorialUI.gameObject.SetActive(true);
 
+        Debug.Log("[Crash-Bisect] StartTutorial: about to StartCoroutine(DeferredAdvanceStep)");
         // Defer first step to end of frame so UI subscribers (TutorialUI.Start) have time to register
         StartCoroutine(DeferredAdvanceStep());
+        Debug.Log("[Crash-Bisect] StartTutorial: coroutine queued, returning");
     }
 
     private IEnumerator DeferredAdvanceStep()
     {
+        Debug.Log("[Crash-Bisect] DeferredAdvanceStep: pre-yield");
         yield return null; // Wait one frame
+        Debug.Log("[Crash-Bisect] DeferredAdvanceStep: post-yield, calling AdvanceStep");
         AdvanceStep();
     }
 
