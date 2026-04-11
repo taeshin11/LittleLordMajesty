@@ -61,19 +61,17 @@ public class CastleViewUI : MonoBehaviour
         Debug.Log("[Crash-Bisect] CastleViewUI.Start entry");
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-        // Crash-bisect 10: re-enable ResourceStrip + ObjectiveText + TopHUD
-        // (no Outline, just baked TMP text). Keep ActionBar disabled since
-        // its 6 buttons with Outline are the prime suspect.
+        // Crash-bisect 11: keep ActionBar disabled (still a suspect). Also
+        // disable ResourceStrip which is where crash returned last iteration.
         try
         {
             if (_buildButton != null && _buildButton.transform.parent != null)
-            {
-                var actionBar = _buildButton.transform.parent.gameObject;
-                actionBar.SetActive(false);
-                Debug.Log($"[Crash-Bisect] Disabled ActionBar subtree: {actionBar.name}");
-            }
+                _buildButton.transform.parent.gameObject.SetActive(false);
+            var panel = transform;
+            var resStrip = panel.Find("ResourceStrip");
+            if (resStrip != null) { resStrip.gameObject.SetActive(false); Debug.Log("[Crash-Bisect] Disabled ResourceStrip"); }
         }
-        catch (System.Exception e) { Debug.LogError($"[Crash-Bisect] Disable ActionBar: {e.Message}"); }
+        catch (System.Exception e) { Debug.LogError($"[Crash-Bisect] Disable: {e.Message}"); }
 #endif
 
         try { _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include); }
