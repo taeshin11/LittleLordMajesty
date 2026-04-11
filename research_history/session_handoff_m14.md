@@ -3,10 +3,41 @@ name: M14 session handoff (4090 migration)
 description: Context for resuming the 4090 PC migration after restarting Claude Code as administrator. The previous (non-elevated) session got everything except Unity Editor install done; the editor install requires elevation that the current session can't trigger.
 type: project
 date: 2026-04-11
-status: HANDOFF
+status: DONE
 ---
 
 # Session handoff — 4090 migration resume
+
+## RESOLUTION (2026-04-11 22:40 — second admin session)
+
+Migration is **DONE**. End state:
+
+- Unity Editor 2022.3.62f1 + WebGL Build Support installed and Personal license
+  activated via Unity Hub web sign-in (Hub login worked once we used the
+  browser path; the in-Hub "Sign in" button itself was unresponsive).
+- Build (Self-Hosted PC) workflow ran end-to-end on `4090-desktop`:
+  Build WebGL 6m34s + Build Windows 2m58s + Deploy to GitHub Pages — all green
+  (run `24282581902`).
+- Live smoke (`tools/playwright_test/live_test.js` against
+  `https://taeshin11.github.io/LittleLordMajesty/`):
+  **Page errors 0, Console errors 0, Unity dialogs 0** — migration success
+  criterion satisfied.
+- Dialogue regen: tried 32B first (`exaone3.5:32b`); on the 4090 it can only
+  partial-offload (37/65 layers GPU + 28 CPU) which made batch generation
+  unstable — multiple silent OOM-class kills mid-run. Reverted
+  `tools/dialogue_gen/generate.py` to `exaone3.5:7.8b` and committed
+  (commit `efd6ca8`). Full 1000-line regen with 7.8B finishes in ~3 min.
+- Separate root cause found while debugging: Anaconda Python's `urllib.request`
+  on Windows hangs indefinitely on Ollama responses (curl works, requests
+  works). Switched the script to `requests`. **Memorise: never use stdlib
+  urllib for ollama on Anaconda/Windows.**
+- Unity 2022.3.62f1 importer format updates committed (`e3666d7`):
+  `Assets/Resources/Art/Generated/*.meta` (renamed `ignoreMasterTextureLimit`
+  → `ignoreMipmapLimit`, added `flipGreenChannel`), plus new
+  `Assets/TextMesh Pro.meta` for the root TMP folder, plus `.vscode/` ignored.
+- The 32B-model upgrade remains a future option once a multi-GPU box or
+  smaller-quant variant is available; the codebase still has the 32B model
+  string in git history (commit `3368171`).
 
 The migration from the laptop to the 4090 PC is ~90% done. Everything that
 doesn't need Windows admin rights is finished. The blocker is installing
