@@ -3,7 +3,7 @@ name: M14 follow-up — GPU lock shared-mode extension
 description: Design + handoff prompt for extending gpu_lock.py from exclusive lock to shared lock with vram_mb capacity accounting. Change happens in SPINAI repo first (source of truth), then re-copied byte-identical to LittleLordMajesty and any other cooperating projects.
 type: project
 date: 2026-04-12
-status: PENDING_SPINAI
+status: DONE
 ---
 
 # GPU lock shared-mode extension — plan + handoff
@@ -103,9 +103,17 @@ re-copy, never hand-edit.
 > - 테스트 결과 요약 (6 개 케이스 pass/fail)
 > - 스키마 버전 번호 확정 (2 로 맞는지)
 
+## Rollout 완료 (2026-04-12)
+- SPINAI Claude 가 `D:\ImageLabelAPI_SPINAI\scripts\gpu_lock.py` 를 shared-mode
+  로 확장 (SHA-256 `ee90f18e24d8fd362446b67188d12334aa8f75edc89a54b530d451a071787b66`,
+  288→576 lines). 6/6 test cases PASS: roundtrip, 2-holders-fit, over-capacity
+  wait/skip/error, dead-holder purge, v1 legacy migration, CLI status format.
+- LittleLordMajesty 쪽 `scripts/gpu_lock.py` 재복사 byte-identical, py_compile OK.
+- `python scripts/gpu_lock.py --status` 실행 시 pynvml 로 실제 capacity 자동
+  감지: 4090 = 24564 MB (fallback 24000 대신). 새 CLI format 동작 확인.
+
 ## LittleLordMajesty 쪽 반영 (이미 완료)
-- `scripts/gpu_lock.py` 는 현재 exclusive-mode 버전 (commit 6297b09). SPINAI
-  업데이트 완료 후 재복사 예정.
+- `scripts/gpu_lock.py` 재복사 후 byte-identical.
 - 호출 사이트는 그대로 두면 됨 — 시그니처는 유지되므로:
   - `tools/image_gen/generate.py`: `acquire("LittleLordMajesty_image_gen", vram_mb=12000, on_busy="wait")`
   - `tools/dialogue_gen/generate.py`: `acquire("LittleLordMajesty_dialogue_gen", vram_mb=8000, on_busy="wait")`
