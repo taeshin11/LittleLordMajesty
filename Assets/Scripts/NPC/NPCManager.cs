@@ -230,29 +230,31 @@ public class NPCManager : MonoBehaviour
         );
     }
 
+    private static bool ContainsCI(string haystack, string needle) =>
+        haystack.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0;
+
     private void UpdateNPCFromResponse(NPCData npc, string command, string response)
     {
-        // Simple heuristic: positive commands boost mood/loyalty
-        command = command.ToLower();
-        if (command.Contains("reward") || command.Contains("praise") || command.Contains("thank"))
+        // Simple heuristic: positive commands boost mood/loyalty.
+        // Uses OrdinalIgnoreCase IndexOf — zero allocations vs. ToLower() + Contains.
+        if (ContainsCI(command, "reward") || ContainsCI(command, "praise") || ContainsCI(command, "thank"))
         {
             npc.MoodScore = Mathf.Min(100, npc.MoodScore + 5);
             npc.LoyaltyToLord = Mathf.Min(100, npc.LoyaltyToLord + 2);
         }
-        else if (command.Contains("punish") || command.Contains("threaten") || command.Contains("execute"))
+        else if (ContainsCI(command, "punish") || ContainsCI(command, "threaten") || ContainsCI(command, "execute"))
         {
             npc.MoodScore = Mathf.Max(0, npc.MoodScore - 10);
             npc.LoyaltyToLord = Mathf.Max(0, npc.LoyaltyToLord - 5);
         }
 
-        // Update task if command implies assignment
-        if (command.Contains("farm") || command.Contains("harvest"))
+        if (ContainsCI(command, "farm") || ContainsCI(command, "harvest"))
             AssignTask(npc.Id, "Farming");
-        else if (command.Contains("build") || command.Contains("construct"))
+        else if (ContainsCI(command, "build") || ContainsCI(command, "construct"))
             AssignTask(npc.Id, "Construction");
-        else if (command.Contains("patrol") || command.Contains("guard"))
+        else if (ContainsCI(command, "patrol") || ContainsCI(command, "guard"))
             AssignTask(npc.Id, "Patrol");
-        else if (command.Contains("scout") || command.Contains("spy"))
+        else if (ContainsCI(command, "scout") || ContainsCI(command, "spy"))
             AssignTask(npc.Id, "Scouting");
     }
 
@@ -269,21 +271,50 @@ public class NPCManager : MonoBehaviour
     public NPCData GetNPC(string id) =>
         _npcLookup.TryGetValue(id, out var npc) ? npc : null;
 
+    public void RegisterRoutine(NPCDailyRoutine routine)
+    {
+        if (routine == null || string.IsNullOrEmpty(routine.NpcId)) return;
+        _routineCache[routine.NpcId] = routine;
+    }
+
+    public void UnregisterRoutine(NPCDailyRoutine routine)
+    {
+        if (routine == null || string.IsNullOrEmpty(routine.NpcId)) return;
+        if (_routineCache.TryGetValue(routine.NpcId, out var cached) && cached == routine)
+            _routineCache.Remove(routine.NpcId);
+    }
+
     private NPCDailyRoutine FindNPCRoutine(string npcId)
     {
-        if (_routineCache.TryGetValue(npcId, out var cached) && cached != null)
-            return cached;
-        foreach (var r in FindObjectsByType<NPCDailyRoutine>(FindObjectsSortMode.None))
-        {
-            _routineCache[r.NpcId] = r;
-            if (r.NpcId == npcId) return r;
-        }
-        return null;
+        return _routineCache.TryGetValue(npcId, out var cached) && cached != null ? cached : null;
     }
-    public List<NPCData> GetAllNPCs() => new List<NPCData>(_npcs);
-    public List<NPCData> GetAvailableNPCs() => _npcs.FindAll(n => n.IsAvailable && n.TaskState == NPCTaskState.Idle);
-    public List<NPCData> GetNPCsByProfession(NPCPersona.NPCProfession profession) =>
-        _npcs.FindAll(n => n.Profession == profession);
+
+    public IReadOnlyList<NPCData> GetAllNPCs() => _npcs;
+
+    // Reusable buffers to avoid per-call List allocations.
+    private readonly List<NPCData> _availableBuffer = new();
+    private readonly List<NPCData> _professionBuffer = new();
+
+    public IReadOnlyList<NPCData> GetAvailableNPCs()
+    {
+        _availableBuffer.Clear();
+        for (int i = 0; i < _npcs.Count; i++)
+        {
+            var n = _npcs[i];
+            if (n.IsAvailable && n.TaskState == NPCTaskState.Idle) _availableBuffer.Add(n);
+        }
+        return _availableBuffer;
+    }
+
+    public IReadOnlyList<NPCData> GetNPCsByProfession(NPCPersona.NPCProfession profession)
+    {
+        _professionBuffer.Clear();
+        for (int i = 0; i < _npcs.Count; i++)
+        {
+            if (_npcs[i].Profession == profession) _professionBuffer.Add(_npcs[i]);
+        }
+        return _professionBuffer;
+    }
 
     public NPCSaveData[] GetSaveData()
     {

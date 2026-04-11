@@ -209,6 +209,8 @@ public class NPCDailyRoutine : MonoBehaviour
             if (npc != null) DailySchedule = GetDefaultSchedule(npc.Profession);
         }
 
+        NPCManager.Instance?.RegisterRoutine(this);
+
         if (GameManager.Instance != null)
             GameManager.Instance.OnDayChanged += OnDayChanged;
 
@@ -220,6 +222,7 @@ public class NPCDailyRoutine : MonoBehaviour
 
     private void OnDestroy()
     {
+        NPCManager.Instance?.UnregisterRoutine(this);
         if (GameManager.Instance != null)
             GameManager.Instance.OnDayChanged -= OnDayChanged;
     }
