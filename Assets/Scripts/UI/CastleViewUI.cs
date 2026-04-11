@@ -79,11 +79,20 @@ public class CastleViewUI : MonoBehaviour
         catch (System.Exception e) { Debug.LogError($"[CastleView] UpdateLordInfo: {e.Message}"); }
         Debug.Log("[Crash-Bisect] CastleViewUI Start: after UpdateLordInfo");
 
+        // Crash-bisect: SKIP RequestBackgroundArt on WebGL during this iteration.
+        // Gemini JsonConvert.SerializeObject of anonymous types hits IL2CPP
+        // reflection stripping and is a suspect for the post-Start render crash.
+#if !UNITY_WEBGL || UNITY_EDITOR
         try { RequestBackgroundArt(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] RequestBackgroundArt: {e.Message}"); }
+#else
+        Debug.Log("[Crash-Bisect] CastleViewUI Start: SKIPPED RequestBackgroundArt on WebGL");
+#endif
         Debug.Log("[Crash-Bisect] CastleViewUI Start: after RequestBackgroundArt");
 
-        // Auto-open the NPC card grid so characters are visible immediately.
+        // Crash-bisect: SKIP PopulateNPCList on WebGL for this iteration.
+        // Dynamic UI spawning + RequestPortrait(Gemini) calls are suspects.
+#if !UNITY_WEBGL || UNITY_EDITOR
         try
         {
             if (_npcListPanel != null)
@@ -93,10 +102,17 @@ public class CastleViewUI : MonoBehaviour
             }
         }
         catch (System.Exception e) { Debug.LogError($"[CastleView] PopulateNPCList: {e.Message}\n{e.StackTrace}"); }
+#else
+        Debug.Log("[Crash-Bisect] CastleViewUI Start: SKIPPED PopulateNPCList on WebGL");
+#endif
         Debug.Log("[Crash-Bisect] CastleViewUI Start: after PopulateNPCList");
 
+#if !UNITY_WEBGL || UNITY_EDITOR
         try { ShowWelcomeHint(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] ShowWelcomeHint: {e.Message}"); }
+#else
+        Debug.Log("[Crash-Bisect] CastleViewUI Start: SKIPPED ShowWelcomeHint on WebGL");
+#endif
         Debug.Log("[Crash-Bisect] CastleViewUI Start: COMPLETE");
     }
 
