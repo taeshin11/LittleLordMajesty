@@ -429,11 +429,23 @@ public static class SceneAutoBuilder
 
         // Objective banner — single-line hint at the top telling the player what to do.
         // Plain ASCII default; CastleViewUI swaps in the localized string at runtime.
+        //
+        // CRITICAL: on WebGL IL2CPP, this specific baked TMP text reproducibly
+        // triggered a "RuntimeError: null function" crash on the first render
+        // after the Castle panel became active. Bisected by disabling each
+        // CastleViewPanel subtree one at a time across 12 live-build
+        // iterations. The culprit turned out to be the combination of the
+        // long single-line text, fontSize 26, width 1000, and word-wrap
+        // DISABLED. Empty/short text renders fine; long text in the same
+        // rect crashes. Leaving the text empty at bake time and letting
+        // CastleViewUI assign the localized string at runtime (where it
+        // already lives as "welcome_hint" in ShowWelcomeHint → notification
+        // banner path) sidesteps the crash entirely without losing the UX.
         var objective = CreateTMPText(panel.transform, "ObjectiveText",
-            "Welcome to your castle. Tap a vassal card below to begin.",
-            26, TextAlignmentOptions.Center, new Color(1f, 0.95f, 0.65f));
-        SetAnchored(objective, new Vector2(0, 680), new Vector2(1000, 60));
-        objective.GetComponent<TextMeshProUGUI>().enableWordWrapping = false;
+            "",
+            22, TextAlignmentOptions.Center, new Color(1f, 0.95f, 0.65f));
+        SetAnchored(objective, new Vector2(0, 680), new Vector2(900, 60));
+        objective.GetComponent<TextMeshProUGUI>().enableWordWrapping = true;
 
         // Central NPC grid — big, ALWAYS visible. No more hidden drawer.
         // Fills most of the middle of the screen so NPCs are immediately obvious.
