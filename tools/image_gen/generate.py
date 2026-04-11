@@ -78,18 +78,18 @@ NEGATIVE = (
 
 
 def load_pipe():
-    print("[img] Loading SDXL Turbo (this takes 1-2 min on first run)...")
+    print("[img] Loading SDXL base 1.0 (this takes 1-2 min on first run)...")
     import torch
     from diffusers import AutoPipelineForText2Image
     pipe = AutoPipelineForText2Image.from_pretrained(
-        "stabilityai/sdxl-turbo",
+        "stabilityai/stable-diffusion-xl-base-1.0",
         torch_dtype=torch.float16,
         variant="fp16",
+        use_safetensors=True,
     )
-    # 6 GB VRAM is borderline for SDXL Turbo at 1024x576. CPU offload gives
-    # us safety margin and only adds ~1 sec per image at this size.
+    # 24 GB VRAM on the 4090 — keep the whole pipe on GPU instead of cpu_offload.
     if torch.cuda.is_available():
-        pipe.enable_model_cpu_offload()
+        pipe.to("cuda")
         print(f"[img] CUDA: {torch.cuda.get_device_name(0)} "
               f"({torch.cuda.get_device_properties(0).total_memory // (1024**3)} GB)")
     else:
@@ -97,7 +97,7 @@ def load_pipe():
     return pipe
 
 
-def gen_image(pipe, prompt, w, h, out_path, seed=42, steps=4):
+def gen_image(pipe, prompt, w, h, out_path, seed=42, steps=30):
     import torch
     g = torch.Generator(device="cpu").manual_seed(seed)
     t0 = time.time()
@@ -105,7 +105,7 @@ def gen_image(pipe, prompt, w, h, out_path, seed=42, steps=4):
         prompt=prompt,
         negative_prompt=NEGATIVE,
         num_inference_steps=steps,
-        guidance_scale=0.0,    # SDXL Turbo: must be 0
+        guidance_scale=7.0,    # SDXL base 1.0: ~7 is the sweet spot
         width=w, height=h,
         generator=g,
     ).images[0]
@@ -116,7 +116,7 @@ def gen_image(pipe, prompt, w, h, out_path, seed=42, steps=4):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="all", choices=["all", "bg", "portraits"])
-    ap.add_argument("--steps", type=int, default=4)
+    ap.add_argument("--steps", type=int, default=30)
     args = ap.parse_args()
 
     pipe = load_pipe()
