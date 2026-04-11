@@ -133,6 +133,32 @@ public class CastleViewUI : MonoBehaviour
         if (_npcListButton != null) _npcListButton.onClick.AddListener(ToggleNPCList);
         if (_menuButton != null) _menuButton.onClick.AddListener(() =>
             GameManager.Instance?.TogglePause());
+
+        // Apply localized labels to the action-bar buttons at runtime. The
+        // scene-baked labels are English defaults; without this pass a user
+        // who switched to ko/ja/zh/de/es/fr would still see English words.
+        var loc = LocalizationManager.Instance;
+        if (loc != null)
+        {
+            SetButtonLabel(_buildButton,    loc.Get("btn_build"));
+            SetButtonLabel(_saveButton,     loc.Get("btn_save"));
+            SetButtonLabel(_npcListButton,  loc.Get("btn_npcs"));
+            SetButtonLabel(_worldMapButton, loc.Get("btn_map"));
+            SetButtonLabel(_settingsButton, loc.Get("btn_options"));
+            SetButtonLabel(_menuButton,     loc.Get("btn_pause"));
+        }
+    }
+
+    /// <summary>
+    /// Writes a label string into the first TextMeshProUGUI child of a
+    /// button, defensively no-op on null. Centralised so the action-bar
+    /// wiring stays a single line per button.
+    /// </summary>
+    private static void SetButtonLabel(Button btn, string text)
+    {
+        if (btn == null || string.IsNullOrEmpty(text)) return;
+        var tmp = btn.GetComponentInChildren<TextMeshProUGUI>(true);
+        if (tmp != null) tmp.text = text;
     }
 
     private void SubscribeToEvents()
@@ -156,30 +182,42 @@ public class CastleViewUI : MonoBehaviour
         switch (type)
         {
             case ResourceManager.ResourceType.Wood:
-                if (_woodText != null) _woodText.text = FormatResource(newVal, rm.MaxWood);
+                if (_woodText != null) _woodText.text = FormatNamedResource("hud_wood", newVal);
                 break;
             case ResourceManager.ResourceType.Food:
-                if (_foodText != null) _foodText.text = FormatResource(newVal, rm.MaxFood);
+                if (_foodText != null) _foodText.text = FormatNamedResource("hud_food", newVal);
                 break;
             case ResourceManager.ResourceType.Gold:
-                if (_goldText != null) _goldText.text = FormatResource(newVal, rm.MaxGold);
+                if (_goldText != null) _goldText.text = FormatNamedResource("hud_gold", newVal);
                 break;
             case ResourceManager.ResourceType.Population:
-                if (_populationText != null) _populationText.text = $"{newVal}/{rm.MaxPopulation}";
+                if (_populationText != null)
+                    _populationText.text = $"{LocName("hud_population", "Pop")} {newVal}/{rm.MaxPopulation}";
                 break;
         }
     }
 
-    private string FormatResource(int value, int max) => $"{value:N0}";
+    /// <summary>
+    /// Formats a resource like "Wood 500" / "Holz 500" / "Gold 1,240" — the
+    /// prefix is resolved via LocalizationManager so the HUD matches the
+    /// player's language. Falls back to the English word if no translation
+    /// is registered.
+    /// </summary>
+    private string FormatNamedResource(string locKey, int value) =>
+        $"{LocName(locKey, locKey)} {value:N0}";
+
+    private static string LocName(string key, string fallback) =>
+        LocalizationManager.Instance?.Get(key) ?? fallback;
 
     private void RefreshResourceHUD()
     {
         var rm = GameManager.Instance?.ResourceManager;
         if (rm == null) return;
-        if (_woodText != null) _woodText.text = FormatResource(rm.Wood, rm.MaxWood);
-        if (_foodText != null) _foodText.text = FormatResource(rm.Food, rm.MaxFood);
-        if (_goldText != null) _goldText.text = FormatResource(rm.Gold, rm.MaxGold);
-        if (_populationText != null) _populationText.text = $"{rm.Population}/{rm.MaxPopulation}";
+        if (_woodText != null) _woodText.text = FormatNamedResource("hud_wood", rm.Wood);
+        if (_foodText != null) _foodText.text = FormatNamedResource("hud_food", rm.Food);
+        if (_goldText != null) _goldText.text = FormatNamedResource("hud_gold", rm.Gold);
+        if (_populationText != null)
+            _populationText.text = $"{LocName("hud_population", "Pop")} {rm.Population}/{rm.MaxPopulation}";
     }
 
     private static string FormatLordDisplay(string title, string name)

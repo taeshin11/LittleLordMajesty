@@ -1277,6 +1277,13 @@ public static class SceneAutoBuilder
         return go;
     }
 
+    /// <summary>
+    /// Creates a button with a themed image background, a centered TMP label,
+    /// a 1px dark outline for contrast against bright backgrounds, and proper
+    /// hover/pressed/selected/disabled color states for keyboard and mouse
+    /// focus feedback. Label uses TMP auto-size so long words (e.g. Back to
+    /// Castle, Neues Spiel, Launch Siege) don't overflow the button rect.
+    /// </summary>
     static GameObject CreateButton(Transform parent, string name, string label, Color bgColor)
     {
         var go = new GameObject(name);
@@ -1285,21 +1292,51 @@ public static class SceneAutoBuilder
         img.color = bgColor;
         var btn = go.AddComponent<Button>();
 
+        // Outline on the button frame gives high-contrast separation from the
+        // dark HUD panel underneath and helps every button feel "clickable".
+        var outline = go.AddComponent<Outline>();
+        outline.effectColor = new Color(0f, 0f, 0f, 0.65f);
+        outline.effectDistance = new Vector2(1.5f, -1.5f);
+
         var lblGO = new GameObject("Label");
         lblGO.transform.SetParent(go.transform, false);
         var lbl = lblGO.AddComponent<TextMeshProUGUI>();
         lbl.text = label;
-        lbl.fontSize = 28;
-        lbl.alignment = TextAlignmentOptions.Center;
-        lbl.color = Color.white;
+        // Auto-size: TMP picks the largest size in [14, 26] that fits the
+        // button rect. Prevents clipping on short buttons and long labels.
+        lbl.enableAutoSizing = true;
+        lbl.fontSizeMin = 14;
+        lbl.fontSizeMax = 26;
+        lbl.fontSize    = 24;
+        lbl.fontStyle   = FontStyles.Bold;
+        lbl.alignment   = TextAlignmentOptions.Center;
+        lbl.color       = Color.white;
+        lbl.enableWordWrapping = false;
+        lbl.overflowMode = TextOverflowModes.Ellipsis;
+        lbl.raycastTarget = false;
         var lblRT = lblGO.GetComponent<RectTransform>();
         lblRT.anchorMin = Vector2.zero; lblRT.anchorMax = Vector2.one;
-        lblRT.offsetMin = Vector2.zero; lblRT.offsetMax = Vector2.zero;
+        // Small horizontal inset so the label never touches the button edge.
+        lblRT.offsetMin = new Vector2(10, 4);
+        lblRT.offsetMax = new Vector2(-10, -4);
 
         btn.targetGraphic = img;
         var colors = btn.colors;
-        colors.highlightedColor = new Color(bgColor.r * 1.3f, bgColor.g * 1.3f, bgColor.b * 1.3f);
-        colors.pressedColor = new Color(bgColor.r * 0.7f, bgColor.g * 0.7f, bgColor.b * 0.7f);
+        colors.normalColor      = bgColor;
+        colors.highlightedColor = new Color(
+            Mathf.Clamp01(bgColor.r * 1.35f + 0.05f),
+            Mathf.Clamp01(bgColor.g * 1.35f + 0.05f),
+            Mathf.Clamp01(bgColor.b * 1.35f + 0.05f),
+            bgColor.a);
+        colors.pressedColor     = new Color(bgColor.r * 0.65f, bgColor.g * 0.65f, bgColor.b * 0.65f, bgColor.a);
+        colors.selectedColor    = new Color(
+            Mathf.Clamp01(bgColor.r * 1.20f),
+            Mathf.Clamp01(bgColor.g * 1.20f),
+            Mathf.Clamp01(bgColor.b * 1.20f),
+            bgColor.a);
+        colors.disabledColor    = new Color(bgColor.r * 0.45f, bgColor.g * 0.45f, bgColor.b * 0.45f, 0.6f);
+        colors.colorMultiplier  = 1f;
+        colors.fadeDuration     = 0.1f;
         btn.colors = colors;
 
         return go;
