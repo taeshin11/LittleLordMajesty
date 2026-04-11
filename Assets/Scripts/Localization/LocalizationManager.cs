@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using TMPro;
+using UnityEngine.TextCore.LowLevel;
 
 /// <summary>
 /// Dynamic localization system. NO hardcoded text - everything through this manager.
@@ -76,9 +77,40 @@ public class LocalizationManager : MonoBehaviour
     {
         // LiberationSans SDF lives in TextMesh Pro's Resources folder — load it and
         // ask whether '가' (U+AC00, the first Hangul syllable) resolves via any fallback.
+        //
+        // IMPORTANT (m15): HasCharacter(searchFallbacks: true) can return true
+        // against a Dynamic-atlas fallback even when no glyph is actually baked,
+        // because TMP "trusts" the dynamic rasterizer to supply it on demand.
+        // On WebGL/IL2CPP that path routes through TMP_FontAsset.TryAddCharacterInternal
+        // → FreeType bridge (partially stripped) → `null function` wasm crash.
+        // So we require the glyph to already exist in a STATIC atlas somewhere
+        // in the fallback chain — dynamic fallbacks are treated as "no".
         var font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
         if (font == null) return false;
-        return font.HasCharacter('가', searchFallbacks: true);
+        if (HasCharacterInStaticChain(font, '\uAC00')) return true;
+        return false;
+    }
+
+    private static bool HasCharacterInStaticChain(TMP_FontAsset font, uint unicode, int depth = 0)
+    {
+        if (font == null || depth > 4) return false;
+        // Only trust the glyph if it's literally already in a static atlas's
+        // character lookup table. Dynamic atlases are treated as "no" because
+        // their HasCharacter(true) return value promises FreeType will
+        // rasterize on demand — but on WebGL/IL2CPP that FreeType bridge is
+        // partially stripped and crashes the wasm runtime.
+        if (font.atlasPopulationMode == AtlasPopulationMode.Static
+            && font.characterLookupTable != null
+            && font.characterLookupTable.ContainsKey(unicode))
+        {
+            return true;
+        }
+        if (font.fallbackFontAssetTable != null)
+        {
+            foreach (var fb in font.fallbackFontAssetTable)
+                if (HasCharacterInStaticChain(fb, unicode, depth + 1)) return true;
+        }
+        return false;
     }
 
     public void SetLanguage(Language language)

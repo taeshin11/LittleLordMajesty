@@ -92,13 +92,37 @@ public static class LocalDialogueBank
     private static bool CanRenderHangul()
     {
         if (_canRenderHangul.HasValue) return _canRenderHangul.Value;
-        // Probe the default TMP font for U+AC00 ('가') including the fallback
-        // chain. Returns true only if some font in the chain has the glyph.
+        // Probe the default TMP font for U+AC00 ('가'). CRITICAL (m15):
+        // HasCharacter(searchFallbacks: true) can return true against a
+        // Dynamic-atlas fallback even if zero glyphs are baked, because TMP
+        // trusts the dynamic rasterizer to supply them on demand. That path
+        // routes through TMP_FontAsset.TryAddCharacterInternal → FreeType
+        // bridge which is partially stripped on IL2CPP WebGL and crashes the
+        // wasm runtime with `null function or function signature mismatch`.
+        // Walk the chain manually and only accept a glyph that is already
+        // baked into a STATIC atlas.
         var font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
-        _canRenderHangul = font != null && font.HasCharacter('\uAC00', searchFallbacks: true);
+        _canRenderHangul = HasCharacterInStaticChain(font, '\uAC00');
         if (!_canRenderHangul.Value)
             Debug.Log("[LocalDialogueBank] Hangul fallback font not present — Korean lines disabled");
         return _canRenderHangul.Value;
+    }
+
+    private static bool HasCharacterInStaticChain(TMP_FontAsset font, uint unicode, int depth = 0)
+    {
+        if (font == null || depth > 4) return false;
+        if (font.atlasPopulationMode == UnityEngine.TextCore.LowLevel.AtlasPopulationMode.Static
+            && font.characterLookupTable != null
+            && font.characterLookupTable.ContainsKey(unicode))
+        {
+            return true;
+        }
+        if (font.fallbackFontAssetTable != null)
+        {
+            foreach (var fb in font.fallbackFontAssetTable)
+                if (HasCharacterInStaticChain(fb, unicode, depth + 1)) return true;
+        }
+        return false;
     }
 
     /// <summary>True iff the bank has at least one line for the given slot.</summary>

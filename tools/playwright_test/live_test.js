@@ -30,7 +30,12 @@ const VIEWPORT = { width: 1280, height: 960 };
         headless: true,
         args: ['--disable-gpu-sandbox', '--no-sandbox', '--autoplay-policy=no-user-gesture-required']
     });
-    const context = await browser.newContext({ viewport: VIEWPORT });
+    // Force a Korean browser locale so Unity's Application.systemLanguage
+    // returns SystemLanguage.Korean, driving LocalizationManager to load
+    // ko.json. This reproduces the m15 Aldrich dialogue wasm crash path — a
+    // default en-US context would silently skip the Hangul-to-TMP code path
+    // and the test would report "all good" against a crashing build.
+    const context = await browser.newContext({ viewport: VIEWPORT, locale: 'ko-KR' });
     const page = await context.newPage();
 
     // Unity 2022+ loader calls createUnityInstance(canvas, config).then(u => ...)
@@ -199,6 +204,42 @@ const VIEWPORT = { width: 1280, height: 960 };
     await page.waitForTimeout(10000);
     await page.screenshot({ path: path.join(OUT_DIR, '03_castle_loaded.png') });
     console.log('[LiveTest] Screenshot 03_castle_loaded.png');
+
+    // ── Step 4: open an NPC dialogue (m15 Aldrich crash repro) ───────
+    // Exercise the NPC interaction code path. In ko-KR locale the Castle
+    // localization pipe (profession labels, "You approach X", idle text,
+    // dialogue bank greeting) will feed Hangul into TMP labels — if
+    // LiberationSans SDF's fallback chain contains a Dynamic-atlas font, the
+    // wasm runtime crashes inside TMP_FontAsset.TryAddCharacterInternal.
+    console.log('[LiveTest] Triggering NPC dialogue via SendMessage...');
+    try {
+        const result = await page.evaluate(() => {
+            const u = window.unityInstance || window.unityGame;
+            const has = !!(u && typeof u.SendMessage === 'function');
+            const dump = {
+                hasUnityInstance: !!window.unityInstance,
+                hasUnityGame: !!window.unityGame,
+                hasSendMessage: has,
+                lang: navigator.language,
+            };
+            if (has) {
+                try {
+                    u.SendMessage('CastleViewPanel', 'TestOpenNPCDialogue', 'vassal_01');
+                    dump.sent = true;
+                } catch (e) { dump.sendError = e.message; }
+            }
+            return dump;
+        });
+        console.log('[LiveTest] Unity state:', JSON.stringify(result));
+    } catch (e) {
+        console.log('[LiveTest] SendMessage failed:', e.message);
+    }
+
+    // Give the dialogue UI time to open + run the first Canvas rebuild
+    // (where TMP_FontAsset.TryAddCharacterInternal would fire if broken).
+    await page.waitForTimeout(8000);
+    await page.screenshot({ path: path.join(OUT_DIR, '04_npc_dialogue.png') });
+    console.log('[LiveTest] Screenshot 04_npc_dialogue.png');
 
     // ── Write logs ───────────────────────────────────────────────────
     const logPath = path.join(OUT_DIR, 'console.log');

@@ -89,6 +89,20 @@ public class CastleViewUI : MonoBehaviour
         catch (System.Exception e) { Debug.LogError($"[CastleView] ShowWelcomeHint: {e.Message}"); }
     }
 
+    /// <summary>
+    /// Test hook: exposed for live_test.js SendMessage to exercise the NPC
+    /// dialogue code path (the one that regressed in m15 via Korean text
+    /// hitting TMP_FontAsset.TryAddCharacterInternal). Safe no-op if the
+    /// interaction UI isn't found.
+    /// </summary>
+    public void TestOpenNPCDialogue(string npcId)
+    {
+        Debug.Log($"[CastleView] TestOpenNPCDialogue({npcId}) — live_test hook");
+        if (_npcInteractionUI == null)
+            _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include);
+        _npcInteractionUI?.OpenForNPC(npcId);
+    }
+
     private void ShowWelcomeHint()
     {
         string msg = LocalizationManager.Instance?.Get("welcome_hint")
