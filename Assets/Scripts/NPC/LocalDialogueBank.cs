@@ -111,7 +111,7 @@ public static class LocalDialogueBank
     private static bool HasCharacterInStaticChain(TMP_FontAsset font, uint unicode, int depth = 0)
     {
         if (font == null || depth > 4) return false;
-        if (font.atlasPopulationMode == UnityEngine.TextCore.LowLevel.AtlasPopulationMode.Static
+        if (font.atlasPopulationMode == AtlasPopulationMode.Static
             && font.characterLookupTable != null
             && font.characterLookupTable.ContainsKey(unicode))
         {

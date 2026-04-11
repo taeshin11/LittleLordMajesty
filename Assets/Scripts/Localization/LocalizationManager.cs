@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using TMPro;
-using UnityEngine.TextCore.LowLevel;
 
 /// <summary>
 /// Dynamic localization system. NO hardcoded text - everything through this manager.
