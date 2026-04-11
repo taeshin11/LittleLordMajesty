@@ -103,7 +103,7 @@ NEGATIVE = (
 )
 
 
-def load_pipe():
+def load_pipe(use_offload=True):
     print("[img] Loading SDXL base 1.0 (this takes 1-2 min on first run)...")
     import torch
     from diffusers import AutoPipelineForText2Image
@@ -113,19 +113,23 @@ def load_pipe():
         variant="fp16",
         use_safetensors=True,
     )
-    # Use cpu_offload when other jobs (e.g. xray training) already occupy the
-    # 4090 — keeps peak VRAM under ~4 GB at the cost of a few seconds per image.
     if torch.cuda.is_available():
         free_b, _ = torch.cuda.mem_get_info()
         free_gb = free_b / (1024**3)
         print(f"[img] CUDA: {torch.cuda.get_device_name(0)} - free {free_gb:.1f} GB",
               flush=True)
-        # Always use model_cpu_offload: the xray training job on the same
-        # GPU can spike VRAM unpredictably, and a silent CUDA OOM on Windows
-        # kills python with exit 1 and no traceback. Offload trades ~2-3s
-        # per image for robustness.
-        print("[img] Enabling model_cpu_offload (shared GPU)", flush=True)
-        pipe.enable_model_cpu_offload()
+        if use_offload:
+            # Default: use model_cpu_offload — keeps peak VRAM under ~4 GB at
+            # a few seconds per image cost. Safer when sharing the GPU with
+            # other jobs (xray training, inference) that spike unpredictably.
+            print("[img] Enabling model_cpu_offload (shared GPU)", flush=True)
+            pipe.enable_model_cpu_offload()
+        else:
+            # --no-offload: user explicitly told us the 4090 is ours. Full
+            # GPU residency runs ~2x faster per image and produces identical
+            # output for the same seed/steps. Peak VRAM ~12 GB for SDXL fp16.
+            print("[img] GPU-resident (no offload, full VRAM)", flush=True)
+            pipe.to("cuda")
     else:
         print("[img] WARNING: no CUDA, running on CPU (very slow)")
     return pipe
@@ -151,38 +155,60 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="all", choices=["all", "bg", "portraits"])
     ap.add_argument("--steps", type=int, default=30)
+    ap.add_argument("--no-offload", action="store_true",
+                    help="Disable cpu_offload (use when the 4090 is fully ours; "
+                         "runs ~2x faster, needs ~12 GB VRAM)")
+    ap.add_argument("--seed-variants", type=int, default=1,
+                    help="Generate N additional seed variations per asset "
+                         "saved to --variants-out (does NOT overwrite originals). "
+                         "Default 1 = originals only.")
+    ap.add_argument("--variants-out", default=None,
+                    help="Directory for variant PNGs (default tools/image_gen/variants/)")
     args = ap.parse_args()
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
     from gpu_lock import acquire as gpu_acquire
-    # vram_mb matches ACTUAL peak under enable_model_cpu_offload() (see
-    # load_pipe below). SDXL base 1.0 fp16 with cpu_offload stays under ~4 GB
-    # at inference time — UNet + VAE decoder are swapped sequentially on GPU.
-    # Declaring the no-offload peak of 12 GB would block acquiring a slot
-    # while SPINAI+PillScan hold the 4090 (18+6=24), even though 4 GB would
-    # actually fit as soon as one of them dips. Declare the real peak so
-    # shared-mode packing works.
-    if not gpu_acquire("LittleLordMajesty_image_gen", vram_mb=4000, on_busy="wait"):
+    # Two VRAM modes:
+    #   default (cpu_offload): ~4 GB peak, for shared-GPU use
+    #   --no-offload:          ~12 GB peak, full residency, ~2x faster
+    # We declare the right one so the shared lock packs jobs correctly.
+    vram_budget = 12000 if args.no_offload else 4000
+    if not gpu_acquire("LittleLordMajesty_image_gen", vram_mb=vram_budget, on_busy="wait"):
         print("GPU busy, exiting")
         sys.exit(0)
 
-    pipe = load_pipe()
+    pipe = load_pipe(use_offload=not args.no_offload)
+
+    variants_dir = Path(args.variants_out) if args.variants_out else \
+        Path(__file__).parent / "variants"
+    if args.seed_variants > 1:
+        variants_dir.mkdir(parents=True, exist_ok=True)
+
+    def _run(stem, prompt, w, h, base_seed):
+        # Always produce the canonical original at base_seed.
+        out = OUT_DIR / f"{stem}.png"
+        gen_image(pipe, prompt, w, h, out, seed=base_seed, steps=args.steps)
+        # Optional alternate seeds — saved outside Resources/ so they don't
+        # land in the Unity build. User promotes one by hand if preferred.
+        for i in range(1, args.seed_variants):
+            alt_seed = (base_seed + i * 1_000_003) & 0x7fffffff
+            vout = variants_dir / f"{stem}_v{i}_seed{alt_seed}.png"
+            gen_image(pipe, prompt, w, h, vout, seed=alt_seed, steps=args.steps)
 
     if args.only in ("all", "bg"):
         for stem, prompt, w, h in BACKGROUNDS:
-            out = OUT_DIR / f"{stem}.png"
-            gen_image(pipe, prompt, w, h, out,
-                      seed=hash(stem) & 0x7fffffff, steps=args.steps)
+            _run(stem, prompt, w, h, hash(stem) & 0x7fffffff)
 
     if args.only in ("all", "portraits"):
         for npc_id, name, profession, vibe in PORTRAITS:
             prompt = PORTRAIT_PROMPT_TEMPLATE.format(
                 name=name, profession=profession, vibe=vibe)
-            out = OUT_DIR / f"portrait_{npc_id}.png"
-            gen_image(pipe, prompt, 512, 512, out,
-                      seed=hash(npc_id) & 0x7fffffff, steps=args.steps)
+            _run(f"portrait_{npc_id}", prompt, 512, 512,
+                 hash(npc_id) & 0x7fffffff)
 
     print(f"[img] DONE -> {OUT_DIR}")
+    if args.seed_variants > 1:
+        print(f"[img] Variants -> {variants_dir}")
 
 
 if __name__ == "__main__":

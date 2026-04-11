@@ -109,3 +109,6 @@ tools/playwright_test/screenshots/
 
 # VS Code workspace settings (machine-local)
 .vscode/
+
+# SDXL seed-variant review dumps (not part of the game build)
+/tools/image_gen/variants/
