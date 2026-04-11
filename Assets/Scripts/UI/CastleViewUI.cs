@@ -61,16 +61,17 @@ public class CastleViewUI : MonoBehaviour
         Debug.Log("[Crash-Bisect] CastleViewUI.Start entry");
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-        // Crash-bisect 12: disable ActionBar + TopHUD. Re-enable
-        // ResourceStrip + ObjectiveText. If this fixes it, TopHUD is the
-        // culprit. If not, ObjectiveText is.
+        // Crash-bisect 13: disable ActionBar + ObjectiveText. Everything
+        // else enabled. Process of elimination: attempts 11 & 12 both left
+        // ObjectiveText enabled and both crashed; attempt 9 had it off and
+        // did not. If this fixes it we have nailed the culprit.
         try
         {
             if (_buildButton != null && _buildButton.transform.parent != null)
                 _buildButton.transform.parent.gameObject.SetActive(false);
             var panel = transform;
-            var topHUD = panel.Find("TopHUD");
-            if (topHUD != null) { topHUD.gameObject.SetActive(false); Debug.Log("[Crash-Bisect] Disabled TopHUD"); }
+            var objective = panel.Find("ObjectiveText");
+            if (objective != null) { objective.gameObject.SetActive(false); Debug.Log("[Crash-Bisect] Disabled ObjectiveText"); }
         }
         catch (System.Exception e) { Debug.LogError($"[Crash-Bisect] Disable: {e.Message}"); }
 #endif
