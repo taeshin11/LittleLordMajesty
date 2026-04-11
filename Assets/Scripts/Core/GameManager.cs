@@ -246,7 +246,6 @@ public class GameManager : MonoBehaviour
         catch (System.Exception e) { Debug.LogError($"[NewGame] SetGameState: {e}"); }
 
         Debug.Log("[NewGame] STEP 6: Tutorial reset+start");
-#if !UNITY_WEBGL || UNITY_EDITOR
         if (TutorialSystem.Instance != null)
         {
             try { TutorialSystem.Instance.ResetTutorial(); }
@@ -254,10 +253,6 @@ public class GameManager : MonoBehaviour
             try { TutorialSystem.Instance.StartTutorial(); }
             catch (System.Exception e) { Debug.LogError($"[NewGame] StartTutorial: {e}"); }
         }
-#else
-        // Crash-bisect: skip tutorial on WebGL entirely.
-        Debug.Log("[Crash-Bisect] Skipping Tutorial on WebGL");
-#endif
         Debug.Log("[NewGame] STEP 7: NewGame() complete");
     }
 }

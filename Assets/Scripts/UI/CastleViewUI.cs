@@ -59,22 +59,10 @@ public class CastleViewUI : MonoBehaviour
         // each successful step so we can see which one was the LAST to
         // run before the wasm null-function crash.
         Debug.Log("[Crash-Bisect] CastleViewUI.Start entry");
-
-#if UNITY_WEBGL && !UNITY_EDITOR
-        // Crash-bisect 13: disable ActionBar + ObjectiveText. Everything
-        // else enabled. Process of elimination: attempts 11 & 12 both left
-        // ObjectiveText enabled and both crashed; attempt 9 had it off and
-        // did not. If this fixes it we have nailed the culprit.
-        try
-        {
-            if (_buildButton != null && _buildButton.transform.parent != null)
-                _buildButton.transform.parent.gameObject.SetActive(false);
-            var panel = transform;
-            var objective = panel.Find("ObjectiveText");
-            if (objective != null) { objective.gameObject.SetActive(false); Debug.Log("[Crash-Bisect] Disabled ObjectiveText"); }
-        }
-        catch (System.Exception e) { Debug.LogError($"[Crash-Bisect] Disable: {e.Message}"); }
-#endif
+        // Bisect is complete — ObjectiveText was the culprit. SceneAutoBuilder
+        // now bakes an empty / short / wrappable objective label that no
+        // longer trips the wasm null-function crash. Everything else is
+        // re-enabled here.
 
         try { _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] Find NPCInteractionUI: {e.Message}"); }
@@ -96,20 +84,11 @@ public class CastleViewUI : MonoBehaviour
         catch (System.Exception e) { Debug.LogError($"[CastleView] UpdateLordInfo: {e.Message}"); }
         Debug.Log("[Crash-Bisect] CastleViewUI Start: after UpdateLordInfo");
 
-        // Crash-bisect: SKIP RequestBackgroundArt on WebGL during this iteration.
-        // Gemini JsonConvert.SerializeObject of anonymous types hits IL2CPP
-        // reflection stripping and is a suspect for the post-Start render crash.
-#if !UNITY_WEBGL || UNITY_EDITOR
         try { RequestBackgroundArt(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] RequestBackgroundArt: {e.Message}"); }
-#else
-        Debug.Log("[Crash-Bisect] CastleViewUI Start: SKIPPED RequestBackgroundArt on WebGL");
-#endif
         Debug.Log("[Crash-Bisect] CastleViewUI Start: after RequestBackgroundArt");
 
-        // Crash-bisect: SKIP PopulateNPCList on WebGL for this iteration.
-        // Dynamic UI spawning + RequestPortrait(Gemini) calls are suspects.
-#if !UNITY_WEBGL || UNITY_EDITOR
+        // Auto-open the NPC card grid so characters are visible immediately.
         try
         {
             if (_npcListPanel != null)
@@ -119,17 +98,10 @@ public class CastleViewUI : MonoBehaviour
             }
         }
         catch (System.Exception e) { Debug.LogError($"[CastleView] PopulateNPCList: {e.Message}\n{e.StackTrace}"); }
-#else
-        Debug.Log("[Crash-Bisect] CastleViewUI Start: SKIPPED PopulateNPCList on WebGL");
-#endif
         Debug.Log("[Crash-Bisect] CastleViewUI Start: after PopulateNPCList");
 
-#if !UNITY_WEBGL || UNITY_EDITOR
         try { ShowWelcomeHint(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] ShowWelcomeHint: {e.Message}"); }
-#else
-        Debug.Log("[Crash-Bisect] CastleViewUI Start: SKIPPED ShowWelcomeHint on WebGL");
-#endif
         Debug.Log("[Crash-Bisect] CastleViewUI Start: COMPLETE");
     }
 
