@@ -47,6 +47,14 @@ public class NPCBillboard : MonoBehaviour
         ApplySprite();
     }
 
+    /// <summary>Runtime wiring hook so CastleScene3D can point us at the
+    /// SpriteRenderer it just spawned without exposing the private field.</summary>
+    public void AssignSpriteRenderer(SpriteRenderer sr)
+    {
+        _sprite = sr;
+        ApplySprite();
+    }
+
     private void Awake()
     {
         LoadSprites();

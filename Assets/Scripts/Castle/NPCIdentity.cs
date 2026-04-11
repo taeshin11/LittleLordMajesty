@@ -20,4 +20,19 @@ public class NPCIdentity : MonoBehaviour
         _npcId = id;
         _displayName = displayName;
     }
+
+    // Self-register so InteractionFinder doesn't have to iterate all scene
+    // GameObjects or configure a physics layer mask. NPCs already are a
+    // small set (~20 in castle view) — a simple list scan at 10 Hz is
+    // cheaper than layer bookkeeping.
+    private void OnEnable()
+    {
+        if (!InteractionFinder.RegisteredNPCs.Contains(this))
+            InteractionFinder.RegisteredNPCs.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        InteractionFinder.RegisteredNPCs.Remove(this);
+    }
 }

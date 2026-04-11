@@ -22,8 +22,7 @@ public class InteractionFinder : MonoBehaviour
 {
     [Header("Search")]
     [SerializeField] private float _searchRadius = 2.2f;
-    [SerializeField] private LayerMask _npcLayer;
-    [Tooltip("Seconds between OverlapSphere ticks. 0.1 = 10 Hz.")]
+    [Tooltip("Seconds between proximity ticks. 0.1 = 10 Hz.")]
     [SerializeField] private float _tickInterval = 0.1f;
 
     [Header("Input")]
@@ -33,8 +32,13 @@ public class InteractionFinder : MonoBehaviour
     private NPCIdentity      _currentTarget;
     private float            _nextTickTime;
 
-    // Reusable buffer so the 10 Hz OverlapSphere doesn't allocate.
-    private static readonly Collider[] _hitBuffer = new Collider[16];
+    /// <summary>
+    /// Process-wide registry maintained by NPCIdentity.OnEnable/OnDisable.
+    /// Avoids any dependency on Unity physics layers (they're a pain to
+    /// configure at runtime) and keeps the proximity tick free of
+    /// GetComponent calls — we can iterate a live list of ~20 NPCs cheaply.
+    /// </summary>
+    public static readonly List<NPCIdentity> RegisteredNPCs = new();
 
     private void Update()
     {
@@ -50,14 +54,11 @@ public class InteractionFinder : MonoBehaviour
 
     private void RefreshTarget()
     {
-        int hitCount = Physics.OverlapSphereNonAlloc(
-            transform.position, _searchRadius, _hitBuffer, _npcLayer);
-
-        float bestDistSq = float.PositiveInfinity;
+        float bestDistSq = _searchRadius * _searchRadius;
         NPCIdentity best = null;
-        for (int i = 0; i < hitCount; i++)
+        for (int i = 0; i < RegisteredNPCs.Count; i++)
         {
-            var id = _hitBuffer[i].GetComponentInParent<NPCIdentity>();
+            var id = RegisteredNPCs[i];
             if (id == null) continue;
             float d2 = (id.transform.position - transform.position).sqrMagnitude;
             if (d2 < bestDistSq)

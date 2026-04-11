@@ -18,6 +18,32 @@ public class PlayerController : MonoBehaviour
 {
     public enum Facing { South = 0, North = 1, East = 2, West = 3 }
 
+    /// <summary>
+    /// Runtime wiring payload used by RoamingBootstrap to configure a
+    /// freshly-spawned player without the Editor inspector. Kept as a
+    /// class (not struct) so SendMessage can box a single reference.
+    /// </summary>
+    public class RuntimeConfig
+    {
+        public SpriteRenderer Sprite;
+        public Sprite[] DirectionSprites;
+        public float WalkSpeed;
+    }
+
+    /// <summary>
+    /// Called by RoamingBootstrap via SendMessage right after AddComponent.
+    /// Populates the private serialized fields so we don't have to expose
+    /// them publicly.
+    /// </summary>
+    public void ConfigureAtRuntime(RuntimeConfig cfg)
+    {
+        if (cfg == null) return;
+        _sprite = cfg.Sprite;
+        _directionSprites = cfg.DirectionSprites;
+        if (cfg.WalkSpeed > 0f) _walkSpeed = cfg.WalkSpeed;
+        ApplySprite();
+    }
+
     [Header("Movement")]
     [SerializeField] private float _walkSpeed = 4f;
     [SerializeField] private LayerMask _wallLayer;
