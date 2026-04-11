@@ -358,6 +358,25 @@ def acquire(
             state["holders"] = _cleanup_holders(state["holders"])
             capacity = int(state.get("capacity_mb") or _detect_capacity())
             state["capacity_mb"] = capacity
+
+            # Dedup: if this PID already holds a slot, refresh it instead of
+            # adding a duplicate entry. Common case: a script imports gpu_lock
+            # twice, or a long-running server re-acquires on reload.
+            my_pid = os.getpid()
+            existing = [h for h in state["holders"] if int(h.get("pid", 0)) == my_pid]
+            if existing:
+                now = _now()
+                exp = now + ttl_hours * 3600
+                for h in existing:
+                    h["name"] = name
+                    h["vram_mb"] = vram_mb
+                    h["expires_at"] = exp
+                    h["expires_at_iso"] = time.strftime(
+                        "%Y-%m-%d %H:%M:%S", time.localtime(exp)
+                    )
+                _write_state(state)
+                return True
+
             used = _used_mb(state["holders"])
             free = capacity - used
 
