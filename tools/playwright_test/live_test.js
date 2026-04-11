@@ -33,6 +33,36 @@ const VIEWPORT = { width: 1280, height: 960 };
     const context = await browser.newContext({ viewport: VIEWPORT });
     const page = await context.newPage();
 
+    // Unity 2022+ loader calls createUnityInstance(canvas, config).then(u => ...)
+    // and the index.html template captures the resolved instance only inside a
+    // closure — it never attaches to window. Without help, window.unityInstance
+    // never appears, the waitForFunction below times out at 120s, and the
+    // SendMessage crash-check fallback gets silently skipped.
+    //
+    // Install a setter trap on window.createUnityInstance BEFORE the loader
+    // script runs. When WebGL.loader.js assigns createUnityInstance, the
+    // setter wraps it so that on Promise resolution we stash the instance
+    // onto window.unityInstance ourselves.
+    await page.addInitScript(() => {
+        try {
+            let _ci;
+            Object.defineProperty(window, 'createUnityInstance', {
+                configurable: true,
+                get() { return _ci; },
+                set(fn) {
+                    _ci = function (...args) {
+                        const p = fn.apply(this, args);
+                        if (p && typeof p.then === 'function') {
+                            p.then(u => { window.unityInstance = u; })
+                             .catch(() => {});
+                        }
+                        return p;
+                    };
+                },
+            });
+        } catch (e) { /* setter install failed — fall back to 120s timeout */ }
+    });
+
     const consoleMessages = [];
     const pageErrors = [];
     const dialogMessages = [];
@@ -78,16 +108,25 @@ const VIEWPORT = { width: 1280, height: 960 };
     // resolved instance is NOT automatically attached to window. Some builds
     // expose it on window.unityInstance, some on window.unityGame. Inject a
     // helper that waits for either — or for the SendMessage function itself.
+    // Two success signals, whichever fires first:
+    //   (a) window.unityInstance set by our setter trap above
+    //   (b) the template's #unity-loading-bar hides — the template does
+    //       `loadingBar.style.display = "none"` inside its .then(unityInstance)
+    //       resolver, so this is a direct observable of Unity finishing init
+    //       even when we can't reach the instance itself.
     let unityReady = false;
     try {
         await page.waitForFunction(() => {
             const u = window.unityInstance || window.unityGame;
-            return !!(u && typeof u.SendMessage === 'function');
-        }, { timeout: 120000 });
+            if (u && typeof u.SendMessage === 'function') return 'instance';
+            const bar = document.querySelector('#unity-loading-bar');
+            if (bar && getComputedStyle(bar).display === 'none') return 'bar-hidden';
+            return false;
+        }, { timeout: 60000 });
         unityReady = true;
         console.log('[LiveTest] unityInstance ready ✓');
     } catch (e) {
-        console.log('[LiveTest] WARNING: unityInstance not detected within 120s — continuing anyway');
+        console.log('[LiveTest] WARNING: no Unity-ready signal within 60s — continuing anyway');
     }
 
     // Give the game extra time to finish Bootstrap → Game scene transition
