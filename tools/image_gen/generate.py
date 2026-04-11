@@ -155,7 +155,14 @@ def main():
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
     from gpu_lock import acquire as gpu_acquire
-    if not gpu_acquire("LittleLordMajesty_image_gen", vram_mb=12000, on_busy="wait"):
+    # vram_mb matches ACTUAL peak under enable_model_cpu_offload() (see
+    # load_pipe below). SDXL base 1.0 fp16 with cpu_offload stays under ~4 GB
+    # at inference time — UNet + VAE decoder are swapped sequentially on GPU.
+    # Declaring the no-offload peak of 12 GB would block acquiring a slot
+    # while SPINAI+PillScan hold the 4090 (18+6=24), even though 4 GB would
+    # actually fit as soon as one of them dips. Declare the real peak so
+    # shared-mode packing works.
+    if not gpu_acquire("LittleLordMajesty_image_gen", vram_mb=4000, on_busy="wait"):
         print("GPU busy, exiting")
         sys.exit(0)
 

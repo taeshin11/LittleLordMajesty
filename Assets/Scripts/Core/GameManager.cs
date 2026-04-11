@@ -76,8 +76,11 @@ public class GameManager : MonoBehaviour
             PlayTimeSeconds += Time.deltaTime;
     }
 
-#if !UNITY_EDITOR
-    // WebGL debug overlay — shows game state to diagnose black screen.
+#if UNITY_EDITOR
+    // Editor-only debug overlay — originally added to diagnose the M13 WebGL
+    // black-screen wasm crash. That's fixed, so the overlay no longer leaks
+    // into deployed builds (aesthetic root cause #4 in the Zelda EoW pivot
+    // notes). Kept available in the Editor for future debugging.
     // GUIStyle is lazily cached (GUI.skin is not safe to touch before first OnGUI),
     // and the Canvas reference is cached to avoid per-frame FindObjectOfType allocations.
     private static GUIStyle _debugStyle;
