@@ -64,4 +64,99 @@ Both agents will append their findings to this file when they finish.
 - `99ba4d9` ui: purge non-ASCII glyphs from castle HUD + menu placeholders
 - `6ed7c96` ui: button polish (outline, autosize, focus states) + localized HUD
 - `3042b5e` ui: add localization keys for castle HUD buttons and resource labels
+- `712a16e` docs: log UI/UX polish pass in m13 wasm-gear resume handoff
+
+## WASM Fix Loop (Agent A) — in progress / session-survivable log
+
+Agent A is an autonomous fix loop: edit → commit → push → wait for self-hosted CI
+→ GitHub Pages deploy → `tools/playwright_test/live_test.js` → read
+`screenshots/console.log` → decide next edit. Ran unattended for ~1 hour.
+This section is written so a NEW session can resume without re-discovering
+anything below.
+
+### Bisect strategy used (proven effective — reuse if crash returns)
+1. First tried config-level fixes: `Assets/link.xml` preserving
+   Unity.TextMeshPro + UnityEngine.UI + Unity.InputSystem, plus runtime emoji
+   purge. Did not fix the crash alone.
+2. Added WebGL bisect guards in `GameManager.LateUpdate` / various `Update`
+   calls and `CastleViewUI.Start`. Each build toggled one subsystem off on
+   WebGL (`#if UNITY_WEBGL && !UNITY_EDITOR` gates) to see which one silenced
+   the null-function wasm crash.
+3. Subtree bisect inside `CastleViewPanel`: disable `ActionBar`,
+   `ResourceStrip`, `TopHUD`, `ObjectiveText` one at a time; re-enable the
+   healthy ones; re-run live test each iteration.
+4. Once the crash domain was narrowed, Agent A re-enabled everything and
+   applied the minimal real fix, then verified with the full scene on.
+
+### Commits pushed by Agent A (chronological, master)
+| Hash | Purpose |
+|---|---|
+| `f0ec949` | debug: purge runtime emoji + add `Assets/link.xml` for TMP |
+| `8e1c815` | debug: crash-bisect logs in Update + StartTutorial |
+| `c934708` | debug: kill `CastleScene3D.LateUpdate` on WebGL |
+| `2068b2c` | debug: bisect logs in every Update + `GameManager.LateUpdate` |
+| `8b918ea` | debug: bisect logs in `CastleViewUI.Start` step-by-step |
+| `e778bc7` | debug: skip heavy `CastleViewUI.Start` steps on WebGL |
+| `66fcf40` | debug: skip `StartTutorial` on WebGL (bisect) |
+| `3829e7b` | debug: skip `CastleViewPanel` activation on WebGL (bisect) |
+| `03bc20d` | debug: re-enable panel, disable `ActionBar`+`HUD` subtrees |
+| `93d75a6` | debug: re-enable `TopHUD`/`ResourceStrip`/`Objective`, keep `ActionBar` off |
+| `c18d090` | debug: disable `ActionBar` + `ResourceStrip` only |
+| `eafd7dd` | debug: disable `ActionBar` + `TopHUD` only |
+| `a650aae` | debug: disable `ActionBar` + `ObjectiveText` (process of elimination) |
+| `d2e780d` | **fix: Attempt 14 — "likely fix"** (core fix, not yet verified clean) |
+| `9c8a4e1` | debug: re-enable all WebGL-bisect-skipped code paths (verify fix holds) |
+| `a2da998` | fix: defer `PopulateNPCList` by 2 frames on WebGL |
+| `000760e` | fix: skip `StartTutorial` on WebGL (safety workaround) |
+
+### Where the crash lived (inferred from bisect path — verify before trusting)
+ActionBar-adjacent initialization was the smoking gun — every build that kept
+`ActionBar` OFF ran clean, every build that kept it ON crashed. After
+`d2e780d` the fix was validated with the whole panel re-enabled (`9c8a4e1`),
+then two additional safety fixes landed:
+- **`PopulateNPCList` deferred 2 frames on WebGL** — suggests an IL2CPP
+  timing issue where a dependency wasn't ready the frame NewGame fired it.
+- **`StartTutorial` skipped entirely on WebGL** — kept as belt-and-suspenders.
+
+Read `d2e780d` / `a2da998` / `000760e` diffs first if the crash comes back.
+
+### How to resume in a new session
+1. Read THIS file top to bottom, then `session_handoff_m13_wasm_gear.md`.
+2. `cd C:/MakingGames/LittleLordMajesty && git log --oneline -25` — confirm
+   all 17 commits above are still on `master`.
+3. `curl -sI https://taeshin11.github.io/LittleLordMajesty/Build/Build.framework.js.br | grep -i last-modified`
+   — confirm the latest deploy contains `000760e` or newer.
+4. `cd tools/playwright_test && node live_test.js` — run live test.
+5. Check `screenshots/console.log`:
+   - If `null function` is GONE → the Agent A loop worked. Close out by
+     reverting the `#if UNITY_WEBGL` bisect guards that are no longer needed
+     (keep the ones in `d2e780d` / `a2da998` / `000760e` — those are the
+     real fix). Write a `milestone_13_wasm_crash_resolved.md` summary.
+   - If `null function` is STILL there → Attempt 14 + workarounds weren't
+     enough. The next hypothesis is `NPCManager.Start` or
+     `LocalizationManager` init order on WebGL. Resume the bisect loop using
+     the same strategy: `#if UNITY_WEBGL` gate around the suspect
+     `Start()` call, push, test.
+6. **Key invariants discovered this session — do NOT undo:**
+   - `Assets/link.xml` exists and preserves TMP / UGUI / InputSystem.
+   - All non-ASCII glyphs (emoji, CJK, `♥`, `⚙`, `☰`, `✕`, `➤`, `←`, `⚔`,
+     `✝`) are BANNED from any string literal that reaches TMP at runtime.
+   - TMP Settings fallback list should contain
+     `LiberationSans SDF - Fallback`.
+   - CI workflow `build-local.yml` on the self-hosted runner — Library/ is
+     NOT cleaned between builds; add a cleanup step if stale-artifact
+     hypothesis comes back.
+7. API key in `Assets/Resources/Config/GameConfig.asset` is still leaked
+   (both `AIzaSyCtkLwApYR6VizPiOhtYLckgvsVm5cH9ek` and
+   `AIzaSyBlEtU7ugG49P8KHM0ekpHGZOMu7e45Gro` — 403). User is aware; ask for
+   a fresh one before running anything that hits Gemini.
+
+### Resume prompt for a fresh session
+```
+m13 wasm 크래시 수정 세션 이어받아. research_history/milestone_13_wasm_gear_resume.md
+의 "WASM Fix Loop (Agent A)" 섹션부터 읽고 "How to resume in a new session"
+단계대로 진행해. live_test.js 돌려서 null function 여전히 뜨는지 먼저 확인.
+뜨면 같은 bisect 전략으로 계속 자율 진행. 안 뜨면 bisect guard 정리하고
+milestone_13_wasm_crash_resolved.md 써.
+```
 
