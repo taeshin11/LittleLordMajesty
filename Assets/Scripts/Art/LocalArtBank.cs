@@ -13,6 +13,9 @@ public static class LocalArtBank
 {
     private const string ART_ROOT = "Art/Generated/";
 
+    /// <summary>Returns the pre-generated main menu background, or null if missing.</summary>
+    public static Sprite GetMainMenuBackground() => LoadAsSprite("bg_main_menu");
+
     /// <summary>Returns the pre-generated castle courtyard background, or null if missing.</summary>
     public static Sprite GetCastleBackground() => LoadAsSprite("bg_castle_courtyard");
 

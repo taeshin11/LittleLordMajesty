@@ -184,8 +184,8 @@ def main():
 
     total_dt = time.time() - total_started
     grand_total = sum(len(s) for r in result.values() for s in r.values())
-    print(f"[gen] DONE — {grand_total} unique lines, {total_dt/60:.1f} min")
-    print(f"[gen] wrote → {args.out}")
+    print(f"[gen] DONE - {grand_total} unique lines, {total_dt/60:.1f} min")
+    print(f"[gen] wrote -> {args.out}")
 
 
 if __name__ == "__main__":

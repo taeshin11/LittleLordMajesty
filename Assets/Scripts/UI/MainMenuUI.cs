@@ -48,7 +48,22 @@ public class MainMenuUI : MonoBehaviour
     /// </summary>
     private void RequestBackgroundArt()
     {
-        if (_backgroundArt == null || GeminiImageClient.Instance == null) return;
+        if (_backgroundArt == null) return;
+
+        // First try the offline-baked SDXL asset (zero API cost).
+        // tools/image_gen/generate.py builds bg_main_menu.png into
+        // Resources/Art/Generated/.
+        var local = LocalArtBank.GetMainMenuBackground();
+        if (local != null)
+        {
+            _backgroundArt.sprite = local;
+            _backgroundArt.color  = new Color(1f, 1f, 1f, 0.75f); // dim for legibility
+            _backgroundArt.preserveAspect = false;
+            return;
+        }
+
+        // Fallback: live Gemini generation (only used if the bake is missing).
+        if (GeminiImageClient.Instance == null) return;
 
         const string prompt =
             "Dramatic medieval fantasy kingdom painting — a young lord standing on a high " +

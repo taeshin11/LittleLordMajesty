@@ -27,7 +27,7 @@ Ran `tools/playwright_test/live_test.js`. Results vs prior handoff:
 3. **TMP fallback array is empty** in `TMP Settings.asset` line 32. Adding `LiberationSans SDF - Fallback` to fallbacks may fix any residual missing-glyph crashes.
 4. **`managedStrippingLevel: 0` for WebGL** per `ProjectSettings.asset` line 780 — but `link.xml` is still worth adding to belt-and-suspenders TMP.
 5. **CI workflow has no Library/Artifacts cleanup.** `actions/checkout@v4 clean: true` does NOT clean Unity's Library folder on the self-hosted runner at `C:\actions-runner\_work\...\Library\`.
-6. **API key #2 (`AIzaSyBlEtU7ugG49P8KHM0ekpHGZOMu7e45Gro`) also leaked.** Google flagged it. Needs rotation, but unrelated to wasm crash.
+6. **API key #2 (redacted) also leaked.** Google flagged it. Needs rotation, but unrelated to wasm crash.
 
 ## Plan
 Two autonomous agents running in parallel:
@@ -147,9 +147,9 @@ Read `d2e780d` / `a2da998` / `000760e` diffs first if the crash comes back.
      NOT cleaned between builds; add a cleanup step if stale-artifact
      hypothesis comes back.
 7. API key in `Assets/Resources/Config/GameConfig.asset` is still leaked
-   (both `AIzaSyCtkLwApYR6VizPiOhtYLckgvsVm5cH9ek` and
-   `AIzaSyBlEtU7ugG49P8KHM0ekpHGZOMu7e45Gro` — 403). User is aware; ask for
-   a fresh one before running anything that hits Gemini.
+   (two prior keys both reported as leaked by Google -> 403, values redacted
+   from history). User is aware; rotated to a fresh key on 2026-04-11
+   during M14 4090 migration.
 
 ### Resume prompt for a fresh session
 ```

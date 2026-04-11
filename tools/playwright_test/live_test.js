@@ -65,7 +65,7 @@ const VIEWPORT = { width: 1280, height: 960 };
 
     // ── Step 1: navigate + wait for Unity init ───────────────────────
     console.log('[LiveTest] Navigating...');
-    await page.goto(URL, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.goto(URL, { waitUntil: 'load', timeout: 60000 });
 
     // Wait for unity-canvas element to exist, then for the Unity runtime
     // (unityInstance) to be created. The Unity loader sets window.unityInstance

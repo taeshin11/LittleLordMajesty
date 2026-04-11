@@ -525,7 +525,22 @@ public class CastleViewUI : MonoBehaviour
     /// </summary>
     private void RequestPortrait(NPCManager.NPCData npc, Image target, TextMeshProUGUI initialLabel = null)
     {
-        if (target == null || GeminiImageClient.Instance == null) return;
+        if (target == null) return;
+
+        // First try the offline-baked SDXL portrait (zero API cost).
+        // tools/image_gen/generate.py builds portrait_<npc_id>.png into
+        // Resources/Art/Generated/.
+        var local = LocalArtBank.GetNPCPortrait(npc.Id);
+        if (local != null)
+        {
+            target.sprite = local;
+            target.color = Color.white;
+            target.preserveAspect = true;
+            if (initialLabel != null) initialLabel.enabled = false;
+            return;
+        }
+
+        if (GeminiImageClient.Instance == null) return;
 
         string prompt =
             $"Square medieval fantasy character portrait of {npc.Name}, a {npc.Profession} in a small lord's castle. " +

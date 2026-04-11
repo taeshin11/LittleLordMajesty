@@ -68,10 +68,25 @@ public class WorldMapUI : MonoBehaviour
             GameManager.Instance?.SetGameState(GameManager.GameState.Castle));
     }
 
-    /// <summary>Generates a painterly world map background via Gemini.</summary>
+    /// <summary>Sets a painterly world map background. Prefers the offline SDXL bake;
+    /// falls back to live Gemini only if the bake is missing.</summary>
     private void RequestBackgroundArt()
     {
-        if (_backgroundArt == null || GeminiImageClient.Instance == null) return;
+        if (_backgroundArt == null) return;
+
+        // First try the offline-baked SDXL asset (zero API cost).
+        // tools/image_gen/generate.py builds bg_world_map.png into
+        // Resources/Art/Generated/.
+        var local = LocalArtBank.GetWorldMapBackground();
+        if (local != null)
+        {
+            _backgroundArt.sprite = local;
+            _backgroundArt.color  = new Color(1f, 1f, 1f, 0.85f);
+            _backgroundArt.preserveAspect = false;
+            return;
+        }
+
+        if (GeminiImageClient.Instance == null) return;
 
         const string prompt =
             "Ancient medieval parchment world map, hand-drawn fantasy cartography style, " +

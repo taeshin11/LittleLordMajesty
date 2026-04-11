@@ -26,6 +26,13 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # (filename_stem, prompt, width, height)
 BACKGROUNDS = [
+    ("bg_main_menu",
+     "Dramatic medieval fantasy kingdom painting, a young lord standing on a high "
+     "castle balcony at dusk overlooking a vast kingdom with rolling hills, distant "
+     "villages, glowing sunset sky, painterly oil-painting style, cinematic lighting, "
+     "warm golden tones, atmospheric haze, highly detailed, epic mood, "
+     "wide establishing shot",
+     1024, 576),
     ("bg_castle_courtyard",
      "Medieval fantasy castle courtyard at golden hour, painterly oil-painting style, "
      "warm torchlight, stone walls, wooden scaffolding, distant towers, dramatic sky, "
