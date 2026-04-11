@@ -170,15 +170,7 @@ public class UIManager : MonoBehaviour
                 SetPanelActive(_mainMenuPanel, true);
                 break;
             case GameManager.GameState.Castle:
-#if !UNITY_WEBGL || UNITY_EDITOR
                 SetPanelActive(_castleViewPanel, true);
-#else
-                // Crash-bisect: do not activate the CastleViewPanel on WebGL.
-                // If the crash disappears, the bug is in the bake-time UI
-                // subtree (baked buttons/Outline/TMP text). If it stays, the
-                // crash is elsewhere.
-                Debug.Log("[Crash-Bisect] ShowPanel(Castle): SKIPPING CastleViewPanel activation");
-#endif
                 break;
             case GameManager.GameState.WorldMap:
                 SetPanelActive(_worldMapPanel, true);
