@@ -61,11 +61,9 @@ public class CastleViewUI : MonoBehaviour
         Debug.Log("[Crash-Bisect] CastleViewUI.Start entry");
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-        // Crash-bisect: disable the ActionBar subtree (6 buttons with Outline
-        // + TMP autosize). The bake-time CreateButton path with Outline is
-        // the prime suspect after skipping CastleViewPanel activation fixed
-        // the null-function crash. We locate the ActionBar via the parent
-        // of _buildButton which is serialized into this panel.
+        // Crash-bisect 10: re-enable ResourceStrip + ObjectiveText + TopHUD
+        // (no Outline, just baked TMP text). Keep ActionBar disabled since
+        // its 6 buttons with Outline are the prime suspect.
         try
         {
             if (_buildButton != null && _buildButton.transform.parent != null)
@@ -76,19 +74,6 @@ public class CastleViewUI : MonoBehaviour
             }
         }
         catch (System.Exception e) { Debug.LogError($"[Crash-Bisect] Disable ActionBar: {e.Message}"); }
-
-        // Also disable the TopHUD and ResourceStrip if we can find them by name
-        try
-        {
-            var panel = transform;
-            var topHUD = panel.Find("TopHUD");
-            if (topHUD != null) { topHUD.gameObject.SetActive(false); Debug.Log("[Crash-Bisect] Disabled TopHUD"); }
-            var resStrip = panel.Find("ResourceStrip");
-            if (resStrip != null) { resStrip.gameObject.SetActive(false); Debug.Log("[Crash-Bisect] Disabled ResourceStrip"); }
-            var objective = panel.Find("ObjectiveText");
-            if (objective != null) { objective.gameObject.SetActive(false); Debug.Log("[Crash-Bisect] Disabled ObjectiveText"); }
-        }
-        catch (System.Exception e) { Debug.LogError($"[Crash-Bisect] Disable HUD: {e.Message}"); }
 #endif
 
         try { _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include); }
