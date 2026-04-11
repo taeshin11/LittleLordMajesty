@@ -49,23 +49,53 @@ const VIEWPORT = { width: 1280, height: 960 };
     // setter wraps it so that on Promise resolution we stash the instance
     // onto window.unityInstance ourselves.
     await page.addInitScript(() => {
+        // Unity 2022+ WebGL loader declares `function createUnityInstance(...)` at
+        // script top level. Function declarations use [[DefineOwnProperty]] which
+        // replaces any preinstalled accessor — so a plain setter trap on window
+        // never fires. We hook HTMLScriptElement's onload setter instead: the
+        // template does `script.onload = () => createUnityInstance(...)`. By
+        // wrapping that handler, we replace window.createUnityInstance with our
+        // wrapper FIRST, then delegate to the template's handler which will
+        // now see the wrapped function when it calls createUnityInstance(...).
         try {
-            let _ci;
-            Object.defineProperty(window, 'createUnityInstance', {
-                configurable: true,
-                get() { return _ci; },
-                set(fn) {
-                    _ci = function (...args) {
-                        const p = fn.apply(this, args);
-                        if (p && typeof p.then === 'function') {
-                            p.then(u => { window.unityInstance = u; })
-                             .catch(() => {});
-                        }
-                        return p;
-                    };
-                },
-            });
-        } catch (e) { /* setter install failed — fall back to 120s timeout */ }
+            const proto = HTMLScriptElement.prototype;
+            const desc = Object.getOwnPropertyDescriptor(proto, 'onload')
+                      || Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'onload')
+                      || Object.getOwnPropertyDescriptor(Element.prototype, 'onload');
+            if (desc && desc.set) {
+                const origSet = desc.set;
+                Object.defineProperty(proto, 'onload', {
+                    configurable: true,
+                    get: desc.get,
+                    set: function (handler) {
+                        const wrapped = function (...a) {
+                            try {
+                                if (typeof window.createUnityInstance === 'function' && !window.__ciWrapped) {
+                                    const original = window.createUnityInstance;
+                                    window.createUnityInstance = function (...args) {
+                                        const p = original.apply(this, args);
+                                        if (p && typeof p.then === 'function') {
+                                            p.then(u => {
+                                                console.log('[InitScript] Unity instance captured');
+                                                window.unityInstance = u;
+                                            }).catch(() => {});
+                                        }
+                                        return p;
+                                    };
+                                    window.__ciWrapped = true;
+                                    console.log('[InitScript] createUnityInstance wrapped via script.onload hook');
+                                }
+                            } catch (e) { console.log('[InitScript] wrap failed: ' + e.message); }
+                            return handler.apply(this, a);
+                        };
+                        return origSet.call(this, wrapped);
+                    },
+                });
+                console.log('[InitScript] script.onload hook installed');
+            } else {
+                console.log('[InitScript] could not find onload descriptor');
+            }
+        } catch (e) { console.log('[InitScript] hook failed: ' + e.message); }
     });
 
     const consoleMessages = [];
@@ -214,11 +244,24 @@ const VIEWPORT = { width: 1280, height: 960 };
     console.log('[LiveTest] Triggering NPC dialogue via SendMessage...');
     try {
         const result = await page.evaluate(() => {
-            const u = window.unityInstance || window.unityGame;
+            // Unity's WebGL template stashes the instance in several places
+            // depending on version. Probe them all and also walk the template
+            // globals the 2022+ loader assigns.
+            let u = window.unityInstance || window.unityGame || window.UnityInstance;
+            if (!u) {
+                for (const k of Object.keys(window)) {
+                    const v = window[k];
+                    if (v && typeof v === 'object' && typeof v.SendMessage === 'function') {
+                        u = v;
+                        break;
+                    }
+                }
+            }
             const has = !!(u && typeof u.SendMessage === 'function');
             const dump = {
                 hasUnityInstance: !!window.unityInstance,
                 hasUnityGame: !!window.unityGame,
+                foundUnity: !!u,
                 hasSendMessage: has,
                 lang: navigator.language,
             };
@@ -226,6 +269,8 @@ const VIEWPORT = { width: 1280, height: 960 };
                 try {
                     u.SendMessage('CastleViewPanel', 'TestOpenNPCDialogue', 'vassal_01');
                     dump.sent = true;
+                    // Stash for later calls
+                    window.__unityHandle = u;
                 } catch (e) { dump.sendError = e.message; }
             }
             return dump;
