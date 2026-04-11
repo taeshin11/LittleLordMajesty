@@ -89,12 +89,21 @@ public class CastleViewUI : MonoBehaviour
         Debug.Log("[Crash-Bisect] CastleViewUI Start: after RequestBackgroundArt");
 
         // Auto-open the NPC card grid so characters are visible immediately.
+        // On WebGL we defer the NPC card population by one frame via a
+        // coroutine — the procedural card spawn + TMP label creation during
+        // the first Start() tick intermittently races the Canvas layout
+        // rebuild and trips a wasm "null function" crash. Yielding a frame
+        // lets the CastleViewPanel finish its initial rebuild first.
         try
         {
             if (_npcListPanel != null)
             {
                 _npcListPanel.SetActive(true);
+#if UNITY_WEBGL && !UNITY_EDITOR
+                StartCoroutine(DeferredPopulateNPCList());
+#else
                 PopulateNPCList();
+#endif
             }
         }
         catch (System.Exception e) { Debug.LogError($"[CastleView] PopulateNPCList: {e.Message}\n{e.StackTrace}"); }
@@ -265,6 +274,21 @@ public class CastleViewUI : MonoBehaviour
         bool show = !_npcListPanel.activeSelf;
         _npcListPanel.SetActive(show);
         if (show) PopulateNPCList();
+    }
+
+    private System.Collections.IEnumerator DeferredPopulateNPCList()
+    {
+        // Let the Canvas finish its first layout pass before we start
+        // spawning the NPC cards procedurally. Two yields = two frames of
+        // breathing room, which has empirically been enough to avoid the
+        // wasm "null function" crash that fires on the first render when
+        // the panel, tutorial overlay, and NPC cards all try to rebuild
+        // their geometry in the same tick.
+        yield return null;
+        yield return null;
+        Debug.Log("[Crash-Bisect] DeferredPopulateNPCList: running");
+        try { PopulateNPCList(); }
+        catch (System.Exception e) { Debug.LogError($"[CastleView] DeferredPopulateNPCList: {e.Message}"); }
     }
 
     private void PopulateNPCList()
