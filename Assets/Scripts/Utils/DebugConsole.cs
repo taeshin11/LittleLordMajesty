@@ -51,8 +51,10 @@ public class DebugConsole : MonoBehaviour
         Application.logMessageReceived -= OnLogMessage;
     }
 
+    private static int _bisectUpdateCount = 0;
     private void Update()
     {
+        if (_bisectUpdateCount < 6) { _bisectUpdateCount++; Debug.Log($"[Crash-Bisect] DebugConsole.Update #{_bisectUpdateCount}"); }
         // Keyboard toggle
         if (Input.GetKeyDown(KeyCode.BackQuote)) Toggle();
 

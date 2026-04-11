@@ -80,10 +80,16 @@ public class GameManager : MonoBehaviour
         if (_currentState == GameState.Castle && _framesSinceCastleEntry < 8)
         {
             _framesSinceCastleEntry++;
-            Debug.Log($"[Crash-Bisect] Castle frame #{_framesSinceCastleEntry}");
+            Debug.Log($"[Crash-Bisect] Castle frame #{_framesSinceCastleEntry} Update");
         }
         if (_currentState != GameState.Paused && _currentState != GameState.MainMenu)
             PlayTimeSeconds += Time.deltaTime;
+    }
+
+    private void LateUpdate()
+    {
+        if (_currentState == GameState.Castle && _framesSinceCastleEntry < 8)
+            Debug.Log($"[Crash-Bisect] Castle frame #{_framesSinceCastleEntry} LateUpdate");
     }
 
 #if !UNITY_EDITOR
