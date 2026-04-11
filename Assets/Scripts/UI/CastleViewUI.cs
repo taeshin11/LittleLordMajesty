@@ -61,15 +61,16 @@ public class CastleViewUI : MonoBehaviour
         Debug.Log("[Crash-Bisect] CastleViewUI.Start entry");
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-        // Crash-bisect 11: keep ActionBar disabled (still a suspect). Also
-        // disable ResourceStrip which is where crash returned last iteration.
+        // Crash-bisect 12: disable ActionBar + TopHUD. Re-enable
+        // ResourceStrip + ObjectiveText. If this fixes it, TopHUD is the
+        // culprit. If not, ObjectiveText is.
         try
         {
             if (_buildButton != null && _buildButton.transform.parent != null)
                 _buildButton.transform.parent.gameObject.SetActive(false);
             var panel = transform;
-            var resStrip = panel.Find("ResourceStrip");
-            if (resStrip != null) { resStrip.gameObject.SetActive(false); Debug.Log("[Crash-Bisect] Disabled ResourceStrip"); }
+            var topHUD = panel.Find("TopHUD");
+            if (topHUD != null) { topHUD.gameObject.SetActive(false); Debug.Log("[Crash-Bisect] Disabled TopHUD"); }
         }
         catch (System.Exception e) { Debug.LogError($"[Crash-Bisect] Disable: {e.Message}"); }
 #endif
