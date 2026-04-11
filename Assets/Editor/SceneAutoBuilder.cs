@@ -1304,22 +1304,18 @@ public static class SceneAutoBuilder
         img.color = bgColor;
         var btn = go.AddComponent<Button>();
 
-        // Outline on the button frame gives high-contrast separation from the
-        // dark HUD panel underneath and helps every button feel "clickable".
-        var outline = go.AddComponent<Outline>();
-        outline.effectColor = new Color(0f, 0f, 0f, 0.65f);
-        outline.effectDistance = new Vector2(1.5f, -1.5f);
+        // NOTE: Outline (BaseMeshEffect) + TMP enableAutoSizing were disabled
+        // on WebGL to test if they caused the frame-0 "null function" wasm
+        // crash after CastleViewUI.Start completes. BaseMeshEffect.ModifyMesh
+        // and TMP auto-size layout rebuild both dispatch through invoke_viii
+        // which matches the crash stack. Re-enable once wasm crash is fixed.
 
         var lblGO = new GameObject("Label");
         lblGO.transform.SetParent(go.transform, false);
         var lbl = lblGO.AddComponent<TextMeshProUGUI>();
         lbl.text = label;
-        // Auto-size: TMP picks the largest size in [14, 26] that fits the
-        // button rect. Prevents clipping on short buttons and long labels.
-        lbl.enableAutoSizing = true;
-        lbl.fontSizeMin = 14;
-        lbl.fontSizeMax = 26;
-        lbl.fontSize    = 24;
+        lbl.enableAutoSizing = false;
+        lbl.fontSize    = 22;
         lbl.fontStyle   = FontStyles.Bold;
         lbl.alignment   = TextAlignmentOptions.Center;
         lbl.color       = Color.white;

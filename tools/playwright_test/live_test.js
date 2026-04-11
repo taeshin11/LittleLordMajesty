@@ -35,6 +35,7 @@ const VIEWPORT = { width: 1280, height: 960 };
 
     const consoleMessages = [];
     const pageErrors = [];
+    const dialogMessages = [];
 
     page.on('console', msg => {
         const entry = `[${msg.type()}] ${msg.text()}`;
@@ -42,8 +43,21 @@ const VIEWPORT = { width: 1280, height: 960 };
         if (msg.type() === 'error') console.log('  !! CONSOLE ERROR:', msg.text());
     });
     page.on('pageerror', err => {
-        pageErrors.push(err.message + '\n' + err.stack);
+        const full = err.message + '\n' + (err.stack || '(no stack)');
+        pageErrors.push(full);
         console.log('  !! PAGE ERROR:', err.message);
+        console.log('  !! STACK:');
+        console.log(full.split('\n').slice(0, 40).map(l => '     ' + l).join('\n'));
+    });
+    // Unity's error handler calls window.alert with the full wasm stack.
+    // Without a dialog handler, Playwright silently auto-dismisses and we lose
+    // the most important diagnostic. Capture the dialog text, then dismiss.
+    page.on('dialog', async dialog => {
+        const entry = `[${dialog.type()}] ${dialog.message()}`;
+        dialogMessages.push(entry);
+        console.log('  !! UNITY DIALOG:', dialog.type());
+        console.log(dialog.message().split('\n').slice(0, 60).map(l => '     ' + l).join('\n'));
+        try { await dialog.dismiss(); } catch {}
     });
     page.on('requestfailed', req => {
         console.log(`  !! REQUEST FAILED: ${req.url()} — ${req.failure()?.errorText}`);
@@ -60,15 +74,25 @@ const VIEWPORT = { width: 1280, height: 960 };
     await page.waitForSelector('#unity-canvas', { timeout: 30000 });
 
     console.log('[LiveTest] Waiting for unityInstance (WebGL runtime init)...');
+    // Unity 2022+ loader uses createUnityInstance(...).then(u => ...). The
+    // resolved instance is NOT automatically attached to window. Some builds
+    // expose it on window.unityInstance, some on window.unityGame. Inject a
+    // helper that waits for either — or for the SendMessage function itself.
+    let unityReady = false;
     try {
-        await page.waitForFunction(() => !!window.unityInstance, { timeout: 120000 });
+        await page.waitForFunction(() => {
+            const u = window.unityInstance || window.unityGame;
+            return !!(u && typeof u.SendMessage === 'function');
+        }, { timeout: 120000 });
+        unityReady = true;
         console.log('[LiveTest] unityInstance ready ✓');
     } catch (e) {
         console.log('[LiveTest] WARNING: unityInstance not detected within 120s — continuing anyway');
     }
 
     // Give the game extra time to finish Bootstrap → Game scene transition
-    await page.waitForTimeout(6000);
+    // (main menu should be visible by now)
+    await page.waitForTimeout(8000);
 
     // Screenshot 1: MainMenu (hopefully)
     await page.screenshot({ path: path.join(OUT_DIR, '01_mainmenu.png'), fullPage: false });
@@ -112,6 +136,26 @@ const VIEWPORT = { width: 1280, height: 960 };
     await page.screenshot({ path: path.join(OUT_DIR, '02_after_newgame.png') });
     console.log('[LiveTest] Screenshot 02_after_newgame.png');
 
+    // ── Step 2b: belt-and-suspenders — also trigger NewGame via SendMessage.
+    // If the click above missed the button (coordinate mismatch after layout
+    // changes), this guarantees we exercise the state-transition code path
+    // that causes the wasm crash. GameManager.NewGame(string) is public.
+    if (unityReady && pageErrors.length === 0 && dialogMessages.length === 0) {
+        console.log('[LiveTest] No crash from click — trying SendMessage fallback...');
+        try {
+            await page.evaluate(() => {
+                const u = window.unityInstance || window.unityGame;
+                if (u && typeof u.SendMessage === 'function') {
+                    u.SendMessage('GameManager', 'NewGame', 'LiveTestPlayer');
+                }
+            });
+            console.log('[LiveTest] SendMessage GameManager.NewGame dispatched.');
+        } catch (e) {
+            console.log('[LiveTest] SendMessage failed:', e.message);
+        }
+        await page.waitForTimeout(5000);
+    }
+
     // ── Step 3: give the game more time (Gemini art + NPC cards) ──────
     await page.waitForTimeout(10000);
     await page.screenshot({ path: path.join(OUT_DIR, '03_castle_loaded.png') });
@@ -124,11 +168,15 @@ const VIEWPORT = { width: 1280, height: 960 };
         `# Timestamp: ${new Date().toISOString()}`,
         `# Console messages: ${consoleMessages.length}`,
         `# Page errors: ${pageErrors.length}`,
+        `# Unity dialogs: ${dialogMessages.length}`,
+        '',
+        '### UNITY DIALOGS (window.alert) ###',
+        ...dialogMessages,
         '',
         '### CONSOLE MESSAGES ###',
         ...consoleMessages,
         '',
-        '### PAGE ERRORS ###',
+        '### PAGE ERRORS (full stack) ###',
         ...pageErrors,
     ].join('\n'));
     console.log(`[LiveTest] Log written to ${logPath}`);
@@ -138,6 +186,7 @@ const VIEWPORT = { width: 1280, height: 960 };
     console.log('═══ SUMMARY ═══');
     console.log(`Total console messages: ${consoleMessages.length}`);
     console.log(`Page errors: ${pageErrors.length}`);
+    console.log(`Unity dialogs: ${dialogMessages.length}`);
     const errorMessages = consoleMessages.filter(m => m.startsWith('[error]'));
     console.log(`Console errors: ${errorMessages.length}`);
     if (errorMessages.length > 0) {
