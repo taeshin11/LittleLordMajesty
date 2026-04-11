@@ -109,8 +109,16 @@ public class CastleViewUI : MonoBehaviour
         catch (System.Exception e) { Debug.LogError($"[CastleView] PopulateNPCList: {e.Message}\n{e.StackTrace}"); }
         Debug.Log("[Crash-Bisect] CastleViewUI Start: after PopulateNPCList");
 
+#if !UNITY_WEBGL || UNITY_EDITOR
         try { ShowWelcomeHint(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] ShowWelcomeHint: {e.Message}"); }
+#else
+        // WebGL: skip ShowWelcomeHint. Activating the NotificationBanner
+        // + writing a TMP text + starting a HideNotificationAfter coroutine
+        // during the first Castle frame intermittently trips the wasm
+        // null-function crash. The welcome hint is non-critical UX.
+        Debug.Log("[CastleView] Skipping ShowWelcomeHint on WebGL (crash workaround)");
+#endif
         Debug.Log("[Crash-Bisect] CastleViewUI Start: COMPLETE");
     }
 
