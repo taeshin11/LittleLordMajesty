@@ -47,5 +47,22 @@
   "tutorial_welcome_title": "Willkommen, junger Lord!",
   "tutorial_welcome_desc": "Ihr habt ein kleines Gebiet geerbt. Euer Volk erwartet Eure Führung. Lasst mich Euch die Grundlagen der Herrschaft zeigen.",
   "tutorial_complete_title": "Ihr seid bereit!",
-  "tutorial_complete_desc": "Ihr kennt nun die Grundlagen. Herrscht weise, Kleiner Lord."
+  "tutorial_complete_desc": "Ihr kennt nun die Grundlagen. Herrscht weise, Kleiner Lord.",
+
+  "btn_build": "Bauen",
+  "btn_save": "Speichern",
+  "btn_npcs": "Vasallen",
+  "btn_map": "Karte",
+  "btn_options": "Optionen",
+  "btn_pause": "Pause",
+  "btn_send": "Senden",
+  "btn_back_to_castle": "Zur Burg",
+  "btn_respond": "Antworten",
+  "btn_talk": "Sprechen",
+  "hud_loyalty": "Treue",
+  "hud_loading": "Lade...",
+  "hud_thinking": "Denke nach...",
+  "hud_voice": "Stimme",
+  "castle_objective_hint": "Willkommen auf Eurer Burg. Tippt unten auf eine Vasallenkarte, um zu beginnen.",
+  "welcome_hint": "Willkommen auf Eurer Burg! Tippt auf eine Vasallenkarte, um Befehle zu erteilen, oder nutzt Bauen, um Gebäude zu errichten."
 }

@@ -47,5 +47,22 @@
   "tutorial_welcome_title": "¡Bienvenido, joven Señor!",
   "tutorial_welcome_desc": "Has heredado un pequeño territorio. Tu pueblo espera tu guía. Déjame mostrarte los fundamentos del gobierno.",
   "tutorial_complete_title": "¡Estás listo!",
-  "tutorial_complete_desc": "Ya conoces lo básico. Gobierna con sabiduría, Pequeño Señor."
+  "tutorial_complete_desc": "Ya conoces lo básico. Gobierna con sabiduría, Pequeño Señor.",
+
+  "btn_build": "Construir",
+  "btn_save": "Guardar",
+  "btn_npcs": "Vasallos",
+  "btn_map": "Mapa",
+  "btn_options": "Opciones",
+  "btn_pause": "Pausa",
+  "btn_send": "Enviar",
+  "btn_back_to_castle": "Volver al castillo",
+  "btn_respond": "Responder",
+  "btn_talk": "Hablar",
+  "hud_loyalty": "Lealtad",
+  "hud_loading": "Cargando...",
+  "hud_thinking": "Pensando...",
+  "hud_voice": "Voz",
+  "castle_objective_hint": "Bienvenido a tu castillo. Toca una carta de vasallo abajo para comenzar.",
+  "welcome_hint": "¡Bienvenido a tu castillo! Toca una carta de vasallo para dar órdenes, o usa Construir para levantar edificios."
 }

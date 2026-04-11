@@ -229,5 +229,18 @@
   "pause_main_menu": "메인 메뉴",
   "btn_talk": "대화",
   "btn_build": "건설",
-  "welcome_hint": "영주님의 성에 오신 것을 환영합니다! 왼쪽 NPC 카드를 눌러 명령을 내리거나, Build 버튼으로 건물을 지으세요."
+  "btn_save": "저장",
+  "btn_npcs": "신하",
+  "btn_map": "지도",
+  "btn_options": "설정",
+  "btn_pause": "일시정지",
+  "btn_send": "보내기",
+  "btn_back_to_castle": "성으로 돌아가기",
+  "btn_respond": "응답",
+  "hud_loyalty": "충성심",
+  "hud_loading": "불러오는 중...",
+  "hud_thinking": "생각 중...",
+  "hud_voice": "음성",
+  "castle_objective_hint": "영주님의 성에 오신 것을 환영합니다. 아래 신하 카드를 눌러 대화를 시작하세요.",
+  "welcome_hint": "영주님의 성에 오신 것을 환영합니다! 왼쪽 NPC 카드를 눌러 명령을 내리거나, 건설 버튼으로 건물을 지으세요."
 }

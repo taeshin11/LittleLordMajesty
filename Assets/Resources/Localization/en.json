@@ -229,5 +229,18 @@
   "pause_main_menu": "Main Menu",
   "btn_talk": "Talk",
   "btn_build": "Build",
+  "btn_save": "Save",
+  "btn_npcs": "NPCs",
+  "btn_map": "Map",
+  "btn_options": "Options",
+  "btn_pause": "Pause",
+  "btn_send": "Send",
+  "btn_back_to_castle": "Back to Castle",
+  "btn_respond": "Respond",
+  "hud_loyalty": "Loyalty",
+  "hud_loading": "Loading...",
+  "hud_thinking": "Thinking...",
+  "hud_voice": "Voice",
+  "castle_objective_hint": "Welcome to your castle. Tap a vassal card below to begin.",
   "welcome_hint": "Welcome to your castle! Tap an NPC card to give commands, or use Build to construct buildings."
 }

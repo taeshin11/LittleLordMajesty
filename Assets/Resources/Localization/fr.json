@@ -47,5 +47,22 @@
   "tutorial_welcome_title": "Bienvenue, jeune Seigneur !",
   "tutorial_welcome_desc": "Vous avez hérité d'un petit territoire. Votre peuple attend vos conseils. Laissez-moi vous montrer les bases de la gouvernance.",
   "tutorial_complete_title": "Vous êtes prêt !",
-  "tutorial_complete_desc": "Vous connaissez maintenant les bases. Gouvernez sagement, Petit Seigneur."
+  "tutorial_complete_desc": "Vous connaissez maintenant les bases. Gouvernez sagement, Petit Seigneur.",
+
+  "btn_build": "Construire",
+  "btn_save": "Sauvegarder",
+  "btn_npcs": "Vassaux",
+  "btn_map": "Carte",
+  "btn_options": "Options",
+  "btn_pause": "Pause",
+  "btn_send": "Envoyer",
+  "btn_back_to_castle": "Retour au château",
+  "btn_respond": "Répondre",
+  "btn_talk": "Parler",
+  "hud_loyalty": "Loyauté",
+  "hud_loading": "Chargement...",
+  "hud_thinking": "Réflexion...",
+  "hud_voice": "Voix",
+  "castle_objective_hint": "Bienvenue dans votre château. Touchez une carte de vassal en bas pour commencer.",
+  "welcome_hint": "Bienvenue dans votre château ! Touchez une carte de vassal pour donner des ordres, ou utilisez Construire pour bâtir."
 }

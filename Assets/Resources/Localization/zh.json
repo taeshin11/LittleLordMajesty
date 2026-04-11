@@ -92,5 +92,22 @@
   "tutorial_worldmap_title": "外面的世界",
   "tutorial_worldmap_desc": "世界地图显示相邻领土。变强之后可通过外交或征服扩张。",
   "tutorial_complete_title": "您已准备好！",
-  "tutorial_complete_desc": "您已掌握基础。明智地统治吧，小领主。您的决定将影响百姓的命运。"
+  "tutorial_complete_desc": "您已掌握基础。明智地统治吧，小领主。您的决定将影响百姓的命运。",
+
+  "btn_build": "建造",
+  "btn_save": "保存",
+  "btn_npcs": "家臣",
+  "btn_map": "地图",
+  "btn_options": "设置",
+  "btn_pause": "暂停",
+  "btn_send": "发送",
+  "btn_back_to_castle": "返回城堡",
+  "btn_respond": "回应",
+  "btn_talk": "交谈",
+  "hud_loyalty": "忠诚",
+  "hud_loading": "加载中...",
+  "hud_thinking": "思考中...",
+  "hud_voice": "语音",
+  "castle_objective_hint": "欢迎来到您的城堡。点击下方的家臣卡片开始对话。",
+  "welcome_hint": "欢迎来到您的城堡！点击家臣卡片下达命令，或使用建造按钮建造建筑。"
 }
