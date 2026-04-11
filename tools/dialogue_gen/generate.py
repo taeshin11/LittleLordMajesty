@@ -12,7 +12,7 @@ Requirements: ollama running locally with model `exaone3.5:7.8b` pulled.
 """
 from __future__ import annotations
 import argparse, json, os, sys, time, hashlib
-import urllib.request, urllib.error
+import requests
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL      = "exaone3.5:7.8b"
@@ -85,14 +85,15 @@ def gen_lines(role_id, role_ko, role_en, personality_ko, background_ko,
             "stop":        ["\n\n\n"],
         },
     }
-    req = urllib.request.Request(
-        OLLAMA_URL,
-        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
-        headers={"Content-Type": "application/json; charset=utf-8"})
     try:
-        with urllib.request.urlopen(req, timeout=300) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.URLError as e:
+        r = requests.post(
+            OLLAMA_URL,
+            data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+            headers={"Content-Type": "application/json; charset=utf-8"},
+            timeout=300)
+        r.raise_for_status()
+        data = r.json()
+    except requests.RequestException as e:
         print(f"[ERR] ollama request failed for {role_id}/{context_id}: {e}",
               file=sys.stderr)
         return []
