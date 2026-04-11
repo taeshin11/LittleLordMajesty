@@ -1285,7 +1285,11 @@ public static class SceneAutoBuilder
         tmp.alignment = align;
         tmp.color = color;
         tmp.enableWordWrapping = false;
-        // Note: TextMeshProUGUI already adds RectTransform implicitly
+        // Rich text parser hits a stripped delegate in IL2CPP WebGL builds
+        // (TMP_Text.ParseInputText → null function crash). None of our
+        // procedural labels use <color>/<b>/<size> tags — disable richText
+        // to force the short-circuit plain-text path.
+        tmp.richText = false;
         return go;
     }
 
@@ -1316,6 +1320,7 @@ public static class SceneAutoBuilder
         lbl.text = label;
         lbl.enableAutoSizing = false;
         lbl.fontSize    = 22;
+        lbl.richText    = false;
         lbl.fontStyle   = FontStyles.Bold;
         lbl.alignment   = TextAlignmentOptions.Center;
         lbl.color       = Color.white;
