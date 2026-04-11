@@ -119,6 +119,30 @@ public class CastleViewUI : MonoBehaviour
         // null-function crash. The welcome hint is non-critical UX.
         Debug.Log("[CastleView] Skipping ShowWelcomeHint on WebGL (crash workaround)");
 #endif
+        // Crash-bisect: dump every TMP_Text descendant in this castle panel
+        // with its current text + any non-ASCII codepoints. The wasm crash
+        // fires inside TMP_FontAsset.TryAddCharacterInternal during the
+        // first Canvas rebuild, which means SOME label has a missing glyph.
+        // This log lets us see exactly which one.
+        try
+        {
+            var tmps = GetComponentsInChildren<TMPro.TMP_Text>(true);
+            Debug.Log($"[Crash-Bisect] Castle TMP labels: {tmps.Length}");
+            for (int i = 0; i < tmps.Length; i++)
+            {
+                var t = tmps[i];
+                var txt = t.text ?? "";
+                int firstNonAscii = -1; int firstCp = 0;
+                for (int j = 0; j < txt.Length; j++)
+                    if (txt[j] >= 128) { firstNonAscii = j; firstCp = txt[j]; break; }
+                if (firstNonAscii >= 0)
+                    Debug.Log($"[Crash-Bisect] TMP[{i}] {t.name} NON-ASCII at {firstNonAscii} (U+{firstCp:X4}): \"{txt}\"");
+                else
+                    Debug.Log($"[Crash-Bisect] TMP[{i}] {t.name} ascii: \"{txt}\"");
+            }
+        }
+        catch (System.Exception e) { Debug.LogError($"[Crash-Bisect] TMP dump failed: {e.Message}"); }
+
         Debug.Log("[Crash-Bisect] CastleViewUI Start: COMPLETE");
     }
 
