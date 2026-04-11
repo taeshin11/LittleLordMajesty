@@ -134,9 +134,10 @@ public class CastleViewUI : MonoBehaviour
         if (GeminiImageClient.Instance == null) return;
 
         const string prompt =
-            "Medieval fantasy castle courtyard at golden hour, painterly oil-painting style, " +
-            "warm torchlight, stone walls, wooden scaffolding, distant towers, dramatic sky, " +
-            "atmospheric depth, no characters, cinematic wide establishing shot, detailed background art.";
+            "Cute isometric diorama of a tiny stylized medieval castle courtyard, miniature toy world, " +
+            "pastel storybook colors, soft Nintendo style, smooth pastel cobblestones, small wooden market " +
+            "stalls, round potted plants, tiny banners, thick clean outlines, soft cel-shaded lighting, " +
+            "Zelda Echoes of Wisdom inspired, 3-quarter top-down isometric view, no characters, no text.";
 
         var targetImage = _backgroundArt;
         GeminiImageClient.Instance.GenerateImage(prompt,
@@ -557,9 +558,10 @@ public class CastleViewUI : MonoBehaviour
         if (GeminiImageClient.Instance == null) return;
 
         string prompt =
-            $"Square medieval fantasy character portrait of {npc.Name}, a {npc.Profession} in a small lord's castle. " +
-            $"Head-and-shoulders framing, painterly oil-painting style, warm torchlight, earthy colors, " +
-            $"detailed face, subtle castle stone background. Character ID: {npc.Id}.";
+            $"Single solo cute chibi square portrait of {npc.Name}, one figure only, a {npc.Profession} " +
+            $"in a tiny medieval kingdom. Big head small body, oversized round eyes, pastel colors, " +
+            $"thick clean outlines, soft cel-shaded toon shading, Zelda Echoes of Wisdom inspired, " +
+            $"Nintendo soft palette, plain pastel mint background, centered. Character ID: {npc.Id}.";
 
         GeminiImageClient.Instance.GenerateImage(prompt,
             onSuccess: tex =>

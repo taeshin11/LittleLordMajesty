@@ -85,21 +85,21 @@ PORTRAITS = [
 ]
 
 STYLE_PORTRAIT = (
-    "cute chibi character, big head small body, oversized round eyes, soft pastel colors, "
-    "thick clean outlines, soft cel-shaded toon shading, friendly expression, "
-    "Zelda Echoes of Wisdom inspired, Nintendo soft palette, charming storybook style, "
-    "low-poly stylized figurine look"
+    "solo chibi portrait, one character, centered, big head, round eyes, "
+    "pastel colors, thick outlines, cel-shaded, Nintendo style"
 )
 PORTRAIT_PROMPT_TEMPLATE = (
-    f"{STYLE_PORTRAIT}, full body chibi portrait of {{name}}, a {{profession}} in a small "
-    f"medieval kingdom. {{vibe}}. Standing on a tiny round pastel grass tile, plain soft "
-    f"pastel mint background, centered, no text"
+    f"solo chibi {{profession}} {{name}}, {{vibe}}, "
+    f"{STYLE_PORTRAIT}, plain pastel mint background, front view"
 )
 
 NEGATIVE = (
+    "character sheet, turnaround, model sheet, reference sheet, sticker sheet, "
+    "multiple views, multiple characters, two characters, three characters, "
+    "grid layout, tiled, duplicate, twins, clone, side view, back view, "
     "photorealistic, oil painting, dark, gritty, scary, dramatic shadows, "
     "cinematic, concept art, painterly, ugly, deformed, watermark, signature, "
-    "text, letters, blurry, low quality, extra limbs, frame, border"
+    "text, letters, blurry, low quality, extra limbs, frame, border, figurine"
 )
 
 

@@ -120,10 +120,10 @@ public class NPCInteractionUI : MonoBehaviour
         string professionKey = NPCManager.GetProfessionLocKey(npc.Profession);
         string professionLoc = LocalizationManager.Instance?.Get(professionKey) ?? npc.Profession.ToString();
         string prompt =
-            $"Medieval fantasy character portrait of {npc.Name}, a {npc.Profession} in a small lord's castle. " +
-            $"Head-and-shoulders view, looking slightly off-camera, painterly oil-painting style, " +
-            $"warm torchlight, earthy medieval colors, detailed face, subtle background of castle stone. " +
-            $"Character ID: {npc.Id}.";
+            $"Single solo cute chibi character portrait of {npc.Name}, one figure only, a {npc.Profession} " +
+            $"in a tiny medieval kingdom. Big head small body, oversized round eyes, pastel colors, " +
+            $"thick clean outlines, soft cel-shaded toon shading, Zelda Echoes of Wisdom inspired, " +
+            $"Nintendo soft palette, plain pastel mint background, centered front view. Character ID: {npc.Id}.";
 
         // Cache the target Image so we don't swap the wrong portrait if the user closes
         // the panel and opens a different NPC while generation is in flight.

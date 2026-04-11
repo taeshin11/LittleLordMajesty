@@ -59,7 +59,7 @@ public static class SceneAutoBuilder
         var camGO = new GameObject("Main Camera");
         var cam = camGO.AddComponent<Camera>();
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.05f, 0.05f, 0.08f);
+        cam.backgroundColor = new Color(1.00f, 0.96f, 0.88f); // Pastel cream
         cam.orthographic = false;
         cam.fieldOfView = 45f;
         cam.nearClipPlane = 0.3f;
@@ -77,7 +77,7 @@ public static class SceneAutoBuilder
 
         // Background image
         var bg = CreatePanel(canvas.transform, "Background",
-            new Color(0.05f, 0.05f, 0.08f), new Vector2(1080, 1920));
+            new Color(1.00f, 0.96f, 0.88f), new Vector2(1080, 1920)); // Pastel cream
         bg.GetComponent<RectTransform>().anchorMin = Vector2.zero;
         bg.GetComponent<RectTransform>().anchorMax = Vector2.one;
         bg.GetComponent<RectTransform>().offsetMin = Vector2.zero;
@@ -85,7 +85,7 @@ public static class SceneAutoBuilder
 
         // Title
         var title = CreateTMPText(bg.transform, "Title", "Little Lord\nMajesty",
-            72, TextAlignmentOptions.Center, Color.white);
+            72, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown on cream
         var titleRT = title.GetComponent<RectTransform>();
         titleRT.anchoredPosition = new Vector2(0, 250);
         titleRT.sizeDelta = new Vector2(900, 200);
@@ -103,7 +103,7 @@ public static class SceneAutoBuilder
         // Slider needs Background + Fill Area/Fill
         var barBg = new GameObject("Background"); barBg.transform.SetParent(barGO.transform, false);
         var barBgImg = barBg.AddComponent<Image>();
-        barBgImg.color = new Color(0.2f, 0.2f, 0.2f);
+        barBgImg.color = new Color(0.94f, 0.88f, 0.78f); // Pale cream trough
         var barBgRT = barBg.GetComponent<RectTransform>();
         barBgRT.anchorMin = Vector2.zero; barBgRT.anchorMax = Vector2.one;
         barBgRT.offsetMin = Vector2.zero; barBgRT.offsetMax = Vector2.zero;
@@ -126,7 +126,7 @@ public static class SceneAutoBuilder
 
         // Loading text
         var loadingText = CreateTMPText(bg.transform, "LoadingText", "Initializing...",
-            28, TextAlignmentOptions.Center, new Color(0.7f, 0.7f, 0.7f));
+            28, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown
         var ltRT = loadingText.GetComponent<RectTransform>();
         ltRT.anchoredPosition = new Vector2(0, -450);
         ltRT.sizeDelta = new Vector2(700, 50);
@@ -316,23 +316,23 @@ public static class SceneAutoBuilder
 
     static GameObject BuildMainMenuPanel(Transform parent)
     {
-        var panel = CreateFullscreenPanel(parent, "MainMenuPanel", new Color(0.05f, 0.04f, 0.08f));
+        var panel = CreateFullscreenPanel(parent, "MainMenuPanel", new Color(1.00f, 0.96f, 0.88f)); // Pastel cream
         panel.AddComponent<MainMenuUI>();
 
         // Full-screen background art layer (Gemini-generated at runtime).
         var bgArt = CreateFullscreenPanel(panel.transform, "BackgroundArt",
-            new Color(0.08f, 0.07f, 0.12f, 1f));
+            new Color(0.92f, 0.97f, 0.90f, 1f)); // Pale mint card
         var bgArtImg = bgArt.GetComponent<Image>();
         bgArtImg.raycastTarget = false;
 
         // Title
         var title = CreateTMPText(panel.transform, "TitleText", "Little Lord\nMajesty",
-            80, TextAlignmentOptions.Center, new Color(0.9f, 0.75f, 0.2f));
+            80, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown title
         SetAnchored(title, new Vector2(0, 500), new Vector2(900, 220));
 
         // Subtitle
         var sub = CreateTMPText(panel.transform, "SubtitleText", "AI-Powered Kingdom Sim",
-            28, TextAlignmentOptions.Center, new Color(0.6f, 0.6f, 0.7f));
+            28, TextAlignmentOptions.Center, new Color(0.40f, 0.28f, 0.18f)); // Warm brown subtitle
         SetAnchored(sub, new Vector2(0, 360), new Vector2(700, 50));
 
         // Name input
@@ -340,10 +340,10 @@ public static class SceneAutoBuilder
         SetAnchored(nameInput, new Vector2(0, 150), new Vector2(600, 70));
 
         // Buttons
-        var startBtn  = CreateButton(panel.transform, "StartButton",  "New Game",  new Color(0.3f, 0.6f, 0.2f));
-        var contBtn   = CreateButton(panel.transform, "ContinueButton","Continue", new Color(0.2f, 0.3f, 0.6f));
-        var settBtn   = CreateButton(panel.transform, "SettingsButton","Settings", new Color(0.3f, 0.3f, 0.3f));
-        var quitBtn   = CreateButton(panel.transform, "QuitButton",   "Quit",     new Color(0.5f, 0.2f, 0.2f));
+        var startBtn  = CreateButton(panel.transform, "StartButton",  "New Game",  new Color(0.72f, 0.92f, 0.78f)); // Pastel mint
+        var contBtn   = CreateButton(panel.transform, "ContinueButton","Continue", new Color(0.80f, 0.85f, 0.98f)); // Pastel lavender
+        var settBtn   = CreateButton(panel.transform, "SettingsButton","Settings", new Color(0.98f, 0.88f, 0.78f)); // Pastel peach
+        var quitBtn   = CreateButton(panel.transform, "QuitButton",   "Quit",     new Color(0.98f, 0.75f, 0.75f)); // Pastel coral
 
         SetAnchored(startBtn, new Vector2(0,  20),   new Vector2(500, 80));
         SetAnchored(contBtn,  new Vector2(0, -80),   new Vector2(500, 80));
@@ -352,7 +352,7 @@ public static class SceneAutoBuilder
 
         // Version label (baked into panel, updated by MainMenuUI at runtime)
         var ver = CreateTMPText(panel.transform, "VersionText", "v0.1.0 Alpha",
-            18, TextAlignmentOptions.Center, new Color(0.4f, 0.4f, 0.5f));
+            18, TextAlignmentOptions.Center, new Color(0.40f, 0.28f, 0.18f)); // Warm brown footer
         SetAnchored(ver, new Vector2(0, -400), new Vector2(400, 30));
 
         // Wire MainMenuUI
@@ -388,27 +388,27 @@ public static class SceneAutoBuilder
         // fills this with a generated castle courtyard at runtime. Semi-transparent
         // so the 3D scene shows through even before Gemini art arrives.
         var bgArt = CreateFullscreenPanel(panel.transform, "BackgroundArt",
-            new Color(0.10f, 0.09f, 0.15f, 0.55f));
+            new Color(1.00f, 0.96f, 0.88f, 0.35f)); // Pastel cream wash
         var bgArtImg = bgArt.GetComponent<Image>();
         bgArtImg.raycastTarget = false; // don't eat clicks
 
         // Top HUD bar
-        var topHUD = CreatePanel(panel.transform, "TopHUD", new Color(0, 0, 0, 0.7f), new Vector2(1080, 120));
+        var topHUD = CreatePanel(panel.transform, "TopHUD", new Color(1.00f, 0.96f, 0.88f, 0.85f), new Vector2(1080, 120)); // Pastel cream HUD
         var topRT = topHUD.GetComponent<RectTransform>();
         topRT.anchorMin = new Vector2(0, 1); topRT.anchorMax = new Vector2(1, 1);
         topRT.pivot = new Vector2(0.5f, 1);
         topRT.offsetMin = new Vector2(0, -120); topRT.offsetMax = Vector2.zero;
 
         var lordTitle = CreateTMPText(topHUD.transform, "LordTitleText", "Little Lord Player",
-            28, TextAlignmentOptions.Left, Color.white);
+            28, TextAlignmentOptions.Left, new Color(0.25f, 0.15f, 0.08f)); // Warm brown
         SetAnchored(lordTitle, new Vector2(-350, 0), new Vector2(400, 50));
 
         var dateText = CreateTMPText(topHUD.transform, "DateText", "Year 1, Day 1",
-            22, TextAlignmentOptions.Right, new Color(0.8f, 0.8f, 0.6f));
+            22, TextAlignmentOptions.Right, new Color(0.25f, 0.15f, 0.08f)); // Warm brown date
         SetAnchored(dateText, new Vector2(350, 0), new Vector2(350, 50));
 
         // Resource strip (below top HUD)
-        var resStrip = CreatePanel(panel.transform, "ResourceStrip", new Color(0, 0, 0, 0.5f), new Vector2(1080, 60));
+        var resStrip = CreatePanel(panel.transform, "ResourceStrip", new Color(0.92f, 0.97f, 0.90f, 0.75f), new Vector2(1080, 60)); // Pale mint strip
         var rsRT = resStrip.GetComponent<RectTransform>();
         rsRT.anchorMin = new Vector2(0, 1); rsRT.anchorMax = new Vector2(1, 1);
         rsRT.pivot = new Vector2(0.5f, 1);
@@ -420,7 +420,7 @@ public static class SceneAutoBuilder
         var woodTxt = CreateTMPText(resStrip.transform, "WoodText",  "Wood 500", 24, TextAlignmentOptions.Center, new Color(0.85f, 0.62f, 0.35f));
         var foodTxt = CreateTMPText(resStrip.transform, "FoodText",  "Food 500", 24, TextAlignmentOptions.Center, new Color(0.55f, 0.9f,  0.35f));
         var goldTxt = CreateTMPText(resStrip.transform, "GoldText",  "Gold 200", 24, TextAlignmentOptions.Center, new Color(1.00f, 0.85f, 0.20f));
-        var popTxt  = CreateTMPText(resStrip.transform, "PopulationText", "Pop 20/50", 24, TextAlignmentOptions.Center, Color.white);
+        var popTxt  = CreateTMPText(resStrip.transform, "PopulationText", "Pop 20/50", 24, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown
 
         SetAnchored(woodTxt, new Vector2(-380, 0), new Vector2(200, 50));
         SetAnchored(foodTxt, new Vector2(-130, 0), new Vector2(200, 50));
@@ -463,23 +463,23 @@ public static class SceneAutoBuilder
         npcGridImg.raycastTarget = false;
 
         // Bottom action bar
-        var actionBar = CreatePanel(panel.transform, "ActionBar", new Color(0, 0, 0, 0.8f), new Vector2(1080, 100));
+        var actionBar = CreatePanel(panel.transform, "ActionBar", new Color(1.00f, 0.96f, 0.88f, 0.90f), new Vector2(1080, 100)); // Pastel cream bar
         var abRT = actionBar.GetComponent<RectTransform>();
         abRT.anchorMin = new Vector2(0, 0); abRT.anchorMax = new Vector2(1, 0);
         abRT.pivot = new Vector2(0.5f, 0);
         abRT.offsetMin = Vector2.zero; abRT.offsetMax = new Vector2(0, 100);
 
-        var buildBtn    = CreateButton(actionBar.transform, "BuildButton",   "Build",    new Color(0.2f, 0.4f, 0.6f));
-        var saveBtn     = CreateButton(actionBar.transform, "SaveButton",    "Save",     new Color(0.2f, 0.5f, 0.3f));
-        var npcListBtn  = CreateButton(actionBar.transform, "NPCListButton", "NPCs",     new Color(0.4f, 0.2f, 0.6f));
-        var worldMapBtn = CreateButton(actionBar.transform, "WorldMapButton","Map",      new Color(0.5f, 0.3f, 0.1f));
+        var buildBtn    = CreateButton(actionBar.transform, "BuildButton",   "Build",    new Color(0.78f, 0.90f, 0.98f)); // Pastel sky
+        var saveBtn     = CreateButton(actionBar.transform, "SaveButton",    "Save",     new Color(0.72f, 0.92f, 0.78f)); // Pastel mint
+        var npcListBtn  = CreateButton(actionBar.transform, "NPCListButton", "NPCs",     new Color(0.88f, 0.82f, 0.98f)); // Pastel lavender
+        var worldMapBtn = CreateButton(actionBar.transform, "WorldMapButton","Map",      new Color(0.98f, 0.88f, 0.78f)); // Pastel peach
         // NOTE: Do NOT use ⚙ (U+2699). LiberationSans SDF has no glyph for it, and the
         // TMP dynamic font-fallback lookup path hits a null function pointer on WebGL IL2CPP,
         // crashing the main loop with "RuntimeError: null function or function signature mismatch".
         // Plain-ASCII word labels instead of * and = placeholders — far more legible
         // and avoids any ambiguity about what the icon-like button does.
-        var settingsBtn = CreateButton(actionBar.transform, "SettingsButton","Options",  new Color(0.30f, 0.30f, 0.38f));
-        var menuBtn     = CreateButton(actionBar.transform, "MenuButton",    "Pause",    new Color(0.30f, 0.30f, 0.30f));
+        var settingsBtn = CreateButton(actionBar.transform, "SettingsButton","Options",  new Color(0.95f, 0.90f, 0.82f)); // Pale peach
+        var menuBtn     = CreateButton(actionBar.transform, "MenuButton",    "Pause",    new Color(0.92f, 0.90f, 0.85f)); // Pale cream
 
         // Uniform button widths so the action bar reads as a single row of equals.
         // Previously settings/menu were crammed into 90-wide slots that truncated their
@@ -510,7 +510,7 @@ public static class SceneAutoBuilder
 
         // Building menu panel
         var buildMenuPanel = CreatePanel(panel.transform, "BuildingMenuPanel",
-            new Color(0.08f, 0.08f, 0.15f, 0.98f), new Vector2(1080, 500));
+            new Color(1.00f, 0.96f, 0.88f, 0.98f), new Vector2(1080, 500)); // Pastel cream menu
         var bmpRT = buildMenuPanel.GetComponent<RectTransform>();
         bmpRT.anchorMin = new Vector2(0, 0); bmpRT.anchorMax = new Vector2(1, 0);
         bmpRT.pivot = new Vector2(0.5f, 0);
@@ -551,12 +551,12 @@ public static class SceneAutoBuilder
 
     static GameObject BuildDialoguePanel(Transform parent)
     {
-        var panel = CreateFullscreenPanel(parent, "DialoguePanel", new Color(0, 0, 0, 0.85f));
+        var panel = CreateFullscreenPanel(parent, "DialoguePanel", new Color(0.20f, 0.12f, 0.08f, 0.75f)); // Warm brown dim
         var interactionUI = panel.AddComponent<NPCInteractionUI>();
 
         // NPC info bar (top)
         var infoBar = CreatePanel(panel.transform, "NPCInfoBar",
-            new Color(0.08f, 0.06f, 0.12f), new Vector2(1080, 160));
+            new Color(1.00f, 0.96f, 0.88f), new Vector2(1080, 160)); // Pastel cream info bar
         var ibRT = infoBar.GetComponent<RectTransform>();
         ibRT.anchorMin = new Vector2(0, 1); ibRT.anchorMax = new Vector2(1, 1);
         ibRT.pivot = new Vector2(0.5f, 1);
@@ -565,17 +565,17 @@ public static class SceneAutoBuilder
         // NPC avatar placeholder
         var avatarGO = new GameObject("NPCPortrait"); avatarGO.transform.SetParent(infoBar.transform, false);
         var avatar = avatarGO.AddComponent<Image>();
-        avatar.color = new Color(0.3f, 0.3f, 0.4f);
+        avatar.color = new Color(0.88f, 0.82f, 0.98f); // Pastel lavender placeholder
         var avatarRT = avatarGO.GetComponent<RectTransform>();
         avatarRT.anchoredPosition = new Vector2(-440, 0);
         avatarRT.sizeDelta = new Vector2(120, 120);
 
         var npcName = CreateTMPText(infoBar.transform, "NPCName", "NPC Name",
-            32, TextAlignmentOptions.Left, Color.white);
+            32, TextAlignmentOptions.Left, new Color(0.25f, 0.15f, 0.08f)); // Warm brown on cream
         SetAnchored(npcName, new Vector2(-250, 35), new Vector2(400, 45));
 
         var npcProf = CreateTMPText(infoBar.transform, "NPCProfession", "Farmer",
-            22, TextAlignmentOptions.Left, new Color(0.6f, 0.6f, 0.8f));
+            22, TextAlignmentOptions.Left, new Color(0.40f, 0.28f, 0.18f)); // Warm brown profession
         SetAnchored(npcProf, new Vector2(-250, -5), new Vector2(300, 35));
 
         // Plain-ASCII "Loyalty" prefix — the heart glyph has no LiberationSans SDF entry
@@ -585,7 +585,7 @@ public static class SceneAutoBuilder
         SetAnchored(loyaltyTxt, new Vector2(400, 35), new Vector2(200, 35));
 
         var taskTxt = CreateTMPText(infoBar.transform, "CurrentTask", "Idle",
-            20, TextAlignmentOptions.Right, new Color(0.7f, 0.7f, 0.5f));
+            20, TextAlignmentOptions.Right, new Color(0.40f, 0.28f, 0.18f)); // Warm brown task
         SetAnchored(taskTxt, new Vector2(400, -5), new Vector2(200, 35));
 
         // Mood slider
@@ -598,7 +598,7 @@ public static class SceneAutoBuilder
         SetupSliderVisuals(moodBarGO, moodSlider, new Color(0.2f, 0.8f, 0.3f));
 
         // Close button — word label instead of a lone X. Wider slot so the text fits.
-        var closeBtn = CreateButton(infoBar.transform, "CloseButton", "Close", new Color(0.55f, 0.25f, 0.25f));
+        var closeBtn = CreateButton(infoBar.transform, "CloseButton", "Close", new Color(0.98f, 0.75f, 0.75f)); // Pastel coral
         SetAnchored(closeBtn, new Vector2(460, 0), new Vector2(130, 60));
 
         // Chat scroll view
@@ -640,12 +640,12 @@ public static class SceneAutoBuilder
         // Thinking indicator
         var thinkingGO = new GameObject("ThinkingIndicator"); thinkingGO.transform.SetParent(panel.transform, false);
         var thinkingImg = thinkingGO.AddComponent<Image>();
-        thinkingImg.color = new Color(0.15f, 0.15f, 0.25f, 0.9f);
+        thinkingImg.color = new Color(0.88f, 0.82f, 0.98f, 0.90f); // Pastel lavender
         var tRT = thinkingGO.GetComponent<RectTransform>();
         tRT.anchorMin = new Vector2(0, 0.15f); tRT.anchorMax = new Vector2(0.5f, 0.2f);
         tRT.offsetMin = new Vector2(16, 0); tRT.offsetMax = new Vector2(-4, 0);
         var thinkText = CreateTMPText(thinkingGO.transform, "ThinkText", "Thinking...",
-            20, TextAlignmentOptions.Left, new Color(0.7f, 0.7f, 0.9f));
+            20, TextAlignmentOptions.Left, new Color(0.25f, 0.15f, 0.08f)); // Warm brown thinking
         var ttRT = thinkText.GetComponent<RectTransform>();
         ttRT.anchorMin = Vector2.zero; ttRT.anchorMax = Vector2.one;
         ttRT.offsetMin = new Vector2(12, 0); ttRT.offsetMax = new Vector2(-12, 0);
@@ -664,7 +664,7 @@ public static class SceneAutoBuilder
 
         // Input bar (bottom)
         var inputBar = CreatePanel(panel.transform, "InputBar",
-            new Color(0.08f, 0.08f, 0.15f), new Vector2(1080, 110));
+            new Color(1.00f, 0.96f, 0.88f), new Vector2(1080, 110)); // Pastel cream input bar
         var inputBarRT = inputBar.GetComponent<RectTransform>();
         inputBarRT.anchorMin = new Vector2(0, 0); inputBarRT.anchorMax = new Vector2(1, 0);
         inputBarRT.pivot = new Vector2(0.5f, 0);
@@ -673,7 +673,7 @@ public static class SceneAutoBuilder
         var cmdInput = CreateInputField(inputBar.transform, "CommandInput", "Issue a command...");
         SetAnchored(cmdInput, new Vector2(-90, 0), new Vector2(850, 75));
 
-        var sendBtn = CreateButton(inputBar.transform, "SendButton", "Send", new Color(0.32f, 0.62f, 0.25f));
+        var sendBtn = CreateButton(inputBar.transform, "SendButton", "Send", new Color(0.72f, 0.92f, 0.78f)); // Pastel mint
         SetAnchored(sendBtn, new Vector2(435, 0), new Vector2(120, 75));
 
         // TTS toggle
@@ -684,7 +684,7 @@ public static class SceneAutoBuilder
         ttsToggleRT.sizeDelta = new Vector2(60, 40);
 
         var ttsLabel = CreateTMPText(inputBar.transform, "TTSLabel", "Voice",
-            18, TextAlignmentOptions.Center, new Color(0.6f, 0.6f, 0.8f));
+            18, TextAlignmentOptions.Center, new Color(0.40f, 0.28f, 0.18f)); // Warm brown label
         SetAnchored(ttsLabel, new Vector2(-490, -35), new Vector2(80, 25));
 
         // Wire NPCInteractionUI
@@ -719,26 +719,26 @@ public static class SceneAutoBuilder
 
     static GameObject BuildEventPanel(Transform parent)
     {
-        var panel = CreateFullscreenPanel(parent, "EventPanel", new Color(0, 0, 0, 0.92f));
+        var panel = CreateFullscreenPanel(parent, "EventPanel", new Color(0.20f, 0.12f, 0.08f, 0.85f)); // Warm brown dim
 
         var bg = CreatePanel(panel.transform, "EventCard",
-            new Color(0.1f, 0.07f, 0.05f), new Vector2(900, 700));
+            new Color(1.00f, 0.96f, 0.88f), new Vector2(900, 700)); // Pastel cream event card
         SetAnchored(bg, new Vector2(0, 50), new Vector2(900, 700));
 
         var title = CreateTMPText(bg.transform, "EventTitle", "EVENT TITLE",
-            42, TextAlignmentOptions.Center, new Color(1f, 0.7f, 0.2f));
+            42, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown event title
         SetAnchored(title, new Vector2(0, 250), new Vector2(820, 80));
 
         var desc = CreateTMPText(bg.transform, "EventDesc",
             "Event description appears here...",
-            26, TextAlignmentOptions.Center, new Color(0.85f, 0.85f, 0.85f));
+            26, TextAlignmentOptions.Center, new Color(0.40f, 0.28f, 0.18f)); // Warm brown event desc
         SetAnchored(desc, new Vector2(0, 50), new Vector2(820, 250));
         desc.GetComponent<TextMeshProUGUI>().enableWordWrapping = true;
 
         var responseField = CreateInputField(bg.transform, "ResponseField", "How do you respond?");
         SetAnchored(responseField, new Vector2(0, -200), new Vector2(820, 80));
 
-        var submitBtn = CreateButton(bg.transform, "SubmitButton", "Respond", new Color(0.3f, 0.5f, 0.2f));
+        var submitBtn = CreateButton(bg.transform, "SubmitButton", "Respond", new Color(0.72f, 0.92f, 0.78f)); // Pastel mint
         SetAnchored(submitBtn, new Vector2(0, -320), new Vector2(400, 70));
 
         return panel;
@@ -746,20 +746,20 @@ public static class SceneAutoBuilder
 
     static GameObject BuildPausePanel(Transform parent)
     {
-        var panel = CreateFullscreenPanel(parent, "PausePanel", new Color(0, 0, 0, 0.7f));
+        var panel = CreateFullscreenPanel(parent, "PausePanel", new Color(0.20f, 0.12f, 0.08f, 0.65f)); // Warm brown dim
         var pauseUI = panel.AddComponent<PauseUI>();
 
         var card = CreatePanel(panel.transform, "PauseCard",
-            new Color(0.1f, 0.08f, 0.15f), new Vector2(500, 500));
+            new Color(1.00f, 0.96f, 0.88f), new Vector2(500, 500)); // Pastel cream pause card
         SetAnchored(card, Vector2.zero, new Vector2(500, 500));
 
         var header = CreateTMPText(card.transform, "PauseTitle", "PAUSED",
-            54, TextAlignmentOptions.Center, Color.white);
+            54, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown on cream
         SetAnchored(header, new Vector2(0, 170), new Vector2(420, 80));
 
-        var resumeBtn = CreateButton(card.transform, "ResumeButton",  "Resume",  new Color(0.2f, 0.5f, 0.2f));
-        var saveBtn   = CreateButton(card.transform, "SaveButton",    "Save",    new Color(0.2f, 0.3f, 0.6f));
-        var quitBtn   = CreateButton(card.transform, "QuitButton",    "Main Menu", new Color(0.5f, 0.2f, 0.2f));
+        var resumeBtn = CreateButton(card.transform, "ResumeButton",  "Resume",  new Color(0.72f, 0.92f, 0.78f)); // Pastel mint
+        var saveBtn   = CreateButton(card.transform, "SaveButton",    "Save",    new Color(0.80f, 0.85f, 0.98f)); // Pastel lavender
+        var quitBtn   = CreateButton(card.transform, "QuitButton",    "Main Menu", new Color(0.98f, 0.75f, 0.75f)); // Pastel coral
 
         SetAnchored(resumeBtn, new Vector2(0, 60),  new Vector2(400, 75));
         SetAnchored(saveBtn,   new Vector2(0, -40), new Vector2(400, 75));
@@ -782,28 +782,28 @@ public static class SceneAutoBuilder
 
     static GameObject BuildLoadingPanel(Transform parent)
     {
-        var panel = CreateFullscreenPanel(parent, "LoadingPanel", new Color(0.05f, 0.04f, 0.08f));
+        var panel = CreateFullscreenPanel(parent, "LoadingPanel", new Color(1.00f, 0.96f, 0.88f)); // Pastel cream
         var loadTxt = CreateTMPText(panel.transform, "LoadingText", "Loading...",
-            36, TextAlignmentOptions.Center, Color.white);
+            36, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown
         SetAnchored(loadTxt, new Vector2(0, 100), new Vector2(600, 60));
         return panel;
     }
 
     static GameObject BuildSettingsPanel(Transform parent)
     {
-        var panel = CreateFullscreenPanel(parent, "SettingsPanel", new Color(0.06f, 0.05f, 0.1f, 0.95f));
+        var panel = CreateFullscreenPanel(parent, "SettingsPanel", new Color(1.00f, 0.96f, 0.88f, 0.95f)); // Pastel cream
         var settingsUI = panel.AddComponent<SettingsUI>();
 
         var header = CreateTMPText(panel.transform, "SettingsTitle", "SETTINGS",
-            48, TextAlignmentOptions.Center, Color.white);
+            48, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown
         SetAnchored(header, new Vector2(0, 800), new Vector2(600, 80));
 
-        var closeBtn = CreateButton(panel.transform, "CloseButton", "Close", new Color(0.32f, 0.32f, 0.36f));
+        var closeBtn = CreateButton(panel.transform, "CloseButton", "Close", new Color(0.98f, 0.75f, 0.75f)); // Pastel coral
         SetAnchored(closeBtn, new Vector2(-430, 800), new Vector2(150, 70));
 
         // Language row
         var langLabel = CreateTMPText(panel.transform, "LangLabel", "Language",
-            28, TextAlignmentOptions.Left, new Color(0.85f, 0.85f, 0.9f));
+            28, TextAlignmentOptions.Left, new Color(0.25f, 0.15f, 0.08f)); // Warm brown label
         SetAnchored(langLabel, new Vector2(-200, 550), new Vector2(400, 50));
 
         var langDropdown = CreateDropdown(panel.transform, "LanguageDropdown");
@@ -811,20 +811,20 @@ public static class SceneAutoBuilder
 
         // Music volume row
         var musicLabel = CreateTMPText(panel.transform, "MusicLabel", "Music Volume",
-            28, TextAlignmentOptions.Left, new Color(0.85f, 0.85f, 0.9f));
+            28, TextAlignmentOptions.Left, new Color(0.25f, 0.15f, 0.08f)); // Warm brown label
         SetAnchored(musicLabel, new Vector2(-200, 400), new Vector2(400, 50));
         var musicSlider = CreateSlider(panel.transform, "MusicSlider", 0f, 1f, 0.8f);
         SetAnchored(musicSlider, new Vector2(150, 400), new Vector2(400, 40));
 
         // SFX volume row
         var sfxLabel = CreateTMPText(panel.transform, "SFXLabel", "SFX Volume",
-            28, TextAlignmentOptions.Left, new Color(0.85f, 0.85f, 0.9f));
+            28, TextAlignmentOptions.Left, new Color(0.25f, 0.15f, 0.08f)); // Warm brown label
         SetAnchored(sfxLabel, new Vector2(-200, 270), new Vector2(400, 50));
         var sfxSlider = CreateSlider(panel.transform, "SFXSlider", 0f, 1f, 1.0f);
         SetAnchored(sfxSlider, new Vector2(150, 270), new Vector2(400, 40));
 
         // Save button
-        var saveBtn = CreateButton(panel.transform, "SaveSettingsButton", "Save", new Color(0.3f, 0.55f, 0.25f));
+        var saveBtn = CreateButton(panel.transform, "SaveSettingsButton", "Save", new Color(0.72f, 0.92f, 0.78f)); // Pastel mint
         SetAnchored(saveBtn, new Vector2(0, -600), new Vector2(400, 80));
 
         var soSett = new SerializedObject(settingsUI);
@@ -845,7 +845,7 @@ public static class SceneAutoBuilder
         go.transform.SetParent(parent, false);
 
         var img = go.AddComponent<Image>();
-        img.color = new Color(0.15f, 0.15f, 0.22f);
+        img.color = new Color(0.94f, 0.88f, 0.78f); // Pale cream dropdown
 
         var dropdown = go.AddComponent<TMP_Dropdown>();
 
@@ -856,7 +856,7 @@ public static class SceneAutoBuilder
         label.text = "Option";
         label.fontSize = 24;
         label.alignment = TextAlignmentOptions.Left;
-        label.color = Color.white;
+        label.color = new Color(0.25f, 0.15f, 0.08f); // Warm brown
         var labelRT = labelGO.GetComponent<RectTransform>();
         labelRT.anchorMin = Vector2.zero; labelRT.anchorMax = Vector2.one;
         labelRT.offsetMin = new Vector2(15, 4); labelRT.offsetMax = new Vector2(-30, -4);
@@ -865,7 +865,7 @@ public static class SceneAutoBuilder
         var template = new GameObject("Template");
         template.transform.SetParent(go.transform, false);
         var templateImg = template.AddComponent<Image>();
-        templateImg.color = new Color(0.1f, 0.1f, 0.15f);
+        templateImg.color = new Color(1.00f, 0.96f, 0.88f); // Pastel cream template
         var templateRT = template.GetComponent<RectTransform>();
         templateRT.anchorMin = new Vector2(0, 0); templateRT.anchorMax = new Vector2(1, 0);
         templateRT.pivot = new Vector2(0.5f, 1);
@@ -876,7 +876,7 @@ public static class SceneAutoBuilder
         var viewport = new GameObject("Viewport");
         viewport.transform.SetParent(template.transform, false);
         var vpImg = viewport.AddComponent<Image>();
-        vpImg.color = new Color(0.1f, 0.1f, 0.15f);
+        vpImg.color = new Color(1.00f, 0.96f, 0.88f); // Pastel cream viewport
         viewport.AddComponent<Mask>().showMaskGraphic = true;
         var vpRT = viewport.GetComponent<RectTransform>();
         vpRT.anchorMin = Vector2.zero; vpRT.anchorMax = Vector2.one;
@@ -892,7 +892,7 @@ public static class SceneAutoBuilder
         item.transform.SetParent(content.transform, false);
         var itemToggle = item.AddComponent<Toggle>();
         var itemBg = item.AddComponent<Image>();
-        itemBg.color = new Color(0.2f, 0.2f, 0.3f);
+        itemBg.color = new Color(0.94f, 0.88f, 0.78f); // Pale cream item
         itemToggle.targetGraphic = itemBg;
         var itemRT = item.GetComponent<RectTransform>();
         itemRT.anchorMin = new Vector2(0, 0.5f); itemRT.anchorMax = new Vector2(1, 0.5f);
@@ -904,7 +904,7 @@ public static class SceneAutoBuilder
         itemLabel.text = "Option";
         itemLabel.fontSize = 22;
         itemLabel.alignment = TextAlignmentOptions.Left;
-        itemLabel.color = Color.white;
+        itemLabel.color = new Color(0.25f, 0.15f, 0.08f); // Warm brown
         var itemLabelRT = itemLabelGO.GetComponent<RectTransform>();
         itemLabelRT.anchorMin = Vector2.zero; itemLabelRT.anchorMax = Vector2.one;
         itemLabelRT.offsetMin = new Vector2(20, 0); itemLabelRT.offsetMax = new Vector2(-10, 0);
@@ -939,7 +939,7 @@ public static class SceneAutoBuilder
         var bg = new GameObject("Background");
         bg.transform.SetParent(go.transform, false);
         var bgImg = bg.AddComponent<Image>();
-        bgImg.color = new Color(0.2f, 0.2f, 0.25f);
+        bgImg.color = new Color(0.94f, 0.88f, 0.78f); // Pale cream slider trough
         var bgRT = bg.GetComponent<RectTransform>();
         bgRT.anchorMin = Vector2.zero; bgRT.anchorMax = Vector2.one;
         bgRT.offsetMin = Vector2.zero; bgRT.offsetMax = Vector2.zero;
@@ -985,21 +985,21 @@ public static class SceneAutoBuilder
 
     static GameObject BuildWorldMapPanel(Transform parent)
     {
-        var panel = CreateFullscreenPanel(parent, "WorldMapPanel", new Color(0.05f, 0.08f, 0.05f));
+        var panel = CreateFullscreenPanel(parent, "WorldMapPanel", new Color(0.92f, 0.97f, 0.90f)); // Pale mint
         panel.AddComponent<WorldMapUI>();
 
         // Full-screen background art (parchment-style, Gemini-generated)
         var bgArt = CreateFullscreenPanel(panel.transform, "BackgroundArt",
-            new Color(0.08f, 0.09f, 0.07f, 1f));
+            new Color(0.92f, 0.97f, 0.90f, 1f)); // Pale mint card
         var bgArtImg = bgArt.GetComponent<Image>();
         bgArtImg.raycastTarget = false;
 
         var header = CreateTMPText(panel.transform, "WorldMapTitle", "WORLD MAP",
-            40, TextAlignmentOptions.Center, new Color(0.7f, 0.9f, 0.7f));
+            40, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown title
         SetAnchored(header, new Vector2(0, 850), new Vector2(600, 70));
 
         // Back-to-castle button — plain ASCII word, no angle-bracket glyph.
-        var closeBtn = CreateButton(panel.transform, "CloseButton", "Back to Castle", new Color(0.22f, 0.32f, 0.22f));
+        var closeBtn = CreateButton(panel.transform, "CloseButton", "Back to Castle", new Color(0.72f, 0.92f, 0.78f)); // Pastel mint
         SetAnchored(closeBtn, new Vector2(-400, 850), new Vector2(260, 70));
 
         var mapContainer = new GameObject("MapContainer"); mapContainer.transform.SetParent(panel.transform, false);
@@ -1018,11 +1018,11 @@ public static class SceneAutoBuilder
 
     static GameObject BuildLeaderboardPanel(Transform parent)
     {
-        var panel = CreateFullscreenPanel(parent, "LeaderboardPanel", new Color(0.06f, 0.05f, 0.1f, 0.98f));
+        var panel = CreateFullscreenPanel(parent, "LeaderboardPanel", new Color(1.00f, 0.96f, 0.88f, 0.98f)); // Pastel cream
         panel.AddComponent<LeaderboardUI>();
 
         var header = CreateTMPText(panel.transform, "Title", "LEADERBOARD",
-            44, TextAlignmentOptions.Center, new Color(0.9f, 0.75f, 0.2f));
+            44, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown title
         SetAnchored(header, new Vector2(0, 800), new Vector2(700, 80));
 
         var (scrollRect, content) = CreateScrollView(panel.transform, "LeaderScroll");
@@ -1041,7 +1041,7 @@ public static class SceneAutoBuilder
 
         // Dim background
         var dim = panel.GetComponent<Image>();
-        dim.color = new Color(0, 0, 0, 0.5f);
+        dim.color = new Color(0.20f, 0.12f, 0.08f, 0.50f); // Warm brown dim
         dim.raycastTarget = true;
 
         // Highlight frame (repositioned at runtime)
@@ -1062,7 +1062,7 @@ public static class SceneAutoBuilder
 
         // Dialogue box at bottom
         var box = CreatePanel(panel.transform, "DialogueBox",
-            new Color(0.08f, 0.06f, 0.14f, 0.95f), new Vector2(900, 300));
+            new Color(1.00f, 0.96f, 0.88f, 0.98f), new Vector2(900, 300)); // Pastel cream dialogue box
         SetAnchored(box, new Vector2(0, -650), new Vector2(900, 300));
         var boxOutline = box.AddComponent<Outline>();
         boxOutline.effectColor = new Color(0.8f, 0.65f, 0.2f);
@@ -1070,12 +1070,12 @@ public static class SceneAutoBuilder
 
         // Title
         var title = CreateTMPText(box.transform, "TutorialTitle", "Welcome!",
-            32, TextAlignmentOptions.Center, new Color(0.95f, 0.85f, 0.4f));
+            32, TextAlignmentOptions.Center, new Color(0.25f, 0.15f, 0.08f)); // Warm brown tutorial title
         SetAnchored(title, new Vector2(0, 100), new Vector2(800, 50));
 
         // Description — multi-line, must wrap inside the dialogue box
         var desc = CreateTMPText(box.transform, "TutorialDesc", "",
-            22, TextAlignmentOptions.TopLeft, new Color(0.85f, 0.82f, 0.75f));
+            22, TextAlignmentOptions.TopLeft, new Color(0.40f, 0.28f, 0.18f)); // Warm brown tutorial desc
         SetAnchored(desc, new Vector2(0, 10), new Vector2(820, 180));
         var descTMP = desc.GetComponent<TextMeshProUGUI>();
         descTMP.enableWordWrapping = true;
@@ -1083,7 +1083,7 @@ public static class SceneAutoBuilder
 
         // Next button
         var nextBtn = CreateButton(box.transform, "NextButton", "Next",
-            new Color(0.25f, 0.55f, 0.3f));
+            new Color(0.72f, 0.92f, 0.78f)); // Pastel mint next
         SetAnchored(nextBtn, new Vector2(200, -110), new Vector2(180, 50));
 
         // Next button text
@@ -1091,7 +1091,7 @@ public static class SceneAutoBuilder
 
         // Skip button
         var skipBtn = CreateButton(box.transform, "SkipButton", "Skip Tutorial",
-            new Color(0.3f, 0.2f, 0.2f));
+            new Color(0.98f, 0.88f, 0.78f)); // Pastel peach skip
         SetAnchored(skipBtn, new Vector2(-200, -110), new Vector2(180, 50));
 
         // Wire TutorialUI serialized fields
@@ -1326,7 +1326,7 @@ public static class SceneAutoBuilder
         lbl.richText    = false;
         lbl.fontStyle   = FontStyles.Bold;
         lbl.alignment   = TextAlignmentOptions.Center;
-        lbl.color       = Color.white;
+        lbl.color       = new Color(0.25f, 0.15f, 0.08f); // Warm brown on pastel fills
         lbl.enableWordWrapping = false;
         lbl.overflowMode = TextOverflowModes.Ellipsis;
         lbl.raycastTarget = false;
@@ -1364,7 +1364,7 @@ public static class SceneAutoBuilder
         go.transform.SetParent(parent, false);
 
         var bg = go.AddComponent<Image>();
-        bg.color = new Color(0.12f, 0.12f, 0.2f);
+        bg.color = new Color(1.00f, 0.98f, 0.92f); // Pastel cream input
 
         var inputField = go.AddComponent<TMP_InputField>();
 
@@ -1380,7 +1380,7 @@ public static class SceneAutoBuilder
         var ph = phGO.AddComponent<TextMeshProUGUI>();
         ph.text = placeholder;
         ph.fontSize = 26;
-        ph.color = new Color(0.5f, 0.5f, 0.6f);
+        ph.color = new Color(0.55f, 0.42f, 0.30f); // Warm brown placeholder
         var phRT = phGO.GetComponent<RectTransform>();
         phRT.anchorMin = Vector2.zero; phRT.anchorMax = Vector2.one;
         phRT.offsetMin = Vector2.zero; phRT.offsetMax = Vector2.zero;
@@ -1389,7 +1389,7 @@ public static class SceneAutoBuilder
         txtGO.transform.SetParent(textAreaGO.transform, false);
         var txt = txtGO.AddComponent<TextMeshProUGUI>();
         txt.fontSize = 26;
-        txt.color = Color.white;
+        txt.color = new Color(0.25f, 0.15f, 0.08f); // Warm brown on cream
         var txtRT = txtGO.GetComponent<RectTransform>();
         txtRT.anchorMin = Vector2.zero; txtRT.anchorMax = Vector2.one;
         txtRT.offsetMin = Vector2.zero; txtRT.offsetMax = Vector2.zero;
@@ -1411,7 +1411,7 @@ public static class SceneAutoBuilder
 
         var scrollRect = scrollGO.AddComponent<ScrollRect>();
         var scrollBg = scrollGO.AddComponent<Image>();
-        scrollBg.color = new Color(0, 0, 0, 0.3f);
+        scrollBg.color = new Color(0.94f, 0.88f, 0.78f, 0.60f); // Pale cream scroll bg
 
         var vpGO = new GameObject("Viewport");
         vpGO.transform.SetParent(scrollGO.transform, false);
@@ -1455,7 +1455,7 @@ public static class SceneAutoBuilder
     static void SetupSliderVisuals(GameObject sliderGO, Slider slider, Color fillColor)
     {
         var bgGO = new GameObject("Background"); bgGO.transform.SetParent(sliderGO.transform, false);
-        var bgImg = bgGO.AddComponent<Image>(); bgImg.color = new Color(0.2f, 0.2f, 0.2f);
+        var bgImg = bgGO.AddComponent<Image>(); bgImg.color = new Color(0.94f, 0.88f, 0.78f); // Pale cream slider bg
         var bgRT = bgGO.GetComponent<RectTransform>();
         bgRT.anchorMin = Vector2.zero; bgRT.anchorMax = Vector2.one;
         bgRT.offsetMin = Vector2.zero; bgRT.offsetMax = Vector2.zero;
