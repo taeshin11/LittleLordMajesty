@@ -1,6 +1,13 @@
 # PRD: LittleLordMajesty (LLM)
 
-> **Note:** This is a living document. Update whenever architecture or scope changes.
+> **Note:** Living document. Update whenever architecture or scope changes.
+>
+> **2026-04-12 — Major pivot.** Moved from a card-grid / chat-window dialogue sim to a
+> **Zelda: Echoes of Wisdom-style cozy roaming RPG**. The player now *walks* around a
+> tiny kingdom as the Little Lord and physically approaches NPCs to talk. The AI NPC
+> core, localization, Warfare systems, and infrastructure (build pipeline, GPU lock,
+> live_test harness, TMP Korean-safe guards) all carry forward unchanged — what changed
+> is the player's relationship to the world: from *menu-operator* to *avatar-in-world*.
 
 ---
 
@@ -9,59 +16,78 @@
 | Item | Value |
 |------|-------|
 | **Product Name** | LittleLordMajesty (LLM) |
-| **Platforms** | Android, iOS, iPad/Tablet — **AND Steam/PC (Windows + macOS)** |
-| **Genre** | 3D Isometric Strategy + AI NPC Interaction + Territory Conquest |
-| **Art Style** | Low-poly 3D isometric (Clash of Clans / Frostpunk aesthetic) |
-| **Core Concept** | "Rule the realm and overcome crises with a single word." Start as "Little Lord"; command NPCs with text prompts; conquer the continent to become "Majesty." |
+| **Platforms** | Steam/PC (Windows + macOS) first, then Android / iOS / iPad |
+| **Genre** | Cozy Kingdom Roaming RPG + AI NPC Interaction + Territory Conquest |
+| **Art Style** | Zelda: Echoes of Wisdom — pastel chibi toy diorama, thick outlines, cel-shaded, Nintendo soft palette |
+| **Core Concept** | "Walk your kingdom. Rule with a single word." You inherit a tiny pastel castle, explore it on foot, approach villagers to talk in natural language, resolve crises through conversation and choice, and grow from "Little Lord" to "Majesty." |
 
 ---
 
 ## 2. Core Game Loop
 
-1. **Instruction & Communication** — Issue work orders and mediate conflicts via text prompts to AI NPCs (Gemini 2.0 Flash Lite).
-2. **Internal Affairs** — Strengthen the castle through resource management and building tech tree.
-3. **Conquest & Expansion** — Deploy armies on 3D World Map; occupy AI lords' castles; expand territory.
-4. **Crisis Management** — Defend against Orc raids; resolve internal crises (fires, food shortages, NPC conflicts).
+1. **Explore** — Walk the castle courtyard (and later, the world map) as the Little Lord. Camera follows the avatar in a 3-quarter isometric view.
+2. **Approach & Talk** — Physical proximity to an NPC triggers an interaction prompt; pressing the talk button opens a bottom-of-screen dialogue box with portrait + natural-language input.
+3. **Instruct via AI** — NPCs respond through Gemini 2.0 Flash Lite. The player issues work orders, mediates conflicts, and interrogates visitors through free-text conversation.
+4. **Consequences & Growth** — Dialogue outcomes feed Resource/Loyalty/Crisis systems; the castle visibly changes over days; the player unlocks new areas (World Map, battlefield, neighboring territories).
+5. **Conquest & Expansion** — Transition to the 3D World Map to deploy armies, occupy rival lords' castles, and expand. (Same roaming-camera philosophy — the player moves their icon across the overworld.)
+6. **Crisis Management** — Orc raids, fires, food shortages, NPC disputes arrive as in-world events the player must walk to and resolve, not modal popups.
 
 ---
 
 ## 3. Key Feature Requirements
 
-### 3.1. AI NPC & Interaction System
+### 3.1. Player Avatar & Movement  *(new post-pivot)*
+- **Third-person isometric controller** — Player is a chibi avatar walking on the castle's pastel floor.
+- **Input scheme** —
+  - PC/Steam: WASD / left stick + interact key (E / Space / A-button)
+  - Mobile: on-screen virtual stick + tappable interact button (appears when an NPC is in range)
+- **Camera** — 3-quarter isometric, perspective 45° FOV, 55° tilt. Follows avatar with soft lerp + configurable zoom (pinch-zoom on mobile, scroll-wheel on PC).
+- **Collision** — NavMesh-driven for both the player and NPC routines. No manual collider stacks.
+- **Interaction trigger** — Proximity sphere around the avatar; the closest in-range NPC highlights with a soft outline and a floating "Talk" prompt.
+
+### 3.2. NPC Roaming & Daily Routines
+- **NPCs walk around** the courtyard along authored waypoint routines (morning: farm → noon: market → dusk: tavern), time-of-day driven by `DayCycleCoroutine`.
+- **Presence over cards** — The old card grid (CastleView) is retired. NPCs exist in the world; you *see* Aldric sweeping near the gate, Bram patrolling the wall, Marta delivering baskets.
+- **Dialogue door** — When the player walks up and presses interact, the dialogue box opens with the NPC's portrait and current task context auto-injected into the Gemini prompt ("Aldric is sweeping the gate at noon" → more grounded greeting).
+
+### 3.3. AI NPC & Dialogue System *(mostly unchanged)*
 - **Gemini 2.0 Flash Lite API** — All NPC dialogue, command interpretation, event outcomes.
 - **Persona System** — Unique personality, background, speech style per profession (Vassal, Soldier, Merchant, Farmer, Scholar, Priest, Spy).
-- **Voice Output (TTS)** — Google Cloud TTS with MD5-based local audio cache (near-zero repeat cost).
+- **Voice Output (TTS)** — Google Cloud TTS with MD5-based local audio cache.
+- **Pre-generated dialogue bank** — `LocalDialogueBank` (1000 EXAONE-baked lines per profession × context) serves greetings / idle chatter / small talk at zero API cost; Gemini is only invoked for full commands and crisis dialogue.
 - **Request Queue** — Max 1–2 concurrent Gemini requests; 1-second inter-request interval to stay within free-tier quota.
+- **UI form factor** — Bottom-of-screen classic RPG dialogue box (portrait left, name+text right, choices/input at the bottom). Replaces the previous full-screen chat scroll panel.
 
-### 3.2. Territory & World Map (3D)
-- **3D Isometric Castle** — Low-poly terrain, buildings, NPC characters rendered behind screen-space UI canvas.
-- **Camera** — Perspective 45° FOV, 55° tilt; pinch-zoom (5–20 units); swipe pan.
-- **World Map** — 35 territories; 3 AI lords; scout / siege / diplomacy.
+### 3.4. Territory & World Map (3D)
+- **3D Isometric Castle** — Actual Unity scene geometry (cobblestones, walls, fountain, houses) rendered as the playable world — **no longer a static background PNG** behind a card UI.
+- **World Map** — Second playable scene. The player icon walks the overworld between 35 territories; 3 AI lords; scout / siege / diplomacy triggered by walking to a territory node and interacting.
+- **Seamless transitions** — Castle ↔ World Map switch is a scene load with the avatar's position preserved.
 
-### 3.3. Events & Visitors
-- **LLM-based Events** — Orc raids, NPC conflicts, fires, food shortages resolved via player text commands.
-- **Mysterious Visitors** — 8 visitor types; LLM generates false identity; player must interrogate.
+### 3.5. Events & Visitors
+- **LLM-based Events** — Orc raids, NPC conflicts, fires, food shortages spawn as in-world markers (smoke plume, arguing NPCs, visitor at the gate). Player must walk to them to resolve.
+- **Mysterious Visitors** — 8 visitor types; the visitor physically appears at the gate, walks to the throne room, and the player talks to them face-to-face. LLM generates false identity; the player interrogates through dialogue.
 
-### 3.4. Localization & UI/UX
+### 3.6. Localization & UI/UX
 - **7 languages** — en, ko, ja, zh, fr, de, es (JSON-based, auto-detect system language).
 - **No hardcoded strings** in game code.
 - **Responsive UI** —
+  - PC/Steam landscape: 1920×1080 reference (primary)
   - Mobile portrait: 1080×1920 reference
-  - PC/Steam landscape: 1920×1080 reference
   - Tablet: 1536×2048 reference
-- **Screen-space Canvas overlay** on top of 3D world.
+- **Menu UI stays screen-space**; the dialogue box, interact prompts, and HUD are screen-space overlays. The castle itself is **world-space**.
+- **Korean font stack** — LiberationSans SDF + Static-baked NotoSansKR atlas (no Dynamic fallback — `HasCharacterInStaticChain` guard, see milestone 15).
 
-### 3.5. Platform Support
+### 3.7. Platform Support
 | Platform | Target | Status |
 |----------|--------|--------|
-| Android | API 24+ | Planned |
-| iOS | iOS 14+ | Planned |
-| Steam Windows | Win10 64-bit | In development |
+| Steam Windows | Win10 64-bit | Primary — in development |
 | Steam macOS | macOS 12+ | In development |
+| Android | API 24+ | Deferred until roaming foundation is solid |
+| iOS | iOS 14+ | Deferred until roaming foundation is solid |
 
-### 3.6. Warfare & Espionage
+### 3.8. Warfare & Espionage  *(deferred past roaming pivot, systems preserved)*
 
-Six interlocking systems that enable multiplayer shadow-war alongside direct military conflict.
+Six interlocking systems from pre-pivot scope. Core code stays (all under `Assets/Scripts/Warfare/`), but they move **behind** the roaming gameplay milestone — they'll be re-plumbed so that, e.g., dispatching a spy means the spy character physically walks out the castle gate and leaves the map.
 
 | System | Mechanic | LLM Role |
 |--------|----------|----------|
@@ -74,21 +100,21 @@ Six interlocking systems that enable multiplayer shadow-war alongside direct mil
 
 All Warfare systems use Firebase Realtime DB for async cross-player state. Firebase paths: `spies/`, `prisoners/`, `rumors/`, `traders/`, `debunkBroadcasts/`, `notifications/`.
 
-### 3.7. LLM Latency Strategy
+### 3.9. LLM Latency Strategy
 
-Gemini 1.5 Flash cold-start on mobile 4G is typically 1.5–3 seconds. Five strategies are used to keep interactions feeling responsive:
+Gemini 2.0 Flash Lite cold-start on mobile 4G is typically 1.5–3 seconds. Five strategies mask the gap:
 
 | Strategy | Description | Status |
 |----------|-------------|--------|
-| **Streaming** | Replace single-callback `SendMessage()` with streaming endpoint; first token < 500ms | Implemented — `SendMessageStreaming()` SSE in `GeminiAPIClient.cs` (M12) |
-| **Action-First** | Trigger visual feedback (character animation, dialogue window open) immediately at call time, before LLM response | Implemented in all Warfare coroutines |
-| **Thinking Animation** | Display "..." or idle animation during `while (!done)` wait loop; masks latency gap perceptually | Implemented via coroutine polling pattern |
-| **Response Length Limits** | Every prompt includes explicit length cap: JSON-only for structured outputs, "2–3 sentences max" for prose | Implemented in all 6 warfare system prompts |
-| **Pre-generation Cache** | Pre-generate common responses (daily NPC greetings, merchant openers) at session start; serve from memory on first interaction, refresh in background | Planned — `GeminiAPIClient` cache layer, keyed by system-prompt hash |
+| **Streaming** | SSE first-token < 500ms | Implemented — `SendMessageStreaming()` in `GeminiAPIClient.cs` (M12) |
+| **Action-First** | Visual feedback (avatar animation, dialogue box open) fires at call time, before LLM response | Implemented in all Warfare coroutines; extended to roaming interact |
+| **Thinking Animation** | "..." or idle animation during poll loop | Implemented via coroutine polling pattern |
+| **Response Length Limits** | Every prompt has an explicit cap (JSON-only for structured, "2–3 sentences" for prose) | Implemented across all 6 warfare prompts + NPC greetings |
+| **Pre-generation Cache** | `LocalDialogueBank` baked via local EXAONE 7.8B serves greetings/idle from disk at 0ms, 0 cost | Implemented — 1000-line bank in `Resources/dialogue_lines.json` |
 
-### 3.8. Persistence & Cloud
-- **Local save** — JSON, platform-aware path (`%APPDATA%` on PC, `persistentDataPath` on mobile).
-- **Firebase** — Global leaderboard (Firebase Realtime DB via REST API, no SDK).
+### 3.10. Persistence & Cloud
+- **Local save** — JSON, platform-aware path (`%APPDATA%` on PC, `persistentDataPath` on mobile). Now also persists avatar world position + current scene.
+- **Firebase** — Global leaderboard (Firebase Realtime DB via REST, no SDK).
 - **Steam** — Achievements + Steam leaderboard (Facepunch.Steamworks — future integration).
 
 ---
@@ -97,15 +123,19 @@ Gemini 1.5 Flash cold-start on mobile 4G is typically 1.5–3 seconds. Five stra
 
 | Layer | Technology |
 |-------|-----------|
-| Engine | Unity 2022.3 LTS (C#) |
-| Rendering | 3D low-poly, URP (Universal Render Pipeline) |
-| AI | Gemini 2.0 Flash Lite REST API |
+| Engine | Unity 2022.3.62f1 LTS (C#) |
+| Rendering | 3D low-poly toy diorama, URP, cel-shaded |
+| Avatar + NPC movement | NavMesh + Unity Input System (new package) |
+| Art Generation | SDXL base 1.0 (local, fp16, `tools/image_gen/generate.py`) — castle BGs, NPC portraits, tile art |
+| AI Dialogue | Gemini 2.0 Flash Lite REST API (runtime) + EXAONE 3.5 7.8B local (build-time dialogue bank baking) |
 | TTS | Google Cloud TTS REST API |
 | Backend | Firebase REST (no SDK) |
 | Steam | Facepunch.Steamworks (pending) |
-| Localization | Custom JSON + LocalizationManager |
+| Localization | Custom JSON + LocalizationManager (static-atlas CJK fallback) |
+| CI | Self-hosted runner on `4090-desktop`, `.github/workflows/build-local.yml` |
 | Version Control | Git + GitHub (taeshin11/LittleLordMajesty) |
-| Development | CLI-first; automated with Editor scripts |
+| Development | CLI-first; Editor scripts (SceneAutoBuilder, AssetCreator); multi-agent sessions via Claude Code + Codex cross-review |
+| Cross-project GPU | `scripts/gpu_lock.py` shared-mode (schema v2) — coexists with SPINAI training + PillScan inference on the same RTX 4090 |
 
 ---
 
@@ -125,9 +155,37 @@ Gemini 1.5 Flash cold-start on mobile 4G is typically 1.5–3 seconds. Five stra
 | 10 | Scenes + Assets + Bootstrap/Game.unity wired | ✅ Complete |
 | 11 | QA Audit + Critical Bug Fixes (32 bugs) | ✅ Complete |
 | 12 | Steam Integration + Tutorial System + LLM Streaming (Gemini 2.0 Flash Lite) | ✅ Complete |
-| 13 | Alpha Playtest Verification + Steam Store Prep + Visual Upgrade (Kenney) | 🔲 Next |
-| 14 | Android/iOS/Steam Build + Final QA | 🔲 Backlog |
-| 15 | App Store + Steam Store Submission | 🔲 Backlog |
+| 13 | M13 WebGL black-screen wasm crash fix + aesthetic debug-overlay cleanup | ✅ Complete |
+| 14 | 4090 desktop migration + shared GPU lock across SPINAI / PillScan / LLM | ✅ Complete |
+| 15 | Aldrich first-dialogue wasm crash (TMP Dynamic fallback) + ko-KR live_test | ✅ Complete |
+| 16 | **Zelda EoW pivot — roaming avatar foundation**: player controller, camera follow, NavMesh bake on castle scene, NPC waypoint routines, proximity interact trigger, bottom-screen dialogue box replacing card grid | 🔲 **Next — active pivot** |
+| 17 | Roaming NPC art pipeline: 4-direction sprite sheets or billboard portraits; NPC walk animations; daily routine authoring | 🔲 Planned |
+| 18 | World Map as a walkable overworld (avatar icon traversal); scene-preserving castle ↔ world transitions | 🔲 Planned |
+| 19 | In-world event triggers (fire smoke plume, argue markers, visitor at gate) replacing modal event popups | 🔲 Planned |
+| 20 | Re-plumb Warfare systems to roaming frame (spy walks out gate, prisoner in dungeon scene, trader caravan visible on map) | 🔲 Planned |
+| 21 | Static-baked Hangul atlas — finish M15 follow-up so Korean users get native text instead of English fallback | 🔲 Planned (blocks Korean launch) |
+| 22 | Alpha Playtest + Steam Store Prep | 🔲 Backlog |
+| 23 | Android/iOS mobile controls (virtual stick) + Final QA | 🔲 Backlog |
+| 24 | App Store + Steam Store Submission | 🔲 Backlog |
+
+### Pivot carryover matrix
+
+What the M16 pivot **keeps** vs **retires**:
+
+| Area | Status |
+|------|--------|
+| `GameManager`, `ResourceManager`, `NPCManager`, `EventManager`, `WorldMapManager` state layer | ✅ Kept — UI layer only changes |
+| `LocalDialogueBank`, EXAONE dialogue generation pipeline | ✅ Kept |
+| `LocalizationManager`, 7-language JSON files, `HasCharacterInStaticChain` TMP guards | ✅ Kept |
+| `GeminiAPIClient` streaming + TTS + request queue | ✅ Kept |
+| Warfare systems (6 subsystems) | ✅ Kept, re-plumbed for in-world triggers |
+| `SceneAutoBuilder` Create* helpers + `PinCenterRect` anchor fix | ✅ Kept for menu/HUD/pause/tutorial UI |
+| Pastel color palette + SDXL art pipeline (backgrounds + portraits) | ✅ Kept, portraits reused in dialogue box |
+| SDXL `bg_main_menu` | ✅ Kept as actual menu background |
+| SDXL `bg_castle_courtyard` (static PNG) | ❌ Retired — replaced by actual 3D scene geometry |
+| `SceneAutoBuilder.BuildCastleViewPanel` NPC card grid | ❌ Retired — NPCs are in-world |
+| `NPCInteractionUI` full-screen chat scroll + message bubble prefabs | ❌ Retired — replaced by bottom-screen dialogue box |
+| `CastleViewUI.cs` fullscreen-overlay background management | ❌ Retired — castle is a world, not a backdrop |
 
 ---
 
@@ -138,4 +196,7 @@ Gemini 1.5 Flash cold-start on mobile 4G is typically 1.5–3 seconds. Five stra
 - 유니티 에디터 작업은 Editor Script로 자동화 (SceneAutoBuilder, AssetCreator).
 - 모든 UI 텍스트는 LocalizationManager 키를 사용. 하드코딩 금지.
 - API 키는 GameConfig.asset에만 저장. 절대 코드에 하드코딩 금지.
-- Agent Team (Quality Tester / Backend Engineer / UI Engineer / Code Reviewer) 주기적 리뷰.
+- 모든 SDXL 생성 이미지는 `tools/image_gen/generate.py` — 프롬프트는 Zelda EoW 팔레트 앵커 유지.
+- 공유 GPU 사용시 `scripts/gpu_lock.py` 우선순위: LittleLordMajesty > SPINAI training > PillScan inference.
+- 프로시저럴 UI 만들 때 `PinCenterRect` 로 앵커 명시 — 기본 stretch 상속으로 오버플로우 나는 버그 재발 금지 (M16 픽스 참고).
+- Agent Team (Quality Tester / Backend Engineer / UI Engineer / Code Reviewer) 주기적 리뷰; 컨텍스트 세이빙을 위해 Agent A (edit→commit→CI→live_test 루프) 패턴 적극 활용.
