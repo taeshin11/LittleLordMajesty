@@ -72,7 +72,7 @@ public class ErrorHandler : MonoBehaviour
     private string GetFriendlyMessage(string error)
     {
         if (error.Contains("NullReference"))
-            return "Something went wrong loading game data.\nYour progress is safe — tap Restart to continue.";
+            return "Something went wrong loading game data.\nYour progress is safe - tap Restart to continue.";
         if (error.Contains("OutOfMemory"))
             return "The game ran out of memory.\nPlease restart to free up resources.";
         if (error.Contains("Network") || error.Contains("WebRequest"))

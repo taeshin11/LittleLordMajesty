@@ -236,8 +236,9 @@ public class WorldMapUI : MonoBehaviour
 
         if (territory.IsScouted)
         {
-            if (_defenseText != null) _defenseText.text = $"⚔️ {territory.DefenseStrength}";
-            if (_garrisonText != null) _garrisonText.text = $"🪖 {territory.Garrison}";
+            // ASCII-only — TMP null-function crash on WebGL if emoji are present.
+            if (_defenseText != null) _defenseText.text = $"Def {territory.DefenseStrength}";
+            if (_garrisonText != null) _garrisonText.text = $"Gar {territory.Garrison}";
             if (_defenseBar != null) _defenseBar.value = territory.DefenseStrength / 100f;
         }
         else

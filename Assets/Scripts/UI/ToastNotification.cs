@@ -54,12 +54,13 @@ public class ToastNotification : MonoBehaviour
     public static void ShowResource(ResourceManager.ResourceType resource, int amount)
     {
         string sign = amount >= 0 ? "+" : "";
+        // ASCII labels only — emoji trip the WebGL TMP null-function crash.
         string icon = resource switch
         {
-            ResourceManager.ResourceType.Wood => "🪵",
-            ResourceManager.ResourceType.Food => "🌾",
-            ResourceManager.ResourceType.Gold => "💰",
-            ResourceManager.ResourceType.Population => "👥",
+            ResourceManager.ResourceType.Wood => "Wood",
+            ResourceManager.ResourceType.Food => "Food",
+            ResourceManager.ResourceType.Gold => "Gold",
+            ResourceManager.ResourceType.Population => "Pop",
             _ => ""
         };
         ToastType type = amount >= 0 ? ToastType.Success : ToastType.Warning;

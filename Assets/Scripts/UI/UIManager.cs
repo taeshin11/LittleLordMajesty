@@ -208,18 +208,21 @@ public class UIManager : MonoBehaviour
 
         switch (type)
         {
+            // NOTE: NO non-ASCII glyphs in runtime strings. LiberationSans SDF has
+            // no emoji, and TMP's dynamic font fallback path nulls out a wasm
+            // function pointer on WebGL IL2CPP → "RuntimeError: null function".
             case ResourceManager.ResourceType.Wood:
-                UpdateResourceUI(_woodText, _woodBar, newVal, rm.MaxWood, "🪵");
+                UpdateResourceUI(_woodText, _woodBar, newVal, rm.MaxWood, "W");
                 break;
             case ResourceManager.ResourceType.Food:
-                UpdateResourceUI(_foodText, _foodBar, newVal, rm.MaxFood, "🌾");
+                UpdateResourceUI(_foodText, _foodBar, newVal, rm.MaxFood, "F");
                 break;
             case ResourceManager.ResourceType.Gold:
-                UpdateResourceUI(_goldText, _goldBar, newVal, rm.MaxGold, "💰");
+                UpdateResourceUI(_goldText, _goldBar, newVal, rm.MaxGold, "G");
                 break;
             case ResourceManager.ResourceType.Population:
                 if (_populationText != null)
-                    _populationText.text = $"👥 {newVal}/{rm.MaxPopulation}";
+                    _populationText.text = $"P {newVal}/{rm.MaxPopulation}";
                 break;
         }
     }

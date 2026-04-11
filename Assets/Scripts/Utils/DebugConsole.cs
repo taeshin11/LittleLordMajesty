@@ -257,7 +257,7 @@ public class DebugConsole : MonoBehaviour
         var closeLblGO = new GameObject("Lbl");
         closeLblGO.transform.SetParent(closeBtnGO.transform, false);
         var closeLbl = closeLblGO.AddComponent<TextMeshProUGUI>();
-        closeLbl.text = "✕";
+        closeLbl.text = "X";
         closeLbl.fontSize = 24;
         closeLbl.color = Color.white;
         closeLbl.alignment = TextAlignmentOptions.Center;
