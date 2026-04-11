@@ -55,95 +55,38 @@ public class CastleViewUI : MonoBehaviour
     {
         // Defensive: every step is wrapped so a single failure doesn't take
         // out the whole castle entry. Logged warnings tell us which step
-        // tripped without crashing the wasm runtime. Crash-bisect logs tag
-        // each successful step so we can see which one was the LAST to
-        // run before the wasm null-function crash.
-        Debug.Log("[Crash-Bisect] CastleViewUI.Start entry");
-        // Bisect is complete — ObjectiveText was the culprit. SceneAutoBuilder
-        // now bakes an empty / short / wrappable objective label that no
-        // longer trips the wasm null-function crash. Everything else is
-        // re-enabled here.
-
+        // tripped without crashing the wasm runtime.
         try { _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] Find NPCInteractionUI: {e.Message}"); }
-        Debug.Log("[Crash-Bisect] CastleViewUI Start: after FindNPCInteractionUI");
 
         try { SetupButtons(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] SetupButtons: {e.Message}"); }
-        Debug.Log("[Crash-Bisect] CastleViewUI Start: after SetupButtons");
 
         try { SubscribeToEvents(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] SubscribeToEvents: {e.Message}"); }
-        Debug.Log("[Crash-Bisect] CastleViewUI Start: after SubscribeToEvents");
 
         try { RefreshResourceHUD(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] RefreshResourceHUD: {e.Message}"); }
-        Debug.Log("[Crash-Bisect] CastleViewUI Start: after RefreshResourceHUD");
 
         try { UpdateLordInfo(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] UpdateLordInfo: {e.Message}"); }
-        Debug.Log("[Crash-Bisect] CastleViewUI Start: after UpdateLordInfo");
 
         try { RequestBackgroundArt(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] RequestBackgroundArt: {e.Message}"); }
-        Debug.Log("[Crash-Bisect] CastleViewUI Start: after RequestBackgroundArt");
 
         // Auto-open the NPC card grid so characters are visible immediately.
-        // On WebGL we defer the NPC card population by one frame via a
-        // coroutine — the procedural card spawn + TMP label creation during
-        // the first Start() tick intermittently races the Canvas layout
-        // rebuild and trips a wasm "null function" crash. Yielding a frame
-        // lets the CastleViewPanel finish its initial rebuild first.
         try
         {
             if (_npcListPanel != null)
             {
                 _npcListPanel.SetActive(true);
-#if UNITY_WEBGL && !UNITY_EDITOR
-                StartCoroutine(DeferredPopulateNPCList());
-#else
                 PopulateNPCList();
-#endif
             }
         }
         catch (System.Exception e) { Debug.LogError($"[CastleView] PopulateNPCList: {e.Message}\n{e.StackTrace}"); }
-        Debug.Log("[Crash-Bisect] CastleViewUI Start: after PopulateNPCList");
 
-#if !UNITY_WEBGL || UNITY_EDITOR
         try { ShowWelcomeHint(); }
         catch (System.Exception e) { Debug.LogError($"[CastleView] ShowWelcomeHint: {e.Message}"); }
-#else
-        // WebGL: skip ShowWelcomeHint. Activating the NotificationBanner
-        // + writing a TMP text + starting a HideNotificationAfter coroutine
-        // during the first Castle frame intermittently trips the wasm
-        // null-function crash. The welcome hint is non-critical UX.
-        Debug.Log("[CastleView] Skipping ShowWelcomeHint on WebGL (crash workaround)");
-#endif
-        // Crash-bisect: dump every TMP_Text descendant in this castle panel
-        // with its current text + any non-ASCII codepoints. The wasm crash
-        // fires inside TMP_FontAsset.TryAddCharacterInternal during the
-        // first Canvas rebuild, which means SOME label has a missing glyph.
-        // This log lets us see exactly which one.
-        try
-        {
-            var tmps = GetComponentsInChildren<TMPro.TMP_Text>(true);
-            Debug.Log($"[Crash-Bisect] Castle TMP labels: {tmps.Length}");
-            for (int i = 0; i < tmps.Length; i++)
-            {
-                var t = tmps[i];
-                var txt = t.text ?? "";
-                int firstNonAscii = -1; int firstCp = 0;
-                for (int j = 0; j < txt.Length; j++)
-                    if (txt[j] >= 128) { firstNonAscii = j; firstCp = txt[j]; break; }
-                if (firstNonAscii >= 0)
-                    Debug.Log($"[Crash-Bisect] TMP[{i}] {t.name} NON-ASCII at {firstNonAscii} (U+{firstCp:X4}): \"{txt}\"");
-                else
-                    Debug.Log($"[Crash-Bisect] TMP[{i}] {t.name} ascii: \"{txt}\"");
-            }
-        }
-        catch (System.Exception e) { Debug.LogError($"[Crash-Bisect] TMP dump failed: {e.Message}"); }
-
-        Debug.Log("[Crash-Bisect] CastleViewUI Start: COMPLETE");
     }
 
     private void ShowWelcomeHint()
@@ -159,7 +102,22 @@ public class CastleViewUI : MonoBehaviour
     /// </summary>
     private void RequestBackgroundArt()
     {
-        if (_backgroundArt == null || GeminiImageClient.Instance == null) return;
+        if (_backgroundArt == null) return;
+
+        // First try the offline-baked SDXL Turbo asset (zero API cost).
+        // tools/image_gen/generate.py builds bg_castle_courtyard.png into
+        // Resources/Art/Generated/.
+        var local = LocalArtBank.GetCastleBackground();
+        if (local != null)
+        {
+            _backgroundArt.sprite = local;
+            _backgroundArt.color  = new Color(1f, 1f, 1f, 0.85f);
+            _backgroundArt.preserveAspect = false;
+            return;
+        }
+
+        // Fallback: live Gemini generation (only used if the bake is missing).
+        if (GeminiImageClient.Instance == null) return;
 
         const string prompt =
             "Medieval fantasy castle courtyard at golden hour, painterly oil-painting style, " +
@@ -306,21 +264,6 @@ public class CastleViewUI : MonoBehaviour
         bool show = !_npcListPanel.activeSelf;
         _npcListPanel.SetActive(show);
         if (show) PopulateNPCList();
-    }
-
-    private System.Collections.IEnumerator DeferredPopulateNPCList()
-    {
-        // Let the Canvas finish its first layout pass before we start
-        // spawning the NPC cards procedurally. Two yields = two frames of
-        // breathing room, which has empirically been enough to avoid the
-        // wasm "null function" crash that fires on the first render when
-        // the panel, tutorial overlay, and NPC cards all try to rebuild
-        // their geometry in the same tick.
-        yield return null;
-        yield return null;
-        Debug.Log("[Crash-Bisect] DeferredPopulateNPCList: running");
-        try { PopulateNPCList(); }
-        catch (System.Exception e) { Debug.LogError($"[CastleView] DeferredPopulateNPCList: {e.Message}"); }
     }
 
     private void PopulateNPCList()

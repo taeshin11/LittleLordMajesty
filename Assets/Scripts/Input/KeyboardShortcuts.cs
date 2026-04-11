@@ -27,10 +27,8 @@ public class KeyboardShortcuts : MonoBehaviour
         return _cachedInteractionUI;
     }
 
-    private static int _bisectUpdateCount = 0;
     private void Update()
     {
-        if (_bisectUpdateCount < 6) { _bisectUpdateCount++; Debug.Log($"[Crash-Bisect] KeyboardShortcuts.Update #{_bisectUpdateCount}"); }
         if (GameManager.Instance == null) return;
         var state = GameManager.Instance.CurrentState;
 

@@ -47,10 +47,8 @@ public class InputHandler : MonoBehaviour
         _mainCam = Camera.main;
     }
 
-    private static int _bisectUpdateCount = 0;
     private void Update()
     {
-        if (_bisectUpdateCount < 6) { _bisectUpdateCount++; Debug.Log($"[Crash-Bisect] InputHandler.Update #{_bisectUpdateCount}"); }
         HandleEscapeKey();
 
         if (Application.isMobilePlatform || Application.isEditor)

@@ -62,52 +62,18 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         // DayCycle starts only when entering Castle/WorldMap, not during MainMenu
-
-        // Crash-bisect: hook Canvas rebuild phases so we know whether the
-        // frame-0 wasm crash fires before, during, or after UI render.
-        Canvas.willRenderCanvases += OnWillRenderCanvases_Bisect;
-    }
-
-    private int _willRenderLogsRemaining = 4;
-    private void OnWillRenderCanvases_Bisect()
-    {
-        if (_willRenderLogsRemaining > 0)
-        {
-            _willRenderLogsRemaining--;
-            Debug.Log($"[Crash-Bisect] willRenderCanvases fired (remaining={_willRenderLogsRemaining})");
-        }
     }
 
     private void OnDestroy()
     {
-        Canvas.willRenderCanvases -= OnWillRenderCanvases_Bisect;
         if (_dayCycleCoroutine != null)
             StopCoroutine(_dayCycleCoroutine);
     }
 
-    // Crash-bisect: count frames after first entering Castle so the log tells us
-    // exactly which frame the null-function crash fires on. We also tag the
-    // "about to run PlayTimeSeconds++" line so stack order is unambiguous.
-    private int _framesSinceCastleEntry = -1;
-
     private void Update()
     {
-        if (_currentState == GameState.Castle && _framesSinceCastleEntry < 8)
-        {
-            _framesSinceCastleEntry++;
-            Debug.Log($"[Crash-Bisect] Castle frame #{_framesSinceCastleEntry} Update");
-        }
         if (_currentState != GameState.Paused && _currentState != GameState.MainMenu)
             PlayTimeSeconds += Time.deltaTime;
-    }
-
-    private void LateUpdate()
-    {
-        if (_currentState == GameState.Castle && _framesSinceCastleEntry < 8)
-        {
-            Debug.Log($"[Crash-Bisect] Castle frame #{_framesSinceCastleEntry} LateUpdate ENTER");
-            Debug.Log($"[Crash-Bisect] Castle frame #{_framesSinceCastleEntry} LateUpdate EXIT");
-        }
     }
 
 #if !UNITY_EDITOR
@@ -236,50 +202,21 @@ public class GameManager : MonoBehaviour
 
     public void NewGame(string playerName)
     {
-        // Verbose diagnostic logging during the NewGame flow — every step is
-        // a candidate for the wasm "null function" runtime crash, so we tag
-        // each one and the Playwright console-log scraper can pinpoint which
-        // step was the LAST to log before the crash.
-        Debug.Log("[NewGame] STEP 1: setting fields");
         PlayerName = playerName;
         Day = 1;
         Year = 1;
         PlayTimeSeconds = 0f;
         LordTitle = "Little Lord";
+        ResourceManager?.ResetToDefault();
+        NPCManager?.InitializeStartingNPCs();
+        EventManager?.ClearActiveEvents();
+        SetGameState(GameState.Castle);
 
-        Debug.Log("[NewGame] STEP 2: ResourceManager.ResetToDefault");
-        try { ResourceManager?.ResetToDefault(); }
-        catch (System.Exception e) { Debug.LogError($"[NewGame] ResetToDefault: {e}"); }
-
-        Debug.Log("[NewGame] STEP 3: NPCManager.InitializeStartingNPCs");
-        try { NPCManager?.InitializeStartingNPCs(); }
-        catch (System.Exception e) { Debug.LogError($"[NewGame] InitializeStartingNPCs: {e}"); }
-
-        Debug.Log("[NewGame] STEP 4: EventManager.ClearActiveEvents");
-        try { EventManager?.ClearActiveEvents(); }
-        catch (System.Exception e) { Debug.LogError($"[NewGame] ClearActiveEvents: {e}"); }
-
-        Debug.Log("[NewGame] STEP 5: SetGameState(Castle)");
-        try { SetGameState(GameState.Castle); }
-        catch (System.Exception e) { Debug.LogError($"[NewGame] SetGameState: {e}"); }
-
-        Debug.Log("[NewGame] STEP 6: Tutorial reset+start");
-#if !UNITY_WEBGL || UNITY_EDITOR
+        // Reset and start tutorial for new games
         if (TutorialSystem.Instance != null)
         {
-            try { TutorialSystem.Instance.ResetTutorial(); }
-            catch (System.Exception e) { Debug.LogError($"[NewGame] ResetTutorial: {e}"); }
-            try { TutorialSystem.Instance.StartTutorial(); }
-            catch (System.Exception e) { Debug.LogError($"[NewGame] StartTutorial: {e}"); }
+            TutorialSystem.Instance.ResetTutorial();
+            TutorialSystem.Instance.StartTutorial();
         }
-#else
-        // WebGL: skip tutorial. Activating the TutorialOverlay (which has
-        // Outline on its dialogue box + many child TMP labels) intermittently
-        // trips the IL2CPP wasm "null function" crash on the first render.
-        // The tutorial is a nice-to-have; the core gameplay works fine
-        // without it on WebGL. Re-enable when the root cause is isolated.
-        Debug.Log("[GameManager] Skipping Tutorial on WebGL (wasm crash workaround)");
-#endif
-        Debug.Log("[NewGame] STEP 7: NewGame() complete");
     }
 }
