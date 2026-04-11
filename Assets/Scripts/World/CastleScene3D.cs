@@ -156,8 +156,16 @@ public class CastleScene3D : MonoBehaviour
         // purely decorative and its primitive-creation path has had repeated
         // wasm crashes across multiple Unity module stripping paths. Defer
         // the 3D world to native/desktop builds where it's stable.
+        //
+        // CRITICAL: also disable THIS component so LateUpdate/Update do not
+        // fire. The camera-pan path touches _mainCamera.transform every frame
+        // and — in combination with CreatePrimitive-stripped colliders / a
+        // null Camera.main — produces the "RuntimeError: null function" crash
+        // on the first post-NewGame tick. Disabling the component is the
+        // cleanest kill-switch while the 3D path is WebGL-unsafe.
 #if UNITY_WEBGL && !UNITY_EDITOR
         Debug.Log("[CastleScene3D] Skipping 3D scene construction on WebGL (2D UI handles gameplay)");
+        enabled = false;
         return;
 #else
         try { SetupTerrain(); }
@@ -206,7 +214,13 @@ public class CastleScene3D : MonoBehaviour
 
     private void LateUpdate()
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        // Belt-and-suspenders: even if `enabled = false` in Start didn't take
+        // effect (e.g. Unity re-enabled), never touch the camera on WebGL.
+        return;
+#else
         UpdateCameraPosition();
+#endif
     }
 
     // ─────────────────────────────────────────────────────────────
