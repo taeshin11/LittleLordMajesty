@@ -446,45 +446,29 @@ public class RoamingBootstrap : MonoBehaviour
         System.Random rng = new System.Random(42);
 
         // Tree tile indices to choose from
-        // ONLY bright round trees: 5, 19 (round), 16 (bush)
-        // AVOID: 4 (spiky pine), 6 (dark half), 17 (Y-shape), 7/8 (pine halves)
-        int[] treeTiles = { 5, 5, 19, 19, 16 };
+        // ONLY tile 5 — the one confirmed bright round green tree
+        int[] treeTiles = { 5 };
 
-        // --- North edge (y=13..14) — thin tree line, not forest ---
-        for (int x = 0; x < GridW; x++)
+        // Sparse tree border — every other tile, edges only
+        for (int x = 0; x < GridW; x += 2)
+            PlaceSortedTile(5, x, 14, parent, 0, $"TreeN_{x}");
+
+        for (int x = 0; x < GridW; x += 2)
         {
-            if (rng.NextDouble() < 0.5)
-                PlaceSortedTile(treeTiles[rng.Next(treeTiles.Length)], x, 14, parent, 0, $"TreeN_{x}");
+            if (x >= 9 && x <= 11) continue; // gate gap
+            PlaceSortedTile(5, x, 0, parent, 0, $"TreeS_{x}");
         }
 
-        // --- South edge (y=0..1), gap at x=9..11 for path ---
-        for (int x = 0; x < GridW; x++)
-        {
-            if (x >= 9 && x <= 11) continue;
-            if (rng.NextDouble() < 0.45)
-                PlaceSortedTile(treeTiles[rng.Next(treeTiles.Length)], x, 0, parent, 0, $"TreeS_{x}");
-        }
+        for (int y = 2; y <= 13; y += 2)
+            PlaceSortedTile(5, 0, y, parent, 0, $"TreeW_{y}");
 
-        // --- West edge (x=0, y=3..12) — single column ---
-        for (int y = 3; y <= 12; y++)
-        {
-            if (rng.NextDouble() < 0.4)
-                PlaceSortedTile(treeTiles[rng.Next(treeTiles.Length)], 0, y, parent, 0, $"TreeW_{y}");
-        }
+        for (int y = 2; y <= 13; y += 2)
+            PlaceSortedTile(5, 19, y, parent, 0, $"TreeE_{y}");
 
-        // --- East edge (x=19, y=3..12) — single column ---
-        for (int y = 3; y <= 12; y++)
-        {
-            if (rng.NextDouble() < 0.4)
-                PlaceSortedTile(treeTiles[rng.Next(treeTiles.Length)], 19, y, parent, 0, $"TreeE_{y}");
-        }
-
-        // --- A few interior decorations (not too many) ---
-        PlaceSortedTile(5, 3, 10, parent, 0, "IntTree1");   // round tree
-        PlaceSortedTile(19, 16, 5, parent, 0, "IntTree2");  // round tree
-        PlaceSortedTile(16, 4, 4, parent, 0, "IntBush1");   // bush
-        PlaceSortedTile(16, 15, 8, parent, 0, "IntBush2");  // bush
-        PlaceSortedTile(28, 7, 5, parent, 0, "IntBush3");   // small bush
+        // --- A few interior decorations (tile 5 only) ---
+        PlaceSortedTile(5, 3, 10, parent, 0, "IntTree1");
+        PlaceSortedTile(5, 16, 5, parent, 0, "IntTree2");
+        PlaceSortedTile(5, 17, 10, parent, 0, "IntTree3");
     }
 
     // ---------------------------------------------------------------
