@@ -112,3 +112,4 @@ tools/playwright_test/screenshots/
 
 # SDXL seed-variant review dumps (not part of the game build)
 /tools/image_gen/variants/
+*.zip

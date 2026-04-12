@@ -1,0 +1,225 @@
+using UnityEngine;
+using System;
+using System.Collections;
+
+/// <summary>
+/// Central game manager - singleton that persists across scenes.
+/// Coordinates all major systems and manages game state.
+/// </summary>
+public class GameManager : MonoBehaviour
+{
+    public static GameManager Instance { get; private set; }
+
+    public enum GameState
+    {
+        MainMenu,
+        Loading,
+        Castle,       // Internal affairs view
+        WorldMap,     // Territory conquest view
+        Battle,       // Active siege/defense
+        Dialogue,     // NPC interaction
+        Event,        // Crisis/unexpected event
+        Paused,
+        GameOver,
+        Victory
+    }
+
+    [Header("Game State")]
+    [SerializeField] private GameState _currentState = GameState.MainMenu;
+    public GameState CurrentState => _currentState;
+    private GameState _prepauseState = GameState.Castle; // Restored on unpause
+    private Coroutine _dayCycleCoroutine;
+
+    [Header("Player Progress")]
+    public string LordTitle = "Little Lord";
+    public string PlayerName = "Stranger";
+    public int Day = 1;
+    public int Year = 1;
+    public float PlayTimeSeconds = 0f;
+
+    [Header("Systems")]
+    public ResourceManager ResourceManager;
+    public NPCManager NPCManager;
+    public EventManager EventManager;
+    public WorldMapManager WorldMapManager;
+
+    public event Action<GameState, GameState> OnGameStateChanged;
+    public event Action<int> OnDayChanged;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        InitializeSystems();
+    }
+
+    private void Start()
+    {
+        // DayCycle starts only when entering Castle/WorldMap, not during MainMenu
+    }
+
+    private void OnDestroy()
+    {
+        if (_dayCycleCoroutine != null)
+            StopCoroutine(_dayCycleCoroutine);
+    }
+
+    private void Update()
+    {
+        if (_currentState != GameState.Paused && _currentState != GameState.MainMenu)
+            PlayTimeSeconds += Time.deltaTime;
+    }
+
+#if UNITY_EDITOR
+    // Editor-only debug overlay — originally added to diagnose the M13 WebGL
+    // black-screen wasm crash. That's fixed, so the overlay no longer leaks
+    // into deployed builds (aesthetic root cause #4 in the Zelda EoW pivot
+    // notes). Kept available in the Editor for future debugging.
+    // GUIStyle is lazily cached (GUI.skin is not safe to touch before first OnGUI),
+    // and the Canvas reference is cached to avoid per-frame FindObjectOfType allocations.
+    private static GUIStyle _debugStyle;
+    private Canvas _cachedCanvas;
+    private float _nextCanvasRefresh;
+
+    private void OnGUI()
+    {
+        if (_debugStyle == null)
+        {
+            _debugStyle = new GUIStyle(GUI.skin.label) { fontSize = 18 };
+            _debugStyle.normal.textColor = Color.yellow;
+        }
+        if (_cachedCanvas == null && Time.unscaledTime >= _nextCanvasRefresh)
+        {
+            _cachedCanvas = FindFirstObjectByType<Canvas>();
+            _nextCanvasRefresh = Time.unscaledTime + 1f;
+        }
+        float y = 10;
+        GUI.Label(new Rect(10, y, 800, 30), "State: " + _currentState, _debugStyle); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), "UIManager: " + (UIManager.Instance != null ? "OK" : "NULL"), _debugStyle); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), "Scene: " + UnityEngine.SceneManagement.SceneManager.GetActiveScene().name, _debugStyle); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), "Cameras: " + Camera.allCamerasCount, _debugStyle); y += 25;
+        GUI.Label(new Rect(10, y, 800, 30), _cachedCanvas != null ? "Canvas: " + _cachedCanvas.name + " " + _cachedCanvas.renderMode : "Canvas: NULL", _debugStyle);
+    }
+#endif
+
+    private void InitializeSystems()
+    {
+        // Systems auto-find or create themselves
+        if (ResourceManager == null)
+            ResourceManager = gameObject.AddComponent<ResourceManager>();
+        if (NPCManager == null)
+            NPCManager = gameObject.AddComponent<NPCManager>();
+        if (EventManager == null)
+            EventManager = gameObject.AddComponent<EventManager>();
+        if (WorldMapManager == null)
+            WorldMapManager = gameObject.AddComponent<WorldMapManager>();
+    }
+
+    public void SetGameState(GameState newState)
+    {
+        GameState oldState = _currentState;
+        _currentState = newState;
+        OnGameStateChanged?.Invoke(oldState, newState);
+
+        // Start/stop day cycle based on gameplay state
+        bool needsDayCycle = newState == GameState.Castle || newState == GameState.WorldMap
+                          || newState == GameState.Dialogue || newState == GameState.Event;
+        if (needsDayCycle && _dayCycleCoroutine == null)
+            _dayCycleCoroutine = StartCoroutine(DayCycleCoroutine());
+        else if (!needsDayCycle && _dayCycleCoroutine != null)
+        {
+            StopCoroutine(_dayCycleCoroutine);
+            _dayCycleCoroutine = null;
+        }
+
+        Debug.Log($"[GameManager] State: {oldState} -> {newState}");
+    }
+
+    public void TogglePause()
+    {
+        if (_currentState == GameState.Paused)
+        {
+            SetGameState(_prepauseState);
+            Time.timeScale = 1f;
+        }
+        else
+        {
+            _prepauseState = _currentState;
+            SetGameState(GameState.Paused);
+            Time.timeScale = 0f;
+        }
+    }
+
+    private IEnumerator DayCycleCoroutine()
+    {
+        float dayDuration = 300f; // 5 real minutes = 1 in-game day
+        while (this != null && enabled)
+        {
+            yield return new WaitForSeconds(dayDuration);
+            if (this == null || !enabled) yield break;
+            AdvanceDay();
+        }
+    }
+
+    public void AdvanceDay()
+    {
+        Day++;
+        if (Day > 365)
+        {
+            Day = 1;
+            Year++;
+        }
+        OnDayChanged?.Invoke(Day);
+        EventManager?.CheckDailyEvents(Day, Year);
+        ResourceManager?.ProcessDailyProduction();
+        SteamManager.OnDayReached(Day);
+        if (ResourceManager != null) SteamManager.OnGoldReached(ResourceManager.Gold);
+        Debug.Log($"[GameManager] Day {Day}, Year {Year}");
+    }
+
+    /// <summary>Updates the lord title based on territory count.</summary>
+    public void UpdateLordTitle(int territoryCount)
+    {
+        if (territoryCount >= 10) LordTitle = "Majesty";
+        else if (territoryCount >= 7) LordTitle = "High Lord";
+        else if (territoryCount >= 5) LordTitle = "Lord";
+        else if (territoryCount >= 3) LordTitle = "Baron";
+        else LordTitle = "Little Lord";
+    }
+
+    public string GetFormattedDate()
+    {
+        return LocalizationManager.Instance != null
+            ? LocalizationManager.Instance.GetFormattedDate(Day, Year)
+            : $"Year {Year}, Day {Day}";
+    }
+
+    public void SaveGame() => SaveSystem.Save();
+    public void LoadGame() => SaveSystem.Load();
+
+    public void NewGame(string playerName)
+    {
+        PlayerName = playerName;
+        Day = 1;
+        Year = 1;
+        PlayTimeSeconds = 0f;
+        LordTitle = "Little Lord";
+        ResourceManager?.ResetToDefault();
+        NPCManager?.InitializeStartingNPCs();
+        EventManager?.ClearActiveEvents();
+        SetGameState(GameState.Castle);
+
+        // Reset and start tutorial for new games
+        if (TutorialSystem.Instance != null)
+        {
+            TutorialSystem.Instance.ResetTutorial();
+            TutorialSystem.Instance.StartTutorial();
+        }
+    }
+}

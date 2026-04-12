@@ -1,0 +1,68 @@
+{
+  "app_name": "Kleiner Lord Majestät",
+  "app_tagline": "KI-gesteuerte Königreich-Simulation",
+  "menu_subtitle": "Beherrsche das Reich mit einem einzigen Wort.",
+  "build_info": "WebGL Alpha-Build",
+  "name_default_player": "Lord",
+
+  "btn_new_game": "Neues Spiel",
+  "btn_continue": "Fortfahren",
+  "btn_settings": "Einstellungen",
+  "btn_quit": "Beenden",
+  "btn_tutorial_start": "Start!",
+  "btn_tutorial_next": "Weiter",
+  "btn_tutorial_skip": "Überspringen",
+  "btn_start": "Starten",
+  "btn_cancel": "Abbrechen",
+  "btn_close": "Schließen",
+
+  "hud_wood": "Holz",
+  "hud_food": "Nahrung",
+  "hud_gold": "Gold",
+  "hud_population": "Bevölkerung",
+
+  "npc_idle": "Untätig",
+  "npc_no_response": "Ich... kann jetzt nicht antworten, mein Herr.",
+  "npc_input_placeholder": "Befehl eingeben...",
+
+  "event_orc_raid_title": "Ork-Überfall!",
+  "event_conflict_title": "Konflikt",
+  "event_famine_title": "Nahrungsmangel!",
+  "event_fire_title": "Feuer!",
+
+  "territory_yours": "Ihr Gebiet",
+  "territory_neutral": "Neutral",
+  "battle_victory": "SIEG!",
+  "battle_defeat": "NIEDERLAGE...",
+
+  "title_little_lord": "Kleiner Lord",
+  "title_baron": "Baron",
+  "title_lord": "Lord",
+  "title_high_lord": "Hochlord",
+  "title_majesty": "Majestät",
+
+  "yes": "Ja",
+  "no": "Nein",
+
+  "tutorial_welcome_title": "Willkommen, junger Lord!",
+  "tutorial_welcome_desc": "Ihr habt ein kleines Gebiet geerbt. Euer Volk erwartet Eure Führung. Lasst mich Euch die Grundlagen der Herrschaft zeigen.",
+  "tutorial_complete_title": "Ihr seid bereit!",
+  "tutorial_complete_desc": "Ihr kennt nun die Grundlagen. Herrscht weise, Kleiner Lord.",
+
+  "btn_build": "Bauen",
+  "btn_save": "Speichern",
+  "btn_npcs": "Vasallen",
+  "btn_map": "Karte",
+  "btn_options": "Optionen",
+  "btn_pause": "Pause",
+  "btn_send": "Senden",
+  "btn_back_to_castle": "Zur Burg",
+  "btn_respond": "Antworten",
+  "btn_talk": "Sprechen",
+  "hud_loyalty": "Treue",
+  "hud_loading": "Lade...",
+  "hud_thinking": "Denke nach...",
+  "hud_voice": "Stimme",
+  "castle_objective_hint": "Willkommen auf Eurer Burg. Tippt unten auf eine Vasallenkarte, um zu beginnen.",
+  "welcome_hint": "Willkommen auf Eurer Burg! Tippt auf eine Vasallenkarte, um Befehle zu erteilen, oder nutzt Bauen, um Gebäude zu errichten."
+}

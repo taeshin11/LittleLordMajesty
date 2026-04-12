@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Preserve TMP + UI + Input System assemblies from IL2CPP stripping on WebGL.
+  Without this, WebGL builds at managedStrippingLevel>=Low can trim virtual
+  methods that TMP's dynamic font fallback path invokes indirectly, producing
+  "RuntimeError: null function" when a glyph is not found in the primary atlas.
+  (We also purge non-ASCII glyphs from runtime strings; this is belt+suspenders.)
+-->
+<linker>
+  <assembly fullname="Unity.TextMeshPro" preserve="all"/>
+  <assembly fullname="UnityEngine.UI" preserve="all"/>
+  <assembly fullname="UnityEngine.UIModule" preserve="all"/>
+  <assembly fullname="Unity.InputSystem" preserve="all"/>
+  <assembly fullname="UnityEngine.IMGUIModule" preserve="all"/>
+</linker>
