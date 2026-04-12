@@ -268,6 +268,8 @@ public class RoamingBootstrap : MonoBehaviour
         ground.transform.position = Vector3.zero;
         ground.transform.localScale = new Vector3(10f, 1f, 10f); // 100x100 units — fills entire camera view
         ApplyColor(ground, new Color(0.30f, 0.55f, 0.20f)); // Grass green
+        // Floor collider so CharacterController doesn't fall through
+        ground.AddComponent<MeshCollider>();
 
         // Try to add Kenney ground_grass tiles for detail in the courtyard
         var grassTile = LoadModel("Nature/ground_grass", null, "CourtyardGrass");

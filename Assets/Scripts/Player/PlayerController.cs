@@ -97,7 +97,13 @@ public class PlayerController : MonoBehaviour
         Vector3 moveDir = new Vector3(input.x, 0f, input.y).normalized;
         Vector3 motion = moveDir * (_walkSpeed * Time.deltaTime);
         if (_cc != null)
-            _cc.Move(motion + Vector3.down * 9.8f * Time.deltaTime); // gravity
+        {
+            // Keep Y locked to ground (no gravity needed on flat terrain)
+            _cc.Move(motion);
+            var pos = transform.position;
+            pos.y = 0f;
+            transform.position = pos;
+        }
         else
             transform.position += motion;
 
