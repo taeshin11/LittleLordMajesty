@@ -47,7 +47,7 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
         }
 
         // Background circle — try Kenney mobile control sprite first.
-        float bgSize = 260f;
+        float bgSize = 160f;
         var bgGO = new GameObject("JoystickBG");
         bgGO.transform.SetParent(canvasGO.transform, false);
         var bgImg = bgGO.AddComponent<Image>();
@@ -55,21 +55,21 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
         if (bgSprite != null)
         {
             bgImg.sprite = bgSprite;
-            bgImg.color = new Color(1f, 1f, 1f, 0.5f);
+            bgImg.color = new Color(1f, 1f, 1f, 0.15f);
         }
         else
         {
-            bgImg.color = new Color(1f, 1f, 1f, 0.25f);
+            bgImg.color = new Color(1f, 1f, 1f, 0.15f);
         }
         var bgRT = bgGO.GetComponent<RectTransform>();
         bgRT.anchorMin = new Vector2(0f, 0f);
         bgRT.anchorMax = new Vector2(0f, 0f);
         bgRT.pivot = new Vector2(0.5f, 0.5f);
-        bgRT.anchoredPosition = new Vector2(180f, 260f);
+        bgRT.anchoredPosition = new Vector2(100f, 100f);
         bgRT.sizeDelta = new Vector2(bgSize, bgSize);
 
         // Knob — try Kenney mobile control sprite first.
-        float knobSize = 100f;
+        float knobSize = 60f;
         var knobGO = new GameObject("JoystickKnob");
         knobGO.transform.SetParent(bgGO.transform, false);
         var knobImg = knobGO.AddComponent<Image>();
@@ -77,11 +77,11 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
         if (knobSprite != null)
         {
             knobImg.sprite = knobSprite;
-            knobImg.color = new Color(1f, 1f, 1f, 0.8f);
+            knobImg.color = new Color(1f, 1f, 1f, 0.4f);
         }
         else
         {
-            knobImg.color = new Color(1f, 1f, 1f, 0.6f);
+            knobImg.color = new Color(1f, 1f, 1f, 0.4f);
         }
         var knobRT = knobGO.GetComponent<RectTransform>();
         knobRT.anchorMin = new Vector2(0.5f, 0.5f);

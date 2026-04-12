@@ -308,26 +308,36 @@ public class RoamingBootstrap : MonoBehaviour
         // Scale down entire character for miniature/cozy feel
         visualRoot.transform.localScale = Vector3.one * 0.65f;
 
-        // Body (capsule) — royal purple
+        // Body (capsule) — royal purple, slightly compact for cute proportions
         var body = CreateVisualPrimitive(PrimitiveType.Capsule, "Body");
         body.transform.SetParent(visualRoot.transform, false);
-        body.transform.localPosition = new Vector3(0f, 0.75f, 0f);
-        body.transform.localScale = new Vector3(0.5f, 0.55f, 0.5f);
-        ApplyColor(body, new Color(0.45f, 0.25f, 0.65f)); // Royal purple
+        body.transform.localPosition = new Vector3(0f, 0.7f, 0f);
+        body.transform.localScale = new Vector3(0.4f, 0.45f, 0.4f);
+        ApplyColor(body, new Color(0.55f, 0.28f, 0.78f)); // Brighter royal purple
 
-        // Head (sphere) — skin tone
+        // Head (sphere) — bigger for chibi/cute proportions
         var head = CreateVisualPrimitive(PrimitiveType.Sphere, "Head");
         head.transform.SetParent(visualRoot.transform, false);
-        head.transform.localPosition = new Vector3(0f, 1.5f, 0f);
-        head.transform.localScale = Vector3.one * 0.4f;
-        ApplyColor(head, new Color(0.85f, 0.72f, 0.58f));
+        head.transform.localPosition = new Vector3(0f, 1.4f, 0f);
+        head.transform.localScale = Vector3.one * 0.5f;
+        ApplyColor(head, new Color(0.90f, 0.76f, 0.62f));
+
+        // Eyes — two tiny black spheres on the front of the head
+        for (int side = -1; side <= 1; side += 2)
+        {
+            var eye = CreateVisualPrimitive(PrimitiveType.Sphere, "Eye");
+            eye.transform.SetParent(visualRoot.transform, false);
+            eye.transform.localPosition = new Vector3(side * 0.1f, 1.43f, 0.2f);
+            eye.transform.localScale = Vector3.one * 0.06f;
+            ApplyColor(eye, new Color(0.08f, 0.06f, 0.06f));
+        }
 
         // Crown (small gold cube on top of head)
         var crown = CreateVisualPrimitive(PrimitiveType.Cube, "Crown");
         crown.transform.SetParent(visualRoot.transform, false);
-        crown.transform.localPosition = new Vector3(0f, 1.78f, 0f);
-        crown.transform.localScale = new Vector3(0.3f, 0.1f, 0.3f);
-        ApplyColor(crown, new Color(0.85f, 0.70f, 0.10f)); // Gold
+        crown.transform.localPosition = new Vector3(0f, 1.72f, 0f);
+        crown.transform.localScale = new Vector3(0.35f, 0.12f, 0.35f);
+        ApplyColor(crown, new Color(0.95f, 0.78f, 0.12f)); // Brighter gold
 
         var ctrl = _player.AddComponent<PlayerController>();
         ctrl.ConfigureAtRuntime(_playerWalkSpeed, visualRoot.transform);
@@ -370,38 +380,70 @@ public class RoamingBootstrap : MonoBehaviour
         // Use 3D world positions directly (XZ ground plane)
         root.transform.position = new Vector3(npc.WorldPosition.x, 0f, npc.WorldPosition.z);
 
-        // Determine colors based on profession
+        // Determine colors based on profession — more saturated for visibility
         Color bodyColor = npc.Profession switch
         {
-            NPCPersona.NPCProfession.Soldier  => new Color(0.55f, 0.25f, 0.15f), // Red-brown armor
-            NPCPersona.NPCProfession.Farmer   => new Color(0.35f, 0.60f, 0.25f), // Green tunic
-            NPCPersona.NPCProfession.Merchant => new Color(0.70f, 0.55f, 0.10f), // Gold/yellow
-            NPCPersona.NPCProfession.Vassal   => new Color(0.45f, 0.30f, 0.65f), // Purple
-            NPCPersona.NPCProfession.Scholar  => new Color(0.25f, 0.45f, 0.70f), // Blue robes
-            NPCPersona.NPCProfession.Priest   => new Color(0.85f, 0.85f, 0.80f), // White robes
-            NPCPersona.NPCProfession.Spy      => new Color(0.15f, 0.15f, 0.20f), // Dark cloak
+            NPCPersona.NPCProfession.Soldier  => new Color(0.75f, 0.22f, 0.18f), // Bright red armor
+            NPCPersona.NPCProfession.Farmer   => new Color(0.30f, 0.72f, 0.25f), // Vivid green tunic
+            NPCPersona.NPCProfession.Merchant => new Color(0.85f, 0.65f, 0.10f), // Rich gold/yellow
+            NPCPersona.NPCProfession.Vassal   => new Color(0.55f, 0.30f, 0.80f), // Bright purple
+            NPCPersona.NPCProfession.Scholar  => new Color(0.25f, 0.50f, 0.85f), // Bright blue robes
+            NPCPersona.NPCProfession.Priest   => new Color(0.95f, 0.93f, 0.88f), // Bright white robes
+            NPCPersona.NPCProfession.Spy      => new Color(0.18f, 0.18f, 0.25f), // Dark cloak
             _                                  => new Color(0.5f, 0.5f, 0.5f),
         };
-        Color skinColor = new Color(0.85f, 0.72f, 0.58f);
+        // Vary skin tones slightly per NPC for visual differentiation
+        int nameHash = npc.Name?.GetHashCode() ?? 0;
+        float skinVar = (Mathf.Abs(nameHash) % 20) * 0.01f; // 0..0.19
+        Color skinColor = new Color(0.85f + skinVar * 0.3f, 0.70f + skinVar, 0.55f + skinVar * 0.5f);
+
+        // Profession-specific body proportions
+        Vector3 bodyScale = npc.Profession switch
+        {
+            NPCPersona.NPCProfession.Soldier  => new Vector3(0.50f, 0.48f, 0.50f), // Wider, stocky
+            NPCPersona.NPCProfession.Merchant => new Vector3(0.38f, 0.55f, 0.38f), // Taller, thinner
+            NPCPersona.NPCProfession.Farmer   => new Vector3(0.42f, 0.42f, 0.42f), // Shorter, compact
+            NPCPersona.NPCProfession.Priest   => new Vector3(0.44f, 0.52f, 0.44f), // Tall, flowing robes
+            NPCPersona.NPCProfession.Scholar  => new Vector3(0.36f, 0.50f, 0.36f), // Thin, tall
+            NPCPersona.NPCProfession.Spy      => new Vector3(0.38f, 0.50f, 0.38f), // Lean
+            _                                  => new Vector3(0.40f, 0.48f, 0.40f),
+        };
+        float bodyY = npc.Profession switch
+        {
+            NPCPersona.NPCProfession.Farmer => 0.65f,  // Shorter
+            NPCPersona.NPCProfession.Merchant => 0.80f, // Taller
+            _ => 0.72f,
+        };
 
         // Visual root for walk bob — miniature scale for cozy feel
         var visualRoot = new GameObject("Visual");
         visualRoot.transform.SetParent(root.transform, false);
         visualRoot.transform.localScale = Vector3.one * 0.65f;
 
-        // Body (capsule)
+        // Body (capsule) — profession-specific proportions
         var body = CreateVisualPrimitive(PrimitiveType.Capsule, "Body");
         body.transform.SetParent(visualRoot.transform, false);
-        body.transform.localPosition = new Vector3(0f, 0.75f, 0f);
-        body.transform.localScale = new Vector3(0.45f, 0.50f, 0.45f);
+        body.transform.localPosition = new Vector3(0f, bodyY, 0f);
+        body.transform.localScale = bodyScale;
         ApplyColor(body, bodyColor);
 
-        // Head (sphere)
+        // Head (sphere) — bigger for cute chibi look
+        float headY = bodyY + 0.68f;
         var head = CreateVisualPrimitive(PrimitiveType.Sphere, "Head");
         head.transform.SetParent(visualRoot.transform, false);
-        head.transform.localPosition = new Vector3(0f, 1.4f, 0f);
-        head.transform.localScale = Vector3.one * 0.35f;
+        head.transform.localPosition = new Vector3(0f, headY, 0f);
+        head.transform.localScale = Vector3.one * 0.48f;
         ApplyColor(head, skinColor);
+
+        // Eyes — two tiny black spheres on the front of the head
+        for (int side = -1; side <= 1; side += 2)
+        {
+            var eye = CreateVisualPrimitive(PrimitiveType.Sphere, "Eye");
+            eye.transform.SetParent(visualRoot.transform, false);
+            eye.transform.localPosition = new Vector3(side * 0.09f, headY + 0.02f, 0.19f);
+            eye.transform.localScale = Vector3.one * 0.055f;
+            ApplyColor(eye, new Color(0.08f, 0.06f, 0.06f));
+        }
 
         // Profession accessory
         SpawnProfessionAccessory(visualRoot.transform, npc.Profession);
@@ -492,16 +534,39 @@ public class RoamingBootstrap : MonoBehaviour
         canvas.sortingOrder = 50;
 
         var rt = canvas.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(200f, 40f);
+        rt.sizeDelta = new Vector2(280f, 50f);
         rt.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+
+        // Semi-transparent background panel for readability
+        var bgGO = new GameObject("PromptBG");
+        bgGO.transform.SetParent(promptGO.transform, false);
+        var bgImg = bgGO.AddComponent<UnityEngine.UI.Image>();
+        bgImg.color = new Color(0.05f, 0.05f, 0.12f, 0.75f);
+        var bgRT = bgGO.GetComponent<RectTransform>();
+        bgRT.anchorMin = Vector2.zero;
+        bgRT.anchorMax = Vector2.one;
+        bgRT.offsetMin = new Vector2(-10f, -4f);
+        bgRT.offsetMax = new Vector2(10f, 4f);
+
+        // Subtle border accent at bottom
+        var borderGO = new GameObject("PromptBorder");
+        borderGO.transform.SetParent(bgGO.transform, false);
+        var borderImg = borderGO.AddComponent<UnityEngine.UI.Image>();
+        borderImg.color = new Color(0.35f, 0.65f, 0.95f, 0.8f);
+        var borderRT = borderGO.GetComponent<RectTransform>();
+        borderRT.anchorMin = new Vector2(0f, 0f);
+        borderRT.anchorMax = new Vector2(1f, 0f);
+        borderRT.pivot = new Vector2(0.5f, 0f);
+        borderRT.anchoredPosition = Vector2.zero;
+        borderRT.sizeDelta = new Vector2(0f, 2f);
 
         var labelGO = new GameObject("Label");
         labelGO.transform.SetParent(promptGO.transform, false);
         var tmp = labelGO.AddComponent<TextMeshProUGUI>();
         tmp.text = $"E   Talk to {npcName}";
-        tmp.fontSize = 24;
+        tmp.fontSize = 28;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = Color.white;
+        tmp.color = new Color(0.95f, 0.95f, 1f);
         tmp.richText = false;
         tmp.enableWordWrapping = false;
         var lblRT = tmp.rectTransform;
@@ -511,8 +576,8 @@ public class RoamingBootstrap : MonoBehaviour
         lblRT.offsetMax = Vector2.zero;
 
         var outline = labelGO.AddComponent<UnityEngine.UI.Outline>();
-        outline.effectColor = Color.black;
-        outline.effectDistance = new Vector2(1f, -1f);
+        outline.effectColor = new Color(0f, 0f, 0f, 0.5f);
+        outline.effectDistance = new Vector2(1.5f, -1.5f);
 
         var prompt = promptGO.AddComponent<InteractPromptUI>();
         prompt.SetupRuntime(canvas, tmp);
@@ -1055,6 +1120,12 @@ public class RoamingBootstrap : MonoBehaviour
 
         System.Random rng = new System.Random(42);
 
+        // Stone paths connecting buildings
+        SpawnStonePaths(envRoot.transform);
+
+        // Courtyard border — raised stone rim around the central area
+        SpawnCourtyardBorder(envRoot.transform);
+
         // Trees around the outer ring (between walls and edge of ground)
         float treeRingSize = 12f;
         for (float x = -treeRingSize; x <= treeRingSize; x += 3f)
@@ -1087,11 +1158,181 @@ public class RoamingBootstrap : MonoBehaviour
         // Bushes, rocks, flowers, and grass scattered inside the castle
         SpawnNatureDetails(envRoot.transform, rng);
 
+        // Additional rock formations for visual interest
+        SpawnRockFormations(envRoot.transform, rng);
+
+        // Extra flower beds between buildings
+        SpawnFlowerBeds(envRoot.transform, rng);
+
         // Well (near center-right) — use fountain model
         SpawnWell(envRoot.transform, new Vector3(2f, 0f, 3f));
 
         // Campfire / gathering area
         SpawnCampfire(envRoot.transform, new Vector3(-1f, 0f, -3f));
+    }
+
+    /// <summary>
+    /// Stone paths connecting key buildings — darker ground tiles for a lived-in feel.
+    /// </summary>
+    private void SpawnStonePaths(Transform parent)
+    {
+        Color pathColor = new Color(0.42f, 0.38f, 0.32f);
+
+        // Path from gate (south) to keep (north-center)
+        var pathGateToKeep = CreateVisualPrimitive(PrimitiveType.Cube, "PathGateToKeep");
+        pathGateToKeep.transform.SetParent(parent, false);
+        pathGateToKeep.transform.localPosition = new Vector3(0f, 0.008f, -3f);
+        pathGateToKeep.transform.localScale = new Vector3(1.8f, 0.01f, 10f);
+        ApplyColor(pathGateToKeep, pathColor);
+
+        // Path from keep to barracks (east)
+        var pathToBarracks = CreateVisualPrimitive(PrimitiveType.Cube, "PathToBarracks");
+        pathToBarracks.transform.SetParent(parent, false);
+        pathToBarracks.transform.localPosition = new Vector3(2.5f, 0.008f, -1f);
+        pathToBarracks.transform.localScale = new Vector3(5f, 0.01f, 1.5f);
+        ApplyColor(pathToBarracks, pathColor);
+
+        // Path from keep to farm (west)
+        var pathToFarm = CreateVisualPrimitive(PrimitiveType.Cube, "PathToFarm");
+        pathToFarm.transform.SetParent(parent, false);
+        pathToFarm.transform.localPosition = new Vector3(-2.5f, 0.008f, 1.5f);
+        pathToFarm.transform.localScale = new Vector3(5f, 0.01f, 1.5f);
+        ApplyColor(pathToFarm, pathColor);
+
+        // Path to market stall (northeast)
+        var pathToMarket = CreateVisualPrimitive(PrimitiveType.Cube, "PathToMarket");
+        pathToMarket.transform.SetParent(parent, false);
+        pathToMarket.transform.localPosition = new Vector3(1f, 0.008f, 3.5f);
+        pathToMarket.transform.localScale = new Vector3(1.5f, 0.01f, 4f);
+        ApplyColor(pathToMarket, pathColor);
+
+        // Small widening around the well area
+        var pathWellArea = CreateVisualPrimitive(PrimitiveType.Cube, "PathWellArea");
+        pathWellArea.transform.SetParent(parent, false);
+        pathWellArea.transform.localPosition = new Vector3(2f, 0.008f, 3f);
+        pathWellArea.transform.localScale = new Vector3(2.5f, 0.01f, 2.5f);
+        ApplyColor(pathWellArea, new Color(0.44f, 0.40f, 0.34f));
+    }
+
+    /// <summary>
+    /// Raised stone border around the courtyard to define the central area.
+    /// </summary>
+    private void SpawnCourtyardBorder(Transform parent)
+    {
+        Color borderColor = new Color(0.48f, 0.44f, 0.38f);
+        float size = 6.5f;
+        float height = 0.08f;
+        float width = 0.25f;
+
+        // North border
+        var north = CreateVisualPrimitive(PrimitiveType.Cube, "BorderN");
+        north.transform.SetParent(parent, false);
+        north.transform.localPosition = new Vector3(0f, height / 2f, size);
+        north.transform.localScale = new Vector3(size * 2f, height, width);
+        ApplyColor(north, borderColor);
+
+        // South border (gap for path)
+        var southL = CreateVisualPrimitive(PrimitiveType.Cube, "BorderSL");
+        southL.transform.SetParent(parent, false);
+        southL.transform.localPosition = new Vector3(-4f, height / 2f, -size);
+        southL.transform.localScale = new Vector3(5f, height, width);
+        ApplyColor(southL, borderColor);
+
+        var southR = CreateVisualPrimitive(PrimitiveType.Cube, "BorderSR");
+        southR.transform.SetParent(parent, false);
+        southR.transform.localPosition = new Vector3(4f, height / 2f, -size);
+        southR.transform.localScale = new Vector3(5f, height, width);
+        ApplyColor(southR, borderColor);
+
+        // West border
+        var west = CreateVisualPrimitive(PrimitiveType.Cube, "BorderW");
+        west.transform.SetParent(parent, false);
+        west.transform.localPosition = new Vector3(-size, height / 2f, 0f);
+        west.transform.localScale = new Vector3(width, height, size * 2f);
+        ApplyColor(west, borderColor);
+
+        // East border
+        var east = CreateVisualPrimitive(PrimitiveType.Cube, "BorderE");
+        east.transform.SetParent(parent, false);
+        east.transform.localPosition = new Vector3(size, height / 2f, 0f);
+        east.transform.localScale = new Vector3(width, height, size * 2f);
+        ApplyColor(east, borderColor);
+    }
+
+    /// <summary>
+    /// Cluster rock formations in a few spots for visual weight.
+    /// </summary>
+    private void SpawnRockFormations(Transform parent, System.Random rng)
+    {
+        Vector3[] clusterCenters = {
+            new(-7f, 0f, 6f), new(7f, 0f, 5f), new(-6f, 0f, -6f),
+        };
+        foreach (var center in clusterCenters)
+        {
+            int count = 3 + rng.Next(3);
+            for (int i = 0; i < count; i++)
+            {
+                float dx = (float)(rng.NextDouble() * 2.0 - 1.0);
+                float dz = (float)(rng.NextDouble() * 2.0 - 1.0);
+                float scale = 0.3f + (float)(rng.NextDouble() * 0.5);
+
+                string model = rng.Next(2) == 0 ? "Nature/rock_smallA" : "Nature/rock_largeA";
+                var rock = LoadModel(model, parent, "RockCluster");
+                if (rock != null)
+                {
+                    rock.transform.localPosition = center + new Vector3(dx, 0f, dz);
+                    rock.transform.localScale = Vector3.one * scale;
+                    rock.transform.localRotation = Quaternion.Euler(0f, rng.Next(360), 0f);
+                }
+                else
+                {
+                    // Fallback rock: slightly squashed sphere
+                    var fallback = CreateVisualPrimitive(PrimitiveType.Sphere, "RockFallback");
+                    fallback.transform.SetParent(parent, false);
+                    fallback.transform.localPosition = center + new Vector3(dx, scale * 0.3f, dz);
+                    fallback.transform.localScale = new Vector3(scale, scale * 0.6f, scale);
+                    ApplyColor(fallback, new Color(0.45f, 0.42f, 0.38f));
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Extra flower beds between buildings for a lively garden feel.
+    /// </summary>
+    private void SpawnFlowerBeds(Transform parent, System.Random rng)
+    {
+        // Flower bed near the keep entrance
+        Vector3[] bedCenters = {
+            new(1.5f, 0f, 0.5f), new(-1.5f, 0f, 0.5f),
+            new(3f, 0f, -2f), new(-3f, 0f, -1f),
+        };
+        string[] flowerModels = { "Nature/flower_redA", "Nature/flower_yellowA" };
+
+        foreach (var center in bedCenters)
+        {
+            // Small patch of flowers in a cluster
+            for (int i = 0; i < 4; i++)
+            {
+                float dx = (float)(rng.NextDouble() * 0.8 - 0.4);
+                float dz = (float)(rng.NextDouble() * 0.8 - 0.4);
+                string model = flowerModels[rng.Next(flowerModels.Length)];
+                var flower = LoadModel(model, parent, "FlowerBed");
+                if (flower != null)
+                {
+                    flower.transform.localPosition = center + new Vector3(dx, 0f, dz);
+                    flower.transform.localScale = Vector3.one * (0.5f + (float)(rng.NextDouble() * 0.3));
+                    flower.transform.localRotation = Quaternion.Euler(0f, rng.Next(360), 0f);
+                }
+            }
+            // Add a small grass base under the flower bed
+            var grassBase = LoadModel("Nature/grass", parent, "FlowerBedGrass");
+            if (grassBase != null)
+            {
+                grassBase.transform.localPosition = center;
+                grassBase.transform.localScale = Vector3.one * 0.6f;
+            }
+        }
     }
 
     private void SpawnTree(Transform parent, Vector3 position, System.Random rng)
