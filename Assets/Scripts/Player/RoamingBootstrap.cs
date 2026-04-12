@@ -356,20 +356,26 @@ public class RoamingBootstrap : MonoBehaviour
     // House = 3 wide x 2 tall: roof row on top, wall row on bottom.
 
     private void PlaceHouse(int gridX, int gridY, Transform parent, string tag,
-        bool blueRoof = false)
+        bool grayStyle = false)
     {
-        // Roof row (upper): y = gridY
-        int roofL = blueRoof ? 67 : 64;
-        int roofC = blueRoof ? 68 : 65;
-        int roofR = blueRoof ? 66 : 66; // right tile same for both
+        // Verified tile combos:
+        // Red house: roof 52,53,54 + walls 72,73,74
+        // Gray house: roof 88,89,90 + walls 76,77,78
+
+        int roofL = grayStyle ? 88 : 52;
+        int roofC = grayStyle ? 89 : 53;
+        int roofR = grayStyle ? 90 : 54;
+        int wallL = grayStyle ? 76 : 72;
+        int wallC = grayStyle ? 77 : 73; // door
+        int wallR = grayStyle ? 78 : 74;
+
+        // Roof row on top, wall row below
         PlaceSortedTile(roofL, gridX, gridY, parent, 10, $"{tag}_RoofL");
         PlaceSortedTile(roofC, gridX + 1, gridY, parent, 10, $"{tag}_RoofC");
         PlaceSortedTile(roofR, gridX + 2, gridY, parent, 10, $"{tag}_RoofR");
-
-        // Wall row (lower): y = gridY - 1
-        PlaceSortedTile(72, gridX, gridY - 1, parent, 11, $"{tag}_WallL");
-        PlaceSortedTile(73, gridX + 1, gridY - 1, parent, 11, $"{tag}_WallDoor");
-        PlaceSortedTile(74, gridX + 2, gridY - 1, parent, 11, $"{tag}_WallR");
+        PlaceSortedTile(wallL, gridX, gridY - 1, parent, 11, $"{tag}_WallL");
+        PlaceSortedTile(wallC, gridX + 1, gridY - 1, parent, 11, $"{tag}_WallC");
+        PlaceSortedTile(wallR, gridX + 2, gridY - 1, parent, 11, $"{tag}_WallR");
     }
 
     private void BuildHouses(Transform parent)
@@ -440,69 +446,45 @@ public class RoamingBootstrap : MonoBehaviour
         System.Random rng = new System.Random(42);
 
         // Tree tile indices to choose from
-        // tile 5=round green tree, 16=round tree variant, 17=double small trees
-        // tile 28=small bush, 30=small plant
-        // AVOID tile 4 (spiky pine = dark arch look!)
-        int[] treeTiles = { 5, 5, 16, 16, 17, 28 };
+        // ONLY bright round trees: 5, 19 (round), 16 (bush)
+        // AVOID: 4 (spiky pine), 6 (dark half), 17 (Y-shape), 7/8 (pine halves)
+        int[] treeTiles = { 5, 5, 19, 19, 16 };
 
-        // --- North edge (y=12..14) ---
-        for (int y = 12; y <= 14; y++)
+        // --- North edge (y=13..14) — thin tree line, not forest ---
+        for (int x = 0; x < GridW; x++)
         {
-            for (int x = 0; x < GridW; x++)
-            {
-                if (rng.NextDouble() < 0.65)
-                {
-                    int t = treeTiles[rng.Next(treeTiles.Length)];
-                    PlaceSortedTile(t, x, y, parent, 0, $"TreeN_{x}_{y}");
-                }
-            }
+            if (rng.NextDouble() < 0.5)
+                PlaceSortedTile(treeTiles[rng.Next(treeTiles.Length)], x, 14, parent, 0, $"TreeN_{x}");
         }
 
-        // --- South edge (y=0..2), gap at x=9..11 for path ---
-        for (int y = 0; y <= 2; y++)
+        // --- South edge (y=0..1), gap at x=9..11 for path ---
+        for (int x = 0; x < GridW; x++)
         {
-            for (int x = 0; x < GridW; x++)
-            {
-                if (x >= 9 && x <= 11 && y <= 1) continue; // path gap
-                if (rng.NextDouble() < 0.60)
-                {
-                    int t = treeTiles[rng.Next(treeTiles.Length)];
-                    PlaceSortedTile(t, x, y, parent, 0, $"TreeS_{x}_{y}");
-                }
-            }
+            if (x >= 9 && x <= 11) continue;
+            if (rng.NextDouble() < 0.45)
+                PlaceSortedTile(treeTiles[rng.Next(treeTiles.Length)], x, 0, parent, 0, $"TreeS_{x}");
         }
 
-        // --- West edge (x=0..1, y=3..11) ---
-        for (int y = 3; y <= 11; y++)
+        // --- West edge (x=0, y=3..12) — single column ---
+        for (int y = 3; y <= 12; y++)
         {
-            for (int x = 0; x <= 1; x++)
-            {
-                if (rng.NextDouble() < 0.55)
-                {
-                    int t = treeTiles[rng.Next(treeTiles.Length)];
-                    PlaceSortedTile(t, x, y, parent, 0, $"TreeW_{x}_{y}");
-                }
-            }
+            if (rng.NextDouble() < 0.4)
+                PlaceSortedTile(treeTiles[rng.Next(treeTiles.Length)], 0, y, parent, 0, $"TreeW_{y}");
         }
 
-        // --- East edge (x=18..19, y=3..11) ---
-        for (int y = 3; y <= 11; y++)
+        // --- East edge (x=19, y=3..12) — single column ---
+        for (int y = 3; y <= 12; y++)
         {
-            for (int x = 18; x <= 19; x++)
-            {
-                if (rng.NextDouble() < 0.55)
-                {
-                    int t = treeTiles[rng.Next(treeTiles.Length)];
-                    PlaceSortedTile(t, x, y, parent, 0, $"TreeE_{x}_{y}");
-                }
-            }
+            if (rng.NextDouble() < 0.4)
+                PlaceSortedTile(treeTiles[rng.Next(treeTiles.Length)], 19, y, parent, 0, $"TreeE_{y}");
         }
 
-        // --- Scattered interior trees for flavor ---
-        PlaceSortedTile(5, 3, 10, parent, 0, "IntTree1");
-        PlaceSortedTile(9, 16, 5, parent, 0, "IntTree2");
-        PlaceSortedTile(5, 7, 12, parent, 0, "IntTree3");
-        PlaceSortedTile(11, 13, 12, parent, 0, "IntTree4"); // autumn tall
+        // --- A few interior decorations (not too many) ---
+        PlaceSortedTile(5, 3, 10, parent, 0, "IntTree1");   // round tree
+        PlaceSortedTile(19, 16, 5, parent, 0, "IntTree2");  // round tree
+        PlaceSortedTile(16, 4, 4, parent, 0, "IntBush1");   // bush
+        PlaceSortedTile(16, 15, 8, parent, 0, "IntBush2");  // bush
+        PlaceSortedTile(28, 7, 5, parent, 0, "IntBush3");   // small bush
     }
 
     // ---------------------------------------------------------------

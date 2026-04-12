@@ -61,10 +61,15 @@ public static class TinyTileset
     public const string TT_RoofRedC   = "Art/TinyTown/tile_0053";
     public const string TT_RoofRedR   = "Art/TinyTown/tile_0054";
 
-    // ─── Blue/Gray Roofs (row 5) ───
-    public const string TT_RoofBlueL  = "Art/TinyTown/tile_0064";
-    public const string TT_RoofBlueC  = "Art/TinyTown/tile_0065";
-    public const string TT_RoofBlueR  = "Art/TinyTown/tile_0066";
+    // ─── Red Roofs Row 2 (row 5, same red) ───
+    public const string TT_RoofRed2L  = "Art/TinyTown/tile_0064";
+    public const string TT_RoofRed2C  = "Art/TinyTown/tile_0065";
+    public const string TT_RoofRed2R  = "Art/TinyTown/tile_0066";
+
+    // ─── Gray/Purple Roofs (row 7) ───
+    public const string TT_RoofGrayL  = "Art/TinyTown/tile_0088";
+    public const string TT_RoofGrayC  = "Art/TinyTown/tile_0089";
+    public const string TT_RoofGrayR  = "Art/TinyTown/tile_0090";
 
     // ─── Wood House Walls (row 6, brown/orange) ───
     public const string TT_HouseWallL = "Art/TinyTown/tile_0072";
