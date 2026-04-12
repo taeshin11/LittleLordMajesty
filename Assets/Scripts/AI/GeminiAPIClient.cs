@@ -114,12 +114,25 @@ public class GeminiAPIClient : MonoBehaviour
 
     private void LoadAPIKey()
     {
-        // Load from GameConfig ScriptableObject or environment
+        // Load from GameConfig ScriptableObject
         var config = Resources.Load<GameConfig>("Config/GameConfig");
-        if (config != null && !string.IsNullOrEmpty(config.GeminiAPIKey))
-            _apiKey = config.GeminiAPIKey;
-        else
-            Debug.LogWarning("[Gemini] API key not configured. Set in Resources/Config/GameConfig.");
+        if (config != null)
+        {
+            config.LoadFromEnvironment();
+            if (!string.IsNullOrEmpty(config.GeminiAPIKey))
+            {
+                _apiKey = config.GeminiAPIKey;
+                return;
+            }
+        }
+        // Fallback: direct env var check
+        string envKey = System.Environment.GetEnvironmentVariable("GEMINI_API_KEY");
+        if (!string.IsNullOrEmpty(envKey))
+        {
+            _apiKey = envKey;
+            return;
+        }
+        Debug.LogWarning("[Gemini] API key not configured. Set in GameConfig or GEMINI_API_KEY env var.");
     }
 
     /// <summary>
