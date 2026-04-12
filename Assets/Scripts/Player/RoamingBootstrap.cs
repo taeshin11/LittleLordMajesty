@@ -266,7 +266,7 @@ public class RoamingBootstrap : MonoBehaviour
         // Main ground plane — large and GREEN
         var ground = CreateVisualPrimitive(PrimitiveType.Plane, "Ground");
         ground.transform.position = Vector3.zero;
-        ground.transform.localScale = new Vector3(10f, 1f, 10f); // 100x100 units — fills entire camera view
+        ground.transform.localScale = new Vector3(30f, 1f, 30f); // 300x300 units — always fills camera
         ApplyColor(ground, new Color(0.30f, 0.55f, 0.20f)); // Grass green
         // Floor collider so CharacterController doesn't fall through
         ground.AddComponent<MeshCollider>();
