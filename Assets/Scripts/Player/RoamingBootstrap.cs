@@ -418,10 +418,10 @@ public class RoamingBootstrap : MonoBehaviour
         PlaceSortedTile(45, 8, 3, parent, 5, "Barrel2");
 
         // Flowers scattered in the village
-        PlaceTile(3, 7, 8, parent, -998, "Flower1");
-        PlaceTile(3, 12, 5, parent, -998, "Flower2");
-        PlaceTile(3, 3, 9, parent, -998, "Flower3");
-        PlaceTile(3, 16, 9, parent, -998, "Flower4");
+        PlaceTile(30, 7, 8, parent, -998, "Flower1");
+        PlaceTile(30, 12, 5, parent, -998, "Flower2");
+        PlaceTile(30, 3, 9, parent, -998, "Flower3");
+        PlaceTile(30, 16, 9, parent, -998, "Flower4");
 
         // Mushrooms
         PlaceSortedTile(29, 2, 5, parent, 0, "Mushroom1");
@@ -440,9 +440,9 @@ public class RoamingBootstrap : MonoBehaviour
         System.Random rng = new System.Random(42);
 
         // Tree tile indices to choose from
-        // Use only single-tile trees (4=round green, 9=autumn orange, 15=small bush)
-        // Tiles 7,8 are pine HALVES — don't use alone
-        int[] treeTiles = { 4, 4, 4, 9, 15 }; // mostly green, some autumn, some bushes
+        // Tile 4=green tree, 16=green bush cluster, 28=small green bush
+        // Avoid: 7,8(pine halves), 9,15(orange autumn), 3(also autumn)
+        int[] treeTiles = { 4, 4, 4, 16, 16, 28 }; // all GREEN
 
         // --- North edge (y=12..14) ---
         for (int y = 12; y <= 14; y++)
