@@ -10,11 +10,20 @@ using TMPro;
 /// giving each tile a 1x1 world-unit footprint.
 /// Sort order is based on Y position (lower Y = drawn in front).
 ///
+/// Village layout: 20x15 grid centered on (0,0).
+///   Row 0-2:   Trees along north edge
+///   Row 3-5:   Castle keep (stone walls)
+///   Row 6:     Open courtyard + path
+///   Row 7-8:   Houses (west + east) + props between
+///   Row 9:     Path + well + market stalls
+///   Row 10-11: Gate entrance (south)
+///   Row 12-14: Trees along south edge + path leading out
+///
 /// BRIGHT, CUTE, ZELDA-LIKE — no dark dungeon aesthetic.
 /// </summary>
 public class RoamingBootstrap : MonoBehaviour
 {
-    [SerializeField] private Vector3 _playerSpawn = new Vector3(15f, 5f, 0f);
+    [SerializeField] private Vector3 _playerSpawn = new Vector3(10f, 5f, 0f);
     [SerializeField] private float _playerWalkSpeed = 3.5f;
 
     private bool _spawned;
@@ -30,9 +39,9 @@ public class RoamingBootstrap : MonoBehaviour
     // Character scale — slightly larger than tiles for visibility
     private const float CharacterScale = 1.3f;
 
-    // Grid dimensions
-    private const int GridW = 30;
-    private const int GridH = 30;
+    // Grid dimensions (village is 20 wide x 15 tall, origin at bottom-left)
+    private const int GridW = 20;
+    private const int GridH = 15;
 
     // Bright grass-green background color (matches Kenney Tiny Town grass)
     private static readonly Color GrassGreen = new Color(0.42f, 0.75f, 0.27f);
@@ -84,18 +93,12 @@ public class RoamingBootstrap : MonoBehaviour
         RetireLegacyUI();
         SuppressLegacyTutorial();
         BuildRoamingCamera();
-        BuildGround();
-        BuildPaths();
-        BuildCastle();
         BuildVillage();
-        BuildFarm();
-        BuildBarracks();
-        BuildEnvironment();
         BuildPlayer();
         WireCamera();
         SpawnNPCs();
         _spawned = true;
-        Debug.Log("[RoamingBootstrap] 2D top-down world built (Kenney Tiny Town + Tiny Dungeon 16x16)");
+        Debug.Log("[RoamingBootstrap] 2D top-down village built (Kenney Tiny Town + Tiny Dungeon 16x16)");
     }
 
     // ---------------------------------------------------------------
@@ -148,13 +151,13 @@ public class RoamingBootstrap : MonoBehaviour
         var camGO = new GameObject("RoamingCamera");
         _roamingCam = camGO.AddComponent<Camera>();
         _roamingCam.orthographic = true;
-        _roamingCam.orthographicSize = 5f; // ~10 units vertically visible
+        _roamingCam.orthographicSize = 7.5f; // see ~15 units vertically — whole village
         _roamingCam.clearFlags = CameraClearFlags.SolidColor;
         _roamingCam.backgroundColor = GrassGreen;
         _roamingCam.nearClipPlane = 0.1f;
         _roamingCam.farClipPlane = 100f;
         _roamingCam.depth = 10;
-        camGO.transform.position = new Vector3(15f, 15f, -10f);
+        camGO.transform.position = new Vector3(10f, 7f, -10f);
         camGO.transform.rotation = Quaternion.identity;
         try { camGO.tag = "MainCamera"; } catch { }
 
@@ -162,17 +165,13 @@ public class RoamingBootstrap : MonoBehaviour
         _roamingCam.transparencySortAxis = new Vector3(0f, 1f, 0f);
 
         var follow = camGO.AddComponent<FollowCamera>();
-        follow.SetOrthoSize(5f);
+        follow.SetOrthoSize(7.5f);
     }
 
     // ---------------------------------------------------------------
     //  SPRITE HELPERS
     // ---------------------------------------------------------------
 
-    /// <summary>
-    /// Load a sprite from Resources (without .png extension).
-    /// Supports both TinyTown and TinyDungeon paths.
-    /// </summary>
     private static Sprite LoadSprite(string resourcePath)
     {
         var sprite = Resources.Load<Sprite>(resourcePath);
@@ -181,9 +180,6 @@ public class RoamingBootstrap : MonoBehaviour
         return sprite;
     }
 
-    /// <summary>
-    /// Create a GameObject with a SpriteRenderer at the given position.
-    /// </summary>
     private static GameObject PlaceSprite(string resourcePath, Vector3 position,
         Transform parent, string name = null, int sortingOrder = 0)
     {
@@ -201,9 +197,6 @@ public class RoamingBootstrap : MonoBehaviour
         return go;
     }
 
-    /// <summary>
-    /// Place a sprite with Y-based sorting (for objects that overlap).
-    /// </summary>
     private static GameObject PlaceSortedSprite(string resourcePath, Vector3 position,
         Transform parent, string name = null, int sortingOffset = 0)
     {
@@ -212,525 +205,305 @@ public class RoamingBootstrap : MonoBehaviour
         return go;
     }
 
-    // ---------------------------------------------------------------
-    //  GROUND — grass tile grid (30x30, top-down, no stagger)
-    // ---------------------------------------------------------------
-
-    private void BuildGround()
+    /// <summary>Place a tile by TinyTown index at grid position.</summary>
+    private static GameObject PlaceTile(int tileIndex, int gridX, int gridY,
+        Transform parent, int sortingOrder = 0, string name = null)
     {
+        string path = TinyTileset.TT(tileIndex);
+        return PlaceSprite(path, new Vector3(gridX, gridY, 0f), parent,
+            name ?? $"tile_{tileIndex}_{gridX}_{gridY}", sortingOrder);
+    }
+
+    /// <summary>Place a sorted tile (Y-based sorting) by TinyTown index.</summary>
+    private static GameObject PlaceSortedTile(int tileIndex, int gridX, int gridY,
+        Transform parent, int sortingOffset = 0, string name = null)
+    {
+        string path = TinyTileset.TT(tileIndex);
+        return PlaceSortedSprite(path, new Vector3(gridX, gridY, 0f), parent,
+            name ?? $"tile_{tileIndex}_{gridX}_{gridY}", sortingOffset);
+    }
+
+    // ---------------------------------------------------------------
+    //  VILLAGE LAYOUT — single method builds everything
+    // ---------------------------------------------------------------
+    //
+    //  Grid: 20 wide (x: 0..19), 15 tall (y: 0..14).
+    //  Y=14 is top (north), Y=0 is bottom (south).
+    //
+    //  Row 12-14: Trees (north edge)
+    //  Row 9-11:  Castle keep (stone walls, center)
+    //  Row 8:     Open courtyard + path
+    //  Row 6-7:   House 1 (west), House 2 (east), props between
+    //  Row 5:     Path + well + market stalls
+    //  Row 3-4:   Gate entrance (south)
+    //  Row 0-2:   Trees (south edge) + path leading out
+
+    private void BuildVillage()
+    {
+        // --- Ground layer ---
         var groundRoot = new GameObject("Ground");
         groundRoot.transform.position = Vector3.zero;
+        FillGround(groundRoot.transform);
 
-        // Fill with grass tiles — alternate between two grass variants
+        // --- Paths ---
+        var pathRoot = new GameObject("Paths");
+        pathRoot.transform.position = Vector3.zero;
+        BuildPaths(pathRoot.transform);
+
+        // --- Castle ---
+        var castleRoot = new GameObject("Castle");
+        castleRoot.transform.position = Vector3.zero;
+        BuildCastle(castleRoot.transform);
+
+        // --- Houses ---
+        var houseRoot = new GameObject("Houses");
+        houseRoot.transform.position = Vector3.zero;
+        BuildHouses(houseRoot.transform);
+
+        // --- Gate ---
+        var gateRoot = new GameObject("Gate");
+        gateRoot.transform.position = Vector3.zero;
+        BuildGate(gateRoot.transform);
+
+        // --- Props ---
+        var propRoot = new GameObject("Props");
+        propRoot.transform.position = Vector3.zero;
+        BuildProps(propRoot.transform);
+
+        // --- Trees & nature ---
+        var envRoot = new GameObject("Environment");
+        envRoot.transform.position = Vector3.zero;
+        BuildEnvironment(envRoot.transform);
+    }
+
+    // ---------- GROUND ----------
+
+    private void FillGround(Transform parent)
+    {
+        System.Random rng = new System.Random(42);
         for (int y = 0; y < GridH; y++)
         {
             for (int x = 0; x < GridW; x++)
             {
-                // Use different grass variants for visual interest
-                string tile;
-                int variant = (x + y * 3) % 5;
-                switch (variant)
-                {
-                    case 0: tile = TinyTileset.TT_Grass; break;
-                    case 1: tile = TinyTileset.TT_GrassAlt1; break;
-                    case 2: tile = TinyTileset.TT_GrassAlt2; break;
-                    case 3: tile = TinyTileset.TT_GrassFlower1; break;
-                    default: tile = TinyTileset.TT_Grass; break;
-                }
-
-                PlaceSprite(tile, new Vector3(x, y, 0f),
-                    groundRoot.transform, $"Grass_{x}_{y}", -1000);
+                // Mostly tile 0 (grass), sprinkle 1/2 for variety
+                int tile;
+                float r = (float)rng.NextDouble();
+                if (r < 0.70f) tile = 0;
+                else if (r < 0.85f) tile = 1;
+                else if (r < 0.95f) tile = 2;
+                else tile = 3; // occasional flower
+                PlaceTile(tile, x, y, parent, -1000, $"Grass_{x}_{y}");
             }
         }
     }
 
-    // ---------------------------------------------------------------
-    //  PATHS — stone paths connecting buildings
-    // ---------------------------------------------------------------
+    // ---------- PATHS ----------
+    // Stone paths (tile 40=light stone, 42=cobblestone) connecting buildings.
 
-    private void BuildPaths()
+    private void BuildPaths(Transform parent)
     {
-        var pathRoot = new GameObject("Paths");
-        pathRoot.transform.position = Vector3.zero;
+        // Main north-south spine: x=10, from y=1 (south gate) up to y=11 (castle)
+        for (int y = 1; y <= 11; y++)
+            PlaceTile(42, 10, y, parent, -999, $"PathNS_{y}");
 
-        // Main north-south path from gate (bottom) to castle (center)
-        for (int y = 2; y <= 18; y++)
+        // East-west path at y=8 (courtyard level) from x=4 to x=16
+        for (int x = 4; x <= 16; x++)
         {
-            PlaceSprite(TinyTileset.TT_PathVert, new Vector3(15f, y, 0f),
-                pathRoot.transform, $"PathNS_{y}", -999);
+            if (x == 10) continue; // already placed
+            PlaceTile(40, x, 8, parent, -999, $"PathEW_{x}");
         }
 
-        // East-west path crossing at center
-        for (int x = 8; x <= 22; x++)
-        {
-            if (x == 15) continue; // Skip the crossing point
-            PlaceSprite(TinyTileset.TT_PathHoriz, new Vector3(x, 12f, 0f),
-                pathRoot.transform, $"PathEW_{x}", -999);
-        }
+        // Cross tile at intersection
+        PlaceTile(42, 10, 8, parent, -998, "PathCross");
 
-        // Crossing tile at intersection
-        PlaceSprite(TinyTileset.TT_PathCross, new Vector3(15f, 12f, 0f),
-            pathRoot.transform, "PathCross", -999);
+        // Path to House 1 (west): x=4..5 at y=6
+        PlaceTile(40, 4, 7, parent, -999, "PathH1a");
+        PlaceTile(40, 5, 7, parent, -999, "PathH1b");
 
-        // Path branch to farm (north-east)
-        for (int x = 16; x <= 20; x++)
-        {
-            PlaceSprite(TinyTileset.TT_PathHoriz, new Vector3(x, 18f, 0f),
-                pathRoot.transform, $"PathFarm_{x}", -999);
-        }
+        // Path to House 2 (east): x=14..15 at y=6
+        PlaceTile(40, 14, 7, parent, -999, "PathH2a");
+        PlaceTile(40, 15, 7, parent, -999, "PathH2b");
 
-        // Path branch to barracks (west)
-        for (int x = 5; x <= 7; x++)
-        {
-            PlaceSprite(TinyTileset.TT_PathHoriz, new Vector3(x, 12f, 0f),
-                pathRoot.transform, $"PathBarracks_{x}", -999);
-        }
-
-        // South entrance tee
-        PlaceSprite(TinyTileset.TT_PathTeeUp, new Vector3(15f, 2f, 0f),
-            pathRoot.transform, "PathGateTee", -999);
+        // Path south of gate leading out: x=10, y=0
+        PlaceTile(40, 10, 0, parent, -999, "PathOut");
     }
 
-    // ---------------------------------------------------------------
-    //  CASTLE — central keep (stone walls + towers)
-    // ---------------------------------------------------------------
+    // ---------- CASTLE ----------
+    // 4-wide x 3-tall stone castle centered at x=8..11, y=9..11
 
-    private void BuildCastle()
+    private void BuildCastle(Transform parent)
     {
-        var castleRoot = new GameObject("Castle");
-        castleRoot.transform.position = Vector3.zero;
+        // Top row (y=11): tiles 48, 49, 49, 50
+        PlaceSortedTile(48, 8, 11, parent, 0, "Castle_TL");
+        PlaceSortedTile(49, 9, 11, parent, 0, "Castle_TC1");
+        PlaceSortedTile(49, 10, 11, parent, 0, "Castle_TC2");
+        PlaceSortedTile(50, 11, 11, parent, 0, "Castle_TR");
 
-        // Castle center at (14, 15) — a 3x3 structure with towers
+        // Middle row (y=10): tiles 60, interior (52), interior (53), 63
+        PlaceSortedTile(60, 8, 10, parent, 0, "Castle_ML");
+        PlaceSortedTile(52, 9, 10, parent, 0, "Castle_MC1");
+        PlaceSortedTile(53, 10, 10, parent, 0, "Castle_MC2");
+        PlaceSortedTile(63, 11, 10, parent, 0, "Castle_MR");
 
-        // Bottom wall row (with gate)
-        PlaceSortedSprite(TinyTileset.TT_StoneWallL, new Vector3(13f, 14f, 0f),
-            castleRoot.transform, "CastleWallBL");
-        PlaceSortedSprite(TinyTileset.TT_StoneGate, new Vector3(14f, 14f, 0f),
-            castleRoot.transform, "CastleGate");
-        PlaceSortedSprite(TinyTileset.TT_StoneWallR, new Vector3(15f, 14f, 0f),
-            castleRoot.transform, "CastleWallBR");
-
-        // Middle wall row (windows)
-        PlaceSortedSprite(TinyTileset.TT_CastleWallL, new Vector3(13f, 15f, 0f),
-            castleRoot.transform, "CastleWallML");
-        PlaceSortedSprite(TinyTileset.TT_CastleWindow, new Vector3(14f, 15f, 0f),
-            castleRoot.transform, "CastleMidWindow");
-        PlaceSortedSprite(TinyTileset.TT_CastleWallR, new Vector3(15f, 15f, 0f),
-            castleRoot.transform, "CastleWallMR");
-
-        // Top wall / roof row
-        PlaceSortedSprite(TinyTileset.TT_CastleRoofL, new Vector3(13f, 16f, 0f),
-            castleRoot.transform, "CastleRoofL");
-        PlaceSortedSprite(TinyTileset.TT_CastleRoofM, new Vector3(14f, 16f, 0f),
-            castleRoot.transform, "CastleRoofM");
-        PlaceSortedSprite(TinyTileset.TT_CastleRoofR, new Vector3(15f, 16f, 0f),
-            castleRoot.transform, "CastleRoofR");
-
-        // Towers on corners
-        PlaceSortedSprite(TinyTileset.TT_CastleTower, new Vector3(12f, 14f, 0f),
-            castleRoot.transform, "TowerBL", 10);
-        PlaceSortedSprite(TinyTileset.TT_CastleTower, new Vector3(16f, 14f, 0f),
-            castleRoot.transform, "TowerBR", 10);
-        PlaceSortedSprite(TinyTileset.TT_CastleTower, new Vector3(12f, 16f, 0f),
-            castleRoot.transform, "TowerTL", 10);
-        PlaceSortedSprite(TinyTileset.TT_CastleTower, new Vector3(16f, 16f, 0f),
-            castleRoot.transform, "TowerTR", 10);
-
-        // Flags on top towers
-        PlaceSortedSprite(TinyTileset.TT_CastleFlag, new Vector3(12f, 17f, 0f),
-            castleRoot.transform, "FlagL", 20);
-        PlaceSortedSprite(TinyTileset.TT_CastleFlag, new Vector3(16f, 17f, 0f),
-            castleRoot.transform, "FlagR", 20);
-
-        // Perimeter stone walls (partial — suggests boundary without full enclosure)
-        // West wall segments
-        for (int y = 14; y <= 16; y++)
-        {
-            PlaceSortedSprite(TinyTileset.TT_StoneWallM, new Vector3(11f, y, 0f),
-                castleRoot.transform, $"WallW_{y}");
-        }
-        // East wall segments
-        for (int y = 14; y <= 16; y++)
-        {
-            PlaceSortedSprite(TinyTileset.TT_StoneWallM, new Vector3(17f, y, 0f),
-                castleRoot.transform, $"WallE_{y}");
-        }
+        // Bottom row (y=9): tiles 61, 62, 62, 63
+        PlaceSortedTile(61, 8, 9, parent, 0, "Castle_BL");
+        PlaceSortedTile(62, 9, 9, parent, 0, "Castle_BC1");
+        PlaceSortedTile(62, 10, 9, parent, 0, "Castle_BC2");
+        PlaceSortedTile(63, 11, 9, parent, 0, "Castle_BR");
     }
 
-    // ---------------------------------------------------------------
-    //  VILLAGE — market/houses (east side)
-    // ---------------------------------------------------------------
+    // ---------- HOUSES ----------
+    // House = 3 wide x 2 tall: roof row on top, wall row on bottom.
 
-    private void BuildVillage()
+    private void PlaceHouse(int gridX, int gridY, Transform parent, string tag,
+        bool blueRoof = false)
     {
-        var villageRoot = new GameObject("Village");
-        villageRoot.transform.position = Vector3.zero;
+        // Roof row (upper): y = gridY
+        int roofL = blueRoof ? 67 : 64;
+        int roofC = blueRoof ? 68 : 65;
+        int roofR = blueRoof ? 66 : 66; // right tile same for both
+        PlaceSortedTile(roofL, gridX, gridY, parent, 10, $"{tag}_RoofL");
+        PlaceSortedTile(roofC, gridX + 1, gridY, parent, 10, $"{tag}_RoofC");
+        PlaceSortedTile(roofR, gridX + 2, gridY, parent, 10, $"{tag}_RoofR");
 
-        // ---- HOUSE 1: East market house (3x2) at (20, 11) ----
-        // Bottom row: walls + door
-        PlaceSortedSprite(TinyTileset.TT_HouseWallL, new Vector3(19f, 11f, 0f),
-            villageRoot.transform, "House1_WallBL");
-        PlaceSortedSprite(TinyTileset.TT_HouseDoor, new Vector3(20f, 11f, 0f),
-            villageRoot.transform, "House1_Door");
-        PlaceSortedSprite(TinyTileset.TT_HouseWallR, new Vector3(21f, 11f, 0f),
-            villageRoot.transform, "House1_WallBR");
-        // Top row: roof
-        PlaceSortedSprite(TinyTileset.TT_RoofL, new Vector3(19f, 12f, 0f),
-            villageRoot.transform, "House1_RoofL");
-        PlaceSortedSprite(TinyTileset.TT_RoofM, new Vector3(20f, 12f, 0f),
-            villageRoot.transform, "House1_RoofM");
-        PlaceSortedSprite(TinyTileset.TT_RoofR, new Vector3(21f, 12f, 0f),
-            villageRoot.transform, "House1_RoofR");
-        // Chimney
-        PlaceSortedSprite(TinyTileset.TT_RoofChimney, new Vector3(21f, 13f, 0f),
-            villageRoot.transform, "House1_Chimney", 5);
-
-        // ---- HOUSE 2: East-south house (3x2) at (20, 8) ----
-        PlaceSortedSprite(TinyTileset.TT_HouseWallL, new Vector3(19f, 8f, 0f),
-            villageRoot.transform, "House2_WallBL");
-        PlaceSortedSprite(TinyTileset.TT_HouseWindow, new Vector3(20f, 8f, 0f),
-            villageRoot.transform, "House2_Window");
-        PlaceSortedSprite(TinyTileset.TT_HouseWallR, new Vector3(21f, 8f, 0f),
-            villageRoot.transform, "House2_WallBR");
-        PlaceSortedSprite(TinyTileset.TT_RoofL, new Vector3(19f, 9f, 0f),
-            villageRoot.transform, "House2_RoofL");
-        PlaceSortedSprite(TinyTileset.TT_RoofM, new Vector3(20f, 9f, 0f),
-            villageRoot.transform, "House2_RoofM");
-        PlaceSortedSprite(TinyTileset.TT_RoofR, new Vector3(21f, 9f, 0f),
-            villageRoot.transform, "House2_RoofR");
-
-        // Market props near houses
-        PlaceSortedSprite(TinyTileset.TT_Barrel, new Vector3(22f, 11f, 0f),
-            villageRoot.transform, "MarketBarrel1");
-        PlaceSortedSprite(TinyTileset.TT_Crate, new Vector3(22f, 10f, 0f),
-            villageRoot.transform, "MarketCrate1");
-        PlaceSortedSprite(TinyTileset.TT_Bench, new Vector3(18f, 10f, 0f),
-            villageRoot.transform, "MarketBench");
-        PlaceSortedSprite(TinyTileset.TT_Cart, new Vector3(22f, 8f, 0f),
-            villageRoot.transform, "MarketCart");
-
-        // Well in village square
-        PlaceSortedSprite(TinyTileset.TT_Well, new Vector3(17f, 12f, 0f),
-            villageRoot.transform, "VillageWell");
-
-        // Sign post near market
-        PlaceSortedSprite(TinyTileset.TT_SignPost, new Vector3(18f, 12f, 0f),
-            villageRoot.transform, "MarketSign");
+        // Wall row (lower): y = gridY - 1
+        PlaceSortedTile(72, gridX, gridY - 1, parent, 11, $"{tag}_WallL");
+        PlaceSortedTile(73, gridX + 1, gridY - 1, parent, 11, $"{tag}_WallDoor");
+        PlaceSortedTile(74, gridX + 2, gridY - 1, parent, 11, $"{tag}_WallR");
     }
 
-    // ---------------------------------------------------------------
-    //  FARM — north area with fences, crops, animals
-    // ---------------------------------------------------------------
-
-    private void BuildFarm()
+    private void BuildHouses(Transform parent)
     {
-        var farmRoot = new GameObject("Farm");
-        farmRoot.transform.position = Vector3.zero;
+        // House 1 (west): roof at y=7, walls at y=6 — x=3..5
+        PlaceHouse(3, 7, parent, "House1", false);
 
-        // Fenced area (18-24, 19-23)
-        // Top fence
-        for (int x = 18; x <= 24; x++)
-        {
-            PlaceSortedSprite(TinyTileset.TT_FenceHoriz, new Vector3(x, 23f, 0f),
-                farmRoot.transform, $"FarmFenceT_{x}");
-        }
-        // Bottom fence with gate
-        for (int x = 18; x <= 24; x++)
-        {
-            if (x == 21)
-            {
-                PlaceSortedSprite(TinyTileset.TT_FenceGate, new Vector3(x, 19f, 0f),
-                    farmRoot.transform, "FarmGate");
-            }
-            else
-            {
-                PlaceSortedSprite(TinyTileset.TT_FenceHoriz, new Vector3(x, 19f, 0f),
-                    farmRoot.transform, $"FarmFenceB_{x}");
-            }
-        }
-        // Left fence
-        for (int y = 20; y <= 22; y++)
-        {
-            PlaceSortedSprite(TinyTileset.TT_FenceVert, new Vector3(18f, y, 0f),
-                farmRoot.transform, $"FarmFenceL_{y}");
-        }
-        // Right fence
-        for (int y = 20; y <= 22; y++)
-        {
-            PlaceSortedSprite(TinyTileset.TT_FenceVert, new Vector3(24f, y, 0f),
-                farmRoot.transform, $"FarmFenceR_{y}");
-        }
+        // House 2 (east): roof at y=7, walls at y=6 — x=14..16
+        PlaceHouse(14, 7, parent, "House2", true);
 
-        // Crops inside fence
-        PlaceSortedSprite(TinyTileset.TT_Crop1, new Vector3(19f, 21f, 0f),
-            farmRoot.transform, "Crop1");
-        PlaceSortedSprite(TinyTileset.TT_Crop2, new Vector3(20f, 21f, 0f),
-            farmRoot.transform, "Crop2");
-        PlaceSortedSprite(TinyTileset.TT_Crop3, new Vector3(21f, 21f, 0f),
-            farmRoot.transform, "Crop3");
-        PlaceSortedSprite(TinyTileset.TT_Crop1, new Vector3(22f, 21f, 0f),
-            farmRoot.transform, "Crop4");
-        PlaceSortedSprite(TinyTileset.TT_Crop2, new Vector3(23f, 21f, 0f),
-            farmRoot.transform, "Crop5");
-
-        PlaceSortedSprite(TinyTileset.TT_Crop3, new Vector3(19f, 22f, 0f),
-            farmRoot.transform, "Crop6");
-        PlaceSortedSprite(TinyTileset.TT_Crop1, new Vector3(20f, 22f, 0f),
-            farmRoot.transform, "Crop7");
-        PlaceSortedSprite(TinyTileset.TT_Crop2, new Vector3(21f, 22f, 0f),
-            farmRoot.transform, "Crop8");
-        PlaceSortedSprite(TinyTileset.TT_Crop3, new Vector3(22f, 22f, 0f),
-            farmRoot.transform, "Crop9");
-        PlaceSortedSprite(TinyTileset.TT_Crop1, new Vector3(23f, 22f, 0f),
-            farmRoot.transform, "Crop10");
-
-        // Hay bale and scarecrow
-        PlaceSortedSprite(TinyTileset.TT_Hay, new Vector3(19f, 20f, 0f),
-            farmRoot.transform, "FarmHay");
-        PlaceSortedSprite(TinyTileset.TT_Scarecrow, new Vector3(23f, 20f, 0f),
-            farmRoot.transform, "FarmScarecrow");
-
-        // Animals outside fence
-        PlaceSortedSprite(TinyTileset.TT_AnimalChicken, new Vector3(25f, 20f, 0f),
-            farmRoot.transform, "Chicken1");
-        PlaceSortedSprite(TinyTileset.TT_AnimalCow, new Vector3(25f, 22f, 0f),
-            farmRoot.transform, "Cow1");
-        PlaceSortedSprite(TinyTileset.TT_AnimalPig, new Vector3(26f, 21f, 0f),
-            farmRoot.transform, "Pig1");
-
-        // Farmhouse (north-west of farm area)
-        PlaceSortedSprite(TinyTileset.TT_HouseWallL2, new Vector3(18f, 24f, 0f),
-            farmRoot.transform, "Farmhouse_WL");
-        PlaceSortedSprite(TinyTileset.TT_HouseDoor2, new Vector3(19f, 24f, 0f),
-            farmRoot.transform, "Farmhouse_Door");
-        PlaceSortedSprite(TinyTileset.TT_HouseWallR2, new Vector3(20f, 24f, 0f),
-            farmRoot.transform, "Farmhouse_WR");
-        PlaceSortedSprite(TinyTileset.TT_RoofL2, new Vector3(18f, 25f, 0f),
-            farmRoot.transform, "Farmhouse_RL");
-        PlaceSortedSprite(TinyTileset.TT_RoofM2, new Vector3(19f, 25f, 0f),
-            farmRoot.transform, "Farmhouse_RM");
-        PlaceSortedSprite(TinyTileset.TT_RoofR2, new Vector3(20f, 25f, 0f),
-            farmRoot.transform, "Farmhouse_RR");
-
-        // Wheelbarrow near farmhouse
-        PlaceSortedSprite(TinyTileset.TT_Wheelbarrow, new Vector3(21f, 24f, 0f),
-            farmRoot.transform, "FarmWheelbarrow");
+        // House 3 (north-east of castle): roof at y=11, walls at y=10 — x=14..16
+        PlaceHouse(14, 11, parent, "House3", false);
     }
 
-    // ---------------------------------------------------------------
-    //  BARRACKS — west side stone buildings
-    // ---------------------------------------------------------------
+    // ---------- GATE ----------
+    // South gate: 2 wide x 2 tall at x=9..10, y=3..4
 
-    private void BuildBarracks()
+    private void BuildGate(Transform parent)
     {
-        var barracksRoot = new GameObject("Barracks");
-        barracksRoot.transform.position = Vector3.zero;
+        // Top row (y=4): gate arch top
+        PlaceSortedTile(112, 9, 4, parent, 5, "Gate_TL");
+        PlaceSortedTile(113, 10, 4, parent, 5, "Gate_TR");
 
-        // Stone barracks building (3x2) at (5, 11)
-        PlaceSortedSprite(TinyTileset.TT_StoneWallL, new Vector3(5f, 11f, 0f),
-            barracksRoot.transform, "Barracks_WBL");
-        PlaceSortedSprite(TinyTileset.TT_StoneGate, new Vector3(6f, 11f, 0f),
-            barracksRoot.transform, "Barracks_Door");
-        PlaceSortedSprite(TinyTileset.TT_StoneWallR, new Vector3(7f, 11f, 0f),
-            barracksRoot.transform, "Barracks_WBR");
-        PlaceSortedSprite(TinyTileset.TT_StoneWallTop, new Vector3(5f, 12f, 0f),
-            barracksRoot.transform, "Barracks_WTL");
-        PlaceSortedSprite(TinyTileset.TT_StoneWallTop, new Vector3(6f, 12f, 0f),
-            barracksRoot.transform, "Barracks_WTM");
-        PlaceSortedSprite(TinyTileset.TT_StoneWallTop, new Vector3(7f, 12f, 0f),
-            barracksRoot.transform, "Barracks_WTR");
-
-        // Training area — crates and barrels
-        PlaceSortedSprite(TinyTileset.TT_Crate, new Vector3(4f, 11f, 0f),
-            barracksRoot.transform, "BarracksCrate1");
-        PlaceSortedSprite(TinyTileset.TT_Barrel, new Vector3(4f, 12f, 0f),
-            barracksRoot.transform, "BarracksBarrel1");
-        PlaceSortedSprite(TinyTileset.TT_Barrel, new Vector3(8f, 11f, 0f),
-            barracksRoot.transform, "BarracksBarrel2");
-
-        // Small guard post (south-west)
-        PlaceSortedSprite(TinyTileset.TT_StoneWallM, new Vector3(5f, 8f, 0f),
-            barracksRoot.transform, "GuardPost1");
-        PlaceSortedSprite(TinyTileset.TT_StoneWallM, new Vector3(6f, 8f, 0f),
-            barracksRoot.transform, "GuardPost2");
-        PlaceSortedSprite(TinyTileset.TT_StoneWallTop, new Vector3(5f, 9f, 0f),
-            barracksRoot.transform, "GuardPostTop1");
-        PlaceSortedSprite(TinyTileset.TT_StoneWallTop, new Vector3(6f, 9f, 0f),
-            barracksRoot.transform, "GuardPostTop2");
-
-        // Fence enclosure for training yard
-        PlaceSortedSprite(TinyTileset.TT_FenceHoriz, new Vector3(4f, 10f, 0f),
-            barracksRoot.transform, "TrainFence1");
-        PlaceSortedSprite(TinyTileset.TT_FenceHoriz, new Vector3(5f, 10f, 0f),
-            barracksRoot.transform, "TrainFence2");
-        PlaceSortedSprite(TinyTileset.TT_FenceHoriz, new Vector3(6f, 10f, 0f),
-            barracksRoot.transform, "TrainFence3");
-        PlaceSortedSprite(TinyTileset.TT_FenceHoriz, new Vector3(7f, 10f, 0f),
-            barracksRoot.transform, "TrainFence4");
-        PlaceSortedSprite(TinyTileset.TT_FenceHoriz, new Vector3(8f, 10f, 0f),
-            barracksRoot.transform, "TrainFence5");
+        // Bottom row (y=3): gate base / opening
+        PlaceSortedTile(124, 9, 3, parent, 5, "Gate_BL");
+        PlaceSortedTile(125, 10, 3, parent, 5, "Gate_BR");
     }
 
-    // ---------------------------------------------------------------
-    //  ENVIRONMENT — trees, flowers, bushes, water
-    // ---------------------------------------------------------------
+    // ---------- PROPS ----------
 
-    private void BuildEnvironment()
+    private void BuildProps(Transform parent)
     {
-        var envRoot = new GameObject("Environment");
-        envRoot.transform.position = Vector3.zero;
+        // Well — center of courtyard area
+        PlaceSortedTile(116, 10, 5, parent, 5, "Well");
 
+        // Barrel — near House 1
+        PlaceSortedTile(45, 6, 6, parent, 5, "Barrel1");
+
+        // Sign post — at path crossing
+        PlaceSortedTile(82, 11, 8, parent, 5, "SignPost");
+
+        // Table near House 2
+        PlaceSortedTile(46, 13, 6, parent, 5, "Table1");
+
+        // Another barrel near gate
+        PlaceSortedTile(45, 8, 3, parent, 5, "Barrel2");
+
+        // Flowers scattered in the village
+        PlaceTile(3, 7, 8, parent, -998, "Flower1");
+        PlaceTile(3, 12, 5, parent, -998, "Flower2");
+        PlaceTile(3, 3, 9, parent, -998, "Flower3");
+        PlaceTile(3, 16, 9, parent, -998, "Flower4");
+
+        // Mushrooms
+        PlaceSortedTile(29, 2, 5, parent, 0, "Mushroom1");
+        PlaceSortedTile(29, 17, 10, parent, 0, "Mushroom2");
+
+        // Small bush/shrub decorations
+        PlaceSortedTile(28, 7, 10, parent, 0, "Shrub1");
+        PlaceSortedTile(15, 12, 10, parent, 0, "Bush1");
+        PlaceSortedTile(28, 6, 4, parent, 0, "Shrub2");
+    }
+
+    // ---------- ENVIRONMENT — trees & nature ----------
+
+    private void BuildEnvironment(Transform parent)
+    {
         System.Random rng = new System.Random(42);
 
-        // ---- PERIMETER TREES (ring around the village) ----
-        string[] treeTiles = {
-            TinyTileset.TT_TreeGreen, TinyTileset.TT_TreeGreenAlt,
-            TinyTileset.TT_TreeAutumn, TinyTileset.TT_TreeAutumnAlt,
-            TinyTileset.TT_TreePine
-        };
+        // Tree tile indices to choose from
+        int[] treeTiles = { 4, 7, 8, 9 }; // small, pine L, pine R, autumn
 
-        // Top edge trees
-        for (int x = 0; x < GridW; x++)
+        // --- North edge (y=12..14) ---
+        for (int y = 12; y <= 14; y++)
         {
-            if (rng.NextDouble() < 0.7)
-                PlaceSortedSprite(treeTiles[rng.Next(treeTiles.Length)],
-                    new Vector3(x, GridH - 1, 0f), envRoot.transform, $"TreeT_{x}");
-            if (rng.NextDouble() < 0.5)
-                PlaceSortedSprite(treeTiles[rng.Next(treeTiles.Length)],
-                    new Vector3(x, GridH - 2, 0f), envRoot.transform, $"TreeT2_{x}");
-        }
-        // Bottom edge trees (gap for entrance)
-        for (int x = 0; x < GridW; x++)
-        {
-            if (x >= 13 && x <= 17) continue; // Gate opening
-            if (rng.NextDouble() < 0.7)
-                PlaceSortedSprite(treeTiles[rng.Next(treeTiles.Length)],
-                    new Vector3(x, 0f, 0f), envRoot.transform, $"TreeB_{x}");
-            if (rng.NextDouble() < 0.5)
-                PlaceSortedSprite(treeTiles[rng.Next(treeTiles.Length)],
-                    new Vector3(x, 1f, 0f), envRoot.transform, $"TreeB2_{x}");
-        }
-        // Left edge trees
-        for (int y = 2; y < GridH - 2; y++)
-        {
-            if (rng.NextDouble() < 0.7)
-                PlaceSortedSprite(treeTiles[rng.Next(treeTiles.Length)],
-                    new Vector3(0f, y, 0f), envRoot.transform, $"TreeL_{y}");
-            if (rng.NextDouble() < 0.5)
-                PlaceSortedSprite(treeTiles[rng.Next(treeTiles.Length)],
-                    new Vector3(1f, y, 0f), envRoot.transform, $"TreeL2_{y}");
-        }
-        // Right edge trees
-        for (int y = 2; y < GridH - 2; y++)
-        {
-            if (rng.NextDouble() < 0.7)
-                PlaceSortedSprite(treeTiles[rng.Next(treeTiles.Length)],
-                    new Vector3(GridW - 1, y, 0f), envRoot.transform, $"TreeR_{y}");
-            if (rng.NextDouble() < 0.5)
-                PlaceSortedSprite(treeTiles[rng.Next(treeTiles.Length)],
-                    new Vector3(GridW - 2, y, 0f), envRoot.transform, $"TreeR2_{y}");
+            for (int x = 0; x < GridW; x++)
+            {
+                if (rng.NextDouble() < 0.65)
+                {
+                    int t = treeTiles[rng.Next(treeTiles.Length)];
+                    PlaceSortedTile(t, x, y, parent, 0, $"TreeN_{x}_{y}");
+                }
+            }
         }
 
-        // ---- INTERIOR DECORATIVE TREES (scattered) ----
-        PlaceSortedSprite(TinyTileset.TT_TreeGreen, new Vector3(10f, 10f, 0f),
-            envRoot.transform, "VTree1");
-        PlaceSortedSprite(TinyTileset.TT_TreeGreenAlt, new Vector3(13f, 8f, 0f),
-            envRoot.transform, "VTree2");
-        PlaceSortedSprite(TinyTileset.TT_TreeAutumn, new Vector3(17f, 8f, 0f),
-            envRoot.transform, "VTree3");
-        PlaceSortedSprite(TinyTileset.TT_TreePine, new Vector3(10f, 15f, 0f),
-            envRoot.transform, "VTree4");
-        PlaceSortedSprite(TinyTileset.TT_TreeGreen, new Vector3(20f, 15f, 0f),
-            envRoot.transform, "VTree5");
+        // --- South edge (y=0..2), gap at x=9..11 for path ---
+        for (int y = 0; y <= 2; y++)
+        {
+            for (int x = 0; x < GridW; x++)
+            {
+                if (x >= 9 && x <= 11 && y <= 1) continue; // path gap
+                if (rng.NextDouble() < 0.60)
+                {
+                    int t = treeTiles[rng.Next(treeTiles.Length)];
+                    PlaceSortedTile(t, x, y, parent, 0, $"TreeS_{x}_{y}");
+                }
+            }
+        }
 
-        // ---- BUSHES near paths ----
-        PlaceSortedSprite(TinyTileset.TT_BushGreen, new Vector3(14f, 10f, 0f),
-            envRoot.transform, "Bush1");
-        PlaceSortedSprite(TinyTileset.TT_BushGreenAlt, new Vector3(16f, 10f, 0f),
-            envRoot.transform, "Bush2");
-        PlaceSortedSprite(TinyTileset.TT_BushAutumn, new Vector3(12f, 12f, 0f),
-            envRoot.transform, "Bush3");
+        // --- West edge (x=0..1, y=3..11) ---
+        for (int y = 3; y <= 11; y++)
+        {
+            for (int x = 0; x <= 1; x++)
+            {
+                if (rng.NextDouble() < 0.55)
+                {
+                    int t = treeTiles[rng.Next(treeTiles.Length)];
+                    PlaceSortedTile(t, x, y, parent, 0, $"TreeW_{x}_{y}");
+                }
+            }
+        }
 
-        // ---- FLOWERS (bright, cute!) ----
-        PlaceSortedSprite(TinyTileset.TT_FlowerRed, new Vector3(11f, 14f, 0f),
-            envRoot.transform, "Flower1");
-        PlaceSortedSprite(TinyTileset.TT_FlowerYellow, new Vector3(18f, 14f, 0f),
-            envRoot.transform, "Flower2");
-        PlaceSortedSprite(TinyTileset.TT_FlowerBlue, new Vector3(13f, 17f, 0f),
-            envRoot.transform, "Flower3");
-        PlaceSortedSprite(TinyTileset.TT_FlowerRed, new Vector3(17f, 17f, 0f),
-            envRoot.transform, "Flower4");
-        PlaceSortedSprite(TinyTileset.TT_FlowerYellow, new Vector3(9f, 6f, 0f),
-            envRoot.transform, "Flower5");
-        PlaceSortedSprite(TinyTileset.TT_FlowerBlue, new Vector3(21f, 6f, 0f),
-            envRoot.transform, "Flower6");
+        // --- East edge (x=18..19, y=3..11) ---
+        for (int y = 3; y <= 11; y++)
+        {
+            for (int x = 18; x <= 19; x++)
+            {
+                if (rng.NextDouble() < 0.55)
+                {
+                    int t = treeTiles[rng.Next(treeTiles.Length)];
+                    PlaceSortedTile(t, x, y, parent, 0, $"TreeE_{x}_{y}");
+                }
+            }
+        }
 
-        // ---- ROCKS ----
-        PlaceSortedSprite(TinyTileset.TT_RockSmall, new Vector3(3f, 5f, 0f),
-            envRoot.transform, "Rock1");
-        PlaceSortedSprite(TinyTileset.TT_RockLarge, new Vector3(26f, 5f, 0f),
-            envRoot.transform, "Rock2");
-        PlaceSortedSprite(TinyTileset.TT_RockSmall, new Vector3(3f, 20f, 0f),
-            envRoot.transform, "Rock3");
-
-        // ---- SMALL POND (water tiles) ----
-        // A small 3x2 pond south-west of center
-        PlaceSortedSprite(TinyTileset.TT_WaterCornerTL, new Vector3(8f, 6f, 0f),
-            envRoot.transform, "PondTL");
-        PlaceSortedSprite(TinyTileset.TT_WaterEdgeN, new Vector3(9f, 6f, 0f),
-            envRoot.transform, "PondTM");
-        PlaceSortedSprite(TinyTileset.TT_WaterCornerTR, new Vector3(10f, 6f, 0f),
-            envRoot.transform, "PondTR");
-        PlaceSortedSprite(TinyTileset.TT_WaterCornerBL, new Vector3(8f, 5f, 0f),
-            envRoot.transform, "PondBL");
-        PlaceSortedSprite(TinyTileset.TT_WaterEdgeS, new Vector3(9f, 5f, 0f),
-            envRoot.transform, "PondBM");
-        PlaceSortedSprite(TinyTileset.TT_WaterCornerBR, new Vector3(10f, 5f, 0f),
-            envRoot.transform, "PondBR");
-        // Water lily
-        PlaceSortedSprite(TinyTileset.TT_WaterLily, new Vector3(9f, 5.5f, 0f),
-            envRoot.transform, "PondLily");
-
-        // ---- BRIDGE over pond approach ----
-        PlaceSortedSprite(TinyTileset.TT_BridgeHoriz, new Vector3(11f, 5f, 0f),
-            envRoot.transform, "Bridge1");
-        PlaceSortedSprite(TinyTileset.TT_BridgeHoriz, new Vector3(11f, 6f, 0f),
-            envRoot.transform, "Bridge2");
-
-        // ---- VILLAGE ENTRANCE (south) ----
-        // Stone gate entrance
-        PlaceSortedSprite(TinyTileset.TT_StoneTowerL, new Vector3(13f, 2f, 0f),
-            envRoot.transform, "GateTowerL");
-        PlaceSortedSprite(TinyTileset.TT_StoneTowerR, new Vector3(17f, 2f, 0f),
-            envRoot.transform, "GateTowerR");
-        PlaceSortedSprite(TinyTileset.TT_StoneWallM, new Vector3(14f, 2f, 0f),
-            envRoot.transform, "GateWallL");
-        PlaceSortedSprite(TinyTileset.TT_StoneWallM, new Vector3(16f, 2f, 0f),
-            envRoot.transform, "GateWallR");
-
-        // Lamp posts at entrance
-        PlaceSortedSprite(TinyTileset.TT_Lamp, new Vector3(14f, 3f, 0f),
-            envRoot.transform, "GateLampL");
-        PlaceSortedSprite(TinyTileset.TT_Lamp, new Vector3(16f, 3f, 0f),
-            envRoot.transform, "GateLampR");
-
-        // ---- STUMPS (logging area, east edge) ----
-        PlaceSortedSprite(TinyTileset.TT_Stump, new Vector3(25f, 10f, 0f),
-            envRoot.transform, "Stump1");
-        PlaceSortedSprite(TinyTileset.TT_Stump, new Vector3(26f, 11f, 0f),
-            envRoot.transform, "Stump2");
-        PlaceSortedSprite(TinyTileset.TT_LogHoriz, new Vector3(25f, 11f, 0f),
-            envRoot.transform, "Log1");
-
-        // ---- MUSHROOMS (cute!) ----
-        PlaceSortedSprite(TinyTileset.TT_Mushroom, new Vector3(3f, 15f, 0f),
-            envRoot.transform, "Mushroom1");
-        PlaceSortedSprite(TinyTileset.TT_Mushroom, new Vector3(27f, 18f, 0f),
-            envRoot.transform, "Mushroom2");
+        // --- Scattered interior trees for flavor ---
+        PlaceSortedTile(4, 3, 10, parent, 0, "IntTree1");
+        PlaceSortedTile(9, 16, 5, parent, 0, "IntTree2");
+        PlaceSortedTile(4, 7, 12, parent, 0, "IntTree3");
+        PlaceSortedTile(11, 13, 12, parent, 0, "IntTree4"); // autumn tall
     }
 
     // ---------------------------------------------------------------
-    //  PLAYER — single Tiny Dungeon character tile
+    //  PLAYER — Tiny Dungeon character tile
     // ---------------------------------------------------------------
 
     private void BuildPlayer()
@@ -742,12 +515,11 @@ public class RoamingBootstrap : MonoBehaviour
         var sr = _player.AddComponent<SpriteRenderer>();
         sr.sortingOrder = 100;
 
-        // Load the knight character tile as player sprite
-        var idle = LoadSprite(TinyTileset.TD_KnightM);
+        // Load the knight character as player sprite
+        var idle = LoadSprite(TinyTileset.TD_Knight);
         if (idle != null) sr.sprite = idle;
 
         var ctrl = _player.AddComponent<PlayerController>();
-        // No run frames for 16x16 single-tile characters — just idle
         ctrl.ConfigureAtRuntime(_playerWalkSpeed, sr, idle, null);
 
         _player.AddComponent<InteractionFinder>();
@@ -780,37 +552,36 @@ public class RoamingBootstrap : MonoBehaviour
 
     /// <summary>
     /// Returns the Tiny Dungeon character tile path for a given NPC profession.
-    /// Each NPC gets a distinct character sprite.
     /// </summary>
     private static string GetNPCSpritePath(NPCManager.NPCData npc)
     {
         return npc.Profession switch
         {
-            NPCPersona.NPCProfession.Vassal   => TinyTileset.TD_KnightF,   // Aldric — armored knight
-            NPCPersona.NPCProfession.Soldier   => TinyTileset.TD_Viking,    // Bram — tough warrior
-            NPCPersona.NPCProfession.Farmer    => TinyTileset.TD_Peasant,   // Marta — simple farmer
-            NPCPersona.NPCProfession.Merchant  => TinyTileset.TD_Rogue,     // Sivaro — shifty merchant
-            NPCPersona.NPCProfession.Mage      => TinyTileset.TD_Mage,
-            NPCPersona.NPCProfession.Priest    => TinyTileset.TD_Priest,
-            NPCPersona.NPCProfession.Scout     => TinyTileset.TD_Ranger,
-            NPCPersona.NPCProfession.Blacksmith => TinyTileset.TD_Dwarf,
-            _ => TinyTileset.TD_Elf,
+            NPCPersona.NPCProfession.Vassal    => TinyTileset.TD_Knight,      // armored knight
+            NPCPersona.NPCProfession.Soldier   => TinyTileset.TD_RedHair,     // tough warrior
+            NPCPersona.NPCProfession.Farmer    => TinyTileset.TD_BrownHair,   // simple farmer
+            NPCPersona.NPCProfession.Merchant  => TinyTileset.TD_Archer,      // merchant
+            NPCPersona.NPCProfession.Mage      => TinyTileset.TD_Wizard,      // purple hat wizard
+            NPCPersona.NPCProfession.Priest    => TinyTileset.TD_Blonde,      // blonde priest
+            NPCPersona.NPCProfession.Scout     => TinyTileset.TD_DarkFemale,  // scout
+            NPCPersona.NPCProfession.Blacksmith => TinyTileset.TD_LightChar,  // blacksmith
+            _ => TinyTileset.TD_Bard,
         };
     }
 
     /// <summary>
     /// Returns a default spawn position for an NPC based on profession,
-    /// placing them near their relevant buildings.
+    /// placing them near relevant buildings.
     /// </summary>
     private static Vector3 GetNPCDefaultPosition(NPCManager.NPCData npc)
     {
         return npc.Profession switch
         {
-            NPCPersona.NPCProfession.Vassal   => new Vector3(14f, 13f, 0f),  // Near castle
-            NPCPersona.NPCProfession.Soldier   => new Vector3(6f, 10f, 0f),   // Near barracks
-            NPCPersona.NPCProfession.Farmer    => new Vector3(21f, 19f, 0f),  // Near farm
-            NPCPersona.NPCProfession.Merchant  => new Vector3(20f, 10f, 0f),  // Near market
-            _ => new Vector3(15f, 10f, 0f),  // Center
+            NPCPersona.NPCProfession.Vassal   => new Vector3(10f, 9f, 0f),   // Near castle
+            NPCPersona.NPCProfession.Soldier  => new Vector3(8f, 8f, 0f),    // Courtyard
+            NPCPersona.NPCProfession.Farmer   => new Vector3(6f, 5f, 0f),    // Near well
+            NPCPersona.NPCProfession.Merchant => new Vector3(13f, 7f, 0f),   // Near House 2
+            _ => new Vector3(10f, 6f, 0f),  // Center courtyard
         };
     }
 
@@ -856,7 +627,6 @@ public class RoamingBootstrap : MonoBehaviour
     {
         var promptGO = new GameObject("InteractPrompt");
         promptGO.transform.SetParent(npcRoot.transform, false);
-        // Position above the character (scaled up by CharacterScale)
         promptGO.transform.localPosition = new Vector3(0f, 1.2f, 0f);
 
         var canvas = promptGO.AddComponent<Canvas>();
@@ -867,18 +637,16 @@ public class RoamingBootstrap : MonoBehaviour
         rt.sizeDelta = new Vector2(280f, 50f);
         rt.localScale = new Vector3(0.008f, 0.008f, 0.008f);
 
-        // Bright semi-transparent background (cute style, not dark)
         var bgGO = new GameObject("PromptBG");
         bgGO.transform.SetParent(promptGO.transform, false);
         var bgImg = bgGO.AddComponent<UnityEngine.UI.Image>();
-        bgImg.color = new Color(0.95f, 0.9f, 0.7f, 0.85f); // Warm parchment
+        bgImg.color = new Color(0.95f, 0.9f, 0.7f, 0.85f);
         var bgRT = bgGO.GetComponent<RectTransform>();
         bgRT.anchorMin = Vector2.zero;
         bgRT.anchorMax = Vector2.one;
         bgRT.offsetMin = new Vector2(-10f, -4f);
         bgRT.offsetMax = new Vector2(10f, 4f);
 
-        // Border accent (warm brown)
         var borderGO = new GameObject("PromptBorder");
         borderGO.transform.SetParent(bgGO.transform, false);
         var borderImg = borderGO.AddComponent<UnityEngine.UI.Image>();
@@ -896,7 +664,7 @@ public class RoamingBootstrap : MonoBehaviour
         tmp.text = $"E   Talk to {npcName}";
         tmp.fontSize = 28;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = new Color(0.2f, 0.15f, 0.1f); // Dark brown text on light bg
+        tmp.color = new Color(0.2f, 0.15f, 0.1f);
         tmp.richText = false;
         tmp.enableWordWrapping = false;
         var lblRT = tmp.rectTransform;

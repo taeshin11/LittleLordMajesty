@@ -309,11 +309,11 @@ public class DialogueBoxUI : MonoBehaviour
         {
             // Map NPC to character tile (same mapping as RoamingBootstrap)
             string spritePath = npcId switch {
-                "vassal_01"  => TinyTileset.TD_KnightF,
-                "soldier_01" => TinyTileset.TD_Viking,
-                "farmer_01"  => TinyTileset.TD_Peasant,
-                "merchant_01" => TinyTileset.TD_Rogue,
-                _ => TinyTileset.TD_Elf
+                "vassal_01"  => TinyTileset.TD_Knight,
+                "soldier_01" => TinyTileset.TD_RedHair,
+                "farmer_01"  => TinyTileset.TD_BrownHair,
+                "merchant_01" => TinyTileset.TD_Archer,
+                _ => TinyTileset.TD_Bard
             };
             var p = Resources.Load<Sprite>(spritePath);
             if (p != null) _portrait.sprite = p;
