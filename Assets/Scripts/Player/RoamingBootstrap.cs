@@ -39,12 +39,37 @@ public class RoamingBootstrap : MonoBehaviour
         Object.DontDestroyOnLoad(host);
     }
 
+    private bool _subscribed;
+
     private void Start()
     {
-        // Wait until GameManager is up. CastleScene3D already defers NPC
-        // spawns the same way — we piggyback on the same lifecycle.
-        if (GameManager.Instance != null)
-            GameManager.Instance.OnGameStateChanged += OnStateChanged;
+        // We're attached via RuntimeInitializeOnLoadMethod(AfterSceneLoad),
+        // which runs BEFORE any MonoBehaviour.Start. That means Start() can
+        // (and usually does) execute before GameManager.Instance is
+        // populated — the singleton is set in its own Awake, which may
+        // fire later in the same frame. A naive null-check here drops the
+        // event subscription on the floor and we never retire the card UI
+        // or build the roaming world.
+        //
+        // Instead, poll in Update until GameManager is up, then subscribe
+        // and try to spawn. TrySpawn is also called inside Update() so we
+        // transition into the Castle state the moment UIManager toggles it.
+        TrySubscribeAndSpawn();
+    }
+
+    private void Update()
+    {
+        if (!_subscribed) TrySubscribeAndSpawn();
+        else if (!_spawned) TrySpawn();
+    }
+
+    private void TrySubscribeAndSpawn()
+    {
+        if (_subscribed) return;
+        var gm = GameManager.Instance;
+        if (gm == null) return;
+        gm.OnGameStateChanged += OnStateChanged;
+        _subscribed = true;
         TrySpawn();
     }
 
@@ -99,6 +124,13 @@ public class RoamingBootstrap : MonoBehaviour
             "DialoguePanel",
             "EventPanel",
             "TutorialOverlay",
+            // M16-07b: TopHUD is the Wood/Food/Gold/Population resource
+            // bar + "Little Lord / Year 1, Day 1" header that was left
+            // over from the card-grid UI. ActionBar is the bottom
+            // Build/Save/NPCs/Map/Options/Pause row. Both hidden during
+            // pivot — a cleaner minimal HUD will come back in M17+.
+            "TopHUD",
+            "ActionBar",
         };
         foreach (var name in retireNames)
         {
