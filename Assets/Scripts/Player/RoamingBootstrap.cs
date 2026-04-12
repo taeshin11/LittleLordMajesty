@@ -8,7 +8,7 @@ using TMPro;
 /// 3D top-down perspective: camera angled ~45° looking down at XZ ground plane.
 /// Buildings use Castle Kit + Fantasy Town Kit FBX models.
 /// Trees/nature use Nature Kit FBX models.
-/// Characters keep procedural primitives (capsule+sphere) with better colors.
+/// Characters use blocky cube humanoids (Minecraft/Crossy Road style) via CharacterBuilder.
 /// </summary>
 public class RoamingBootstrap : MonoBehaviour
 {
@@ -301,43 +301,17 @@ public class RoamingBootstrap : MonoBehaviour
         _player = new GameObject("Player");
         _player.transform.position = _playerSpawn;
 
-        // Visual root for walk bob
-        var visualRoot = new GameObject("Visual");
-        visualRoot.transform.SetParent(_player.transform, false);
-
-        // Scale down entire character for miniature/cozy feel
-        visualRoot.transform.localScale = Vector3.one * 0.65f;
-
-        // Body (capsule) — royal purple, slightly compact for cute proportions
-        var body = CreateVisualPrimitive(PrimitiveType.Capsule, "Body");
-        body.transform.SetParent(visualRoot.transform, false);
-        body.transform.localPosition = new Vector3(0f, 0.7f, 0f);
-        body.transform.localScale = new Vector3(0.4f, 0.45f, 0.4f);
-        ApplyColor(body, new Color(0.55f, 0.28f, 0.78f)); // Brighter royal purple
-
-        // Head (sphere) — bigger for chibi/cute proportions
-        var head = CreateVisualPrimitive(PrimitiveType.Sphere, "Head");
-        head.transform.SetParent(visualRoot.transform, false);
-        head.transform.localPosition = new Vector3(0f, 1.4f, 0f);
-        head.transform.localScale = Vector3.one * 0.5f;
-        ApplyColor(head, new Color(0.90f, 0.76f, 0.62f));
-
-        // Eyes — two tiny black spheres on the front of the head
-        for (int side = -1; side <= 1; side += 2)
+        // Blocky humanoid via CharacterBuilder
+        var playerConfig = new CharacterBuilder.CharacterConfig
         {
-            var eye = CreateVisualPrimitive(PrimitiveType.Sphere, "Eye");
-            eye.transform.SetParent(visualRoot.transform, false);
-            eye.transform.localPosition = new Vector3(side * 0.1f, 1.43f, 0.2f);
-            eye.transform.localScale = Vector3.one * 0.06f;
-            ApplyColor(eye, new Color(0.08f, 0.06f, 0.06f));
-        }
-
-        // Crown (small gold cube on top of head)
-        var crown = CreateVisualPrimitive(PrimitiveType.Cube, "Crown");
-        crown.transform.SetParent(visualRoot.transform, false);
-        crown.transform.localPosition = new Vector3(0f, 1.72f, 0f);
-        crown.transform.localScale = new Vector3(0.35f, 0.12f, 0.35f);
-        ApplyColor(crown, new Color(0.95f, 0.78f, 0.12f)); // Brighter gold
+            bodyColor  = new Color(0.45f, 0.25f, 0.65f),  // royal purple
+            pantsColor = new Color(0.3f, 0.15f, 0.45f),   // dark purple
+            skinColor  = new Color(0.92f, 0.78f, 0.62f),  // warm skin
+            hairColor  = new Color(0.4f, 0.25f, 0.12f),   // brown
+            hasHair    = true,
+            accessory  = CharacterBuilder.AccessoryType.Crown,
+        };
+        var visualRoot = CharacterBuilder.BuildCharacter(_player.transform, playerConfig);
 
         var ctrl = _player.AddComponent<PlayerController>();
         ctrl.ConfigureAtRuntime(_playerWalkSpeed, visualRoot.transform);
@@ -380,73 +354,9 @@ public class RoamingBootstrap : MonoBehaviour
         // Use 3D world positions directly (XZ ground plane)
         root.transform.position = new Vector3(npc.WorldPosition.x, 0f, npc.WorldPosition.z);
 
-        // Determine colors based on profession — more saturated for visibility
-        Color bodyColor = npc.Profession switch
-        {
-            NPCPersona.NPCProfession.Soldier  => new Color(0.75f, 0.22f, 0.18f), // Bright red armor
-            NPCPersona.NPCProfession.Farmer   => new Color(0.30f, 0.72f, 0.25f), // Vivid green tunic
-            NPCPersona.NPCProfession.Merchant => new Color(0.85f, 0.65f, 0.10f), // Rich gold/yellow
-            NPCPersona.NPCProfession.Vassal   => new Color(0.55f, 0.30f, 0.80f), // Bright purple
-            NPCPersona.NPCProfession.Scholar  => new Color(0.25f, 0.50f, 0.85f), // Bright blue robes
-            NPCPersona.NPCProfession.Priest   => new Color(0.95f, 0.93f, 0.88f), // Bright white robes
-            NPCPersona.NPCProfession.Spy      => new Color(0.18f, 0.18f, 0.25f), // Dark cloak
-            _                                  => new Color(0.5f, 0.5f, 0.5f),
-        };
-        // Vary skin tones slightly per NPC for visual differentiation
-        int nameHash = npc.Name?.GetHashCode() ?? 0;
-        float skinVar = (Mathf.Abs(nameHash) % 20) * 0.01f; // 0..0.19
-        Color skinColor = new Color(0.85f + skinVar * 0.3f, 0.70f + skinVar, 0.55f + skinVar * 0.5f);
-
-        // Profession-specific body proportions
-        Vector3 bodyScale = npc.Profession switch
-        {
-            NPCPersona.NPCProfession.Soldier  => new Vector3(0.50f, 0.48f, 0.50f), // Wider, stocky
-            NPCPersona.NPCProfession.Merchant => new Vector3(0.38f, 0.55f, 0.38f), // Taller, thinner
-            NPCPersona.NPCProfession.Farmer   => new Vector3(0.42f, 0.42f, 0.42f), // Shorter, compact
-            NPCPersona.NPCProfession.Priest   => new Vector3(0.44f, 0.52f, 0.44f), // Tall, flowing robes
-            NPCPersona.NPCProfession.Scholar  => new Vector3(0.36f, 0.50f, 0.36f), // Thin, tall
-            NPCPersona.NPCProfession.Spy      => new Vector3(0.38f, 0.50f, 0.38f), // Lean
-            _                                  => new Vector3(0.40f, 0.48f, 0.40f),
-        };
-        float bodyY = npc.Profession switch
-        {
-            NPCPersona.NPCProfession.Farmer => 0.65f,  // Shorter
-            NPCPersona.NPCProfession.Merchant => 0.80f, // Taller
-            _ => 0.72f,
-        };
-
-        // Visual root for walk bob — miniature scale for cozy feel
-        var visualRoot = new GameObject("Visual");
-        visualRoot.transform.SetParent(root.transform, false);
-        visualRoot.transform.localScale = Vector3.one * 0.65f;
-
-        // Body (capsule) — profession-specific proportions
-        var body = CreateVisualPrimitive(PrimitiveType.Capsule, "Body");
-        body.transform.SetParent(visualRoot.transform, false);
-        body.transform.localPosition = new Vector3(0f, bodyY, 0f);
-        body.transform.localScale = bodyScale;
-        ApplyColor(body, bodyColor);
-
-        // Head (sphere) — bigger for cute chibi look
-        float headY = bodyY + 0.68f;
-        var head = CreateVisualPrimitive(PrimitiveType.Sphere, "Head");
-        head.transform.SetParent(visualRoot.transform, false);
-        head.transform.localPosition = new Vector3(0f, headY, 0f);
-        head.transform.localScale = Vector3.one * 0.48f;
-        ApplyColor(head, skinColor);
-
-        // Eyes — two tiny black spheres on the front of the head
-        for (int side = -1; side <= 1; side += 2)
-        {
-            var eye = CreateVisualPrimitive(PrimitiveType.Sphere, "Eye");
-            eye.transform.SetParent(visualRoot.transform, false);
-            eye.transform.localPosition = new Vector3(side * 0.09f, headY + 0.02f, 0.19f);
-            eye.transform.localScale = Vector3.one * 0.055f;
-            ApplyColor(eye, new Color(0.08f, 0.06f, 0.06f));
-        }
-
-        // Profession accessory
-        SpawnProfessionAccessory(visualRoot.transform, npc.Profession);
+        // Build blocky humanoid via CharacterBuilder
+        var config = GetNPCCharacterConfig(npc);
+        var visualRoot = CharacterBuilder.BuildCharacter(root.transform, config);
 
         var identity = root.AddComponent<NPCIdentity>();
         identity.SetIdentity(npc.Id, npc.Name);
@@ -463,64 +373,99 @@ public class RoamingBootstrap : MonoBehaviour
         _npcObjects[npc.Id] = root;
     }
 
-    private void SpawnProfessionAccessory(Transform parent, NPCPersona.NPCProfession profession)
+    /// <summary>
+    /// Maps NPC profession to a blocky CharacterBuilder config with distinct colors and accessories.
+    /// </summary>
+    private static CharacterBuilder.CharacterConfig GetNPCCharacterConfig(NPCManager.NPCData npc)
     {
-        switch (profession)
+        // Vary skin tones slightly per NPC for visual differentiation
+        int nameHash = npc.Name?.GetHashCode() ?? 0;
+        float skinVar = (Mathf.Abs(nameHash) % 20) * 0.01f;
+        Color defaultSkin = new Color(0.85f + skinVar * 0.3f, 0.70f + skinVar, 0.55f + skinVar * 0.5f);
+
+        return npc.Profession switch
         {
-            case NPCPersona.NPCProfession.Soldier:
-                // Helmet — small dark sphere on top of head
-                var helmet = CreateVisualPrimitive(PrimitiveType.Sphere, "Helmet");
-                helmet.transform.SetParent(parent, false);
-                helmet.transform.localPosition = new Vector3(0f, 1.65f, 0f);
-                helmet.transform.localScale = Vector3.one * 0.25f;
-                ApplyColor(helmet, new Color(0.4f, 0.4f, 0.45f));
-                break;
-
-            case NPCPersona.NPCProfession.Merchant:
-                // Hat — flat cube on head
-                var hat = CreateVisualPrimitive(PrimitiveType.Cube, "Hat");
-                hat.transform.SetParent(parent, false);
-                hat.transform.localPosition = new Vector3(0f, 1.63f, 0f);
-                hat.transform.localScale = new Vector3(0.35f, 0.08f, 0.35f);
-                ApplyColor(hat, new Color(0.55f, 0.40f, 0.08f));
-                break;
-
-            case NPCPersona.NPCProfession.Farmer:
-                // Straw hat — wider flat disk
-                var strawHat = CreateVisualPrimitive(PrimitiveType.Cylinder, "StrawHat");
-                strawHat.transform.SetParent(parent, false);
-                strawHat.transform.localPosition = new Vector3(0f, 1.62f, 0f);
-                strawHat.transform.localScale = new Vector3(0.45f, 0.04f, 0.45f);
-                ApplyColor(strawHat, new Color(0.75f, 0.65f, 0.30f));
-                break;
-
-            case NPCPersona.NPCProfession.Priest:
-                // Tall mitre (thin tall cube)
-                var mitre = CreateVisualPrimitive(PrimitiveType.Cube, "Mitre");
-                mitre.transform.SetParent(parent, false);
-                mitre.transform.localPosition = new Vector3(0f, 1.72f, 0f);
-                mitre.transform.localScale = new Vector3(0.15f, 0.2f, 0.15f);
-                ApplyColor(mitre, new Color(0.90f, 0.88f, 0.80f));
-                break;
-
-            case NPCPersona.NPCProfession.Scholar:
-                // Book — small cube held in front
-                var book = CreateVisualPrimitive(PrimitiveType.Cube, "Book");
-                book.transform.SetParent(parent, false);
-                book.transform.localPosition = new Vector3(0f, 0.8f, 0.3f);
-                book.transform.localScale = new Vector3(0.15f, 0.2f, 0.1f);
-                ApplyColor(book, new Color(0.35f, 0.20f, 0.10f));
-                break;
-
-            case NPCPersona.NPCProfession.Spy:
-                // Hood — dark sphere slightly forward on head
-                var hood = CreateVisualPrimitive(PrimitiveType.Sphere, "Hood");
-                hood.transform.SetParent(parent, false);
-                hood.transform.localPosition = new Vector3(0f, 1.50f, 0.05f);
-                hood.transform.localScale = Vector3.one * 0.38f;
-                ApplyColor(hood, new Color(0.12f, 0.12f, 0.15f));
-                break;
-        }
+            // Vassal (Aldric): blue tunic, dark pants, dark hair, no accessory
+            NPCPersona.NPCProfession.Vassal => new CharacterBuilder.CharacterConfig
+            {
+                bodyColor  = new Color(0.25f, 0.40f, 0.75f),   // blue tunic
+                pantsColor = new Color(0.2f, 0.2f, 0.25f),     // dark pants
+                skinColor  = defaultSkin,
+                hairColor  = new Color(0.18f, 0.12f, 0.08f),   // dark hair
+                hasHair    = true,
+                accessory  = CharacterBuilder.AccessoryType.None,
+            },
+            // Soldier (Bram): gray metal body, brown pants, light skin, Helmet
+            NPCPersona.NPCProfession.Soldier => new CharacterBuilder.CharacterConfig
+            {
+                bodyColor  = new Color(0.55f, 0.55f, 0.60f),   // gray metal
+                pantsColor = new Color(0.45f, 0.30f, 0.18f),   // brown pants
+                skinColor  = new Color(0.92f, 0.82f, 0.72f),   // light skin
+                hairColor  = Color.clear,
+                hasHair    = false,
+                accessory  = CharacterBuilder.AccessoryType.Helmet,
+            },
+            // Farmer (Marta): green tunic, brown pants, red hair, StrawHat
+            NPCPersona.NPCProfession.Farmer => new CharacterBuilder.CharacterConfig
+            {
+                bodyColor  = new Color(0.30f, 0.65f, 0.25f),   // green tunic
+                pantsColor = new Color(0.45f, 0.30f, 0.18f),   // brown pants
+                skinColor  = defaultSkin,
+                hairColor  = new Color(0.72f, 0.25f, 0.12f),   // red hair
+                hasHair    = true,
+                accessory  = CharacterBuilder.AccessoryType.StrawHat,
+            },
+            // Merchant (Sivaro): dark red tunic, black pants, dark hair, WizardHat
+            NPCPersona.NPCProfession.Merchant => new CharacterBuilder.CharacterConfig
+            {
+                bodyColor  = new Color(0.60f, 0.15f, 0.15f),   // dark red tunic
+                pantsColor = new Color(0.12f, 0.12f, 0.12f),   // black pants
+                skinColor  = defaultSkin,
+                hairColor  = new Color(0.18f, 0.12f, 0.08f),   // dark hair
+                hasHair    = true,
+                accessory  = CharacterBuilder.AccessoryType.WizardHat,
+            },
+            // Scholar: blue robes, dark pants, no hair (bald scholar), no accessory
+            NPCPersona.NPCProfession.Scholar => new CharacterBuilder.CharacterConfig
+            {
+                bodyColor  = new Color(0.25f, 0.50f, 0.85f),
+                pantsColor = new Color(0.18f, 0.18f, 0.25f),
+                skinColor  = defaultSkin,
+                hairColor  = Color.clear,
+                hasHair    = false,
+                accessory  = CharacterBuilder.AccessoryType.None,
+            },
+            // Priest: white robes, light pants, no hair
+            NPCPersona.NPCProfession.Priest => new CharacterBuilder.CharacterConfig
+            {
+                bodyColor  = new Color(0.95f, 0.93f, 0.88f),
+                pantsColor = new Color(0.80f, 0.78f, 0.72f),
+                skinColor  = defaultSkin,
+                hairColor  = Color.clear,
+                hasHair    = false,
+                accessory  = CharacterBuilder.AccessoryType.Crown,
+            },
+            // Spy: dark cloak, dark pants, Hood
+            NPCPersona.NPCProfession.Spy => new CharacterBuilder.CharacterConfig
+            {
+                bodyColor  = new Color(0.18f, 0.18f, 0.25f),
+                pantsColor = new Color(0.12f, 0.12f, 0.15f),
+                skinColor  = defaultSkin,
+                hairColor  = Color.clear,
+                hasHair    = false,
+                accessory  = CharacterBuilder.AccessoryType.Hood,
+            },
+            // Default fallback
+            _ => new CharacterBuilder.CharacterConfig
+            {
+                bodyColor  = new Color(0.5f, 0.5f, 0.5f),
+                pantsColor = new Color(0.3f, 0.3f, 0.3f),
+                skinColor  = defaultSkin,
+                hairColor  = Color.clear,
+                hasHair    = false,
+                accessory  = CharacterBuilder.AccessoryType.None,
+            },
+        };
     }
 
     private void BuildInteractPrompt(GameObject npcRoot, string npcName)
