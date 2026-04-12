@@ -93,7 +93,7 @@ public class GameBootstrap : MonoBehaviour
             if (gm != null)
             {
                 var loc = LocalizationManager.Instance;
-                string defaultName = loc?.Get("name_default_player") ?? "Lord";
+                string defaultName = loc?.Get("name_default_player") ?? "영주님";
                 gm.NewGame(defaultName);
                 _statusText = "Running!";
                 yield break;

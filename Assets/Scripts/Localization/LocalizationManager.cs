@@ -23,7 +23,7 @@ public class LocalizationManager : MonoBehaviour
         Spanish
     }
 
-    private Language _currentLanguage = Language.English;
+    private Language _currentLanguage = Language.Korean;
     public Language CurrentLanguage => _currentLanguage;
     public string CurrentLanguageCode => GetLanguageCode(_currentLanguage);
 
