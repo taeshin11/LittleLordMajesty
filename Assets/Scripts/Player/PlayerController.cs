@@ -72,12 +72,39 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Simple transform movement on XZ, Y always 0
+        // Movement with wall collision check
         Vector3 moveDir = new Vector3(input.x, 0f, input.y).normalized;
-        transform.position = new Vector3(
-            transform.position.x + moveDir.x * _walkSpeed * Time.deltaTime,
-            0f,
-            transform.position.z + moveDir.z * _walkSpeed * Time.deltaTime);
+        float step = _walkSpeed * Time.deltaTime;
+        Vector3 origin = transform.position + Vector3.up * 0.5f; // Check from waist height
+
+        // Try full movement first
+        Vector3 newPos = transform.position + moveDir * step;
+        if (!Physics.SphereCast(origin, 0.3f, moveDir, out _, step + 0.1f))
+        {
+            newPos.y = 0f;
+            transform.position = newPos;
+        }
+        else
+        {
+            // Blocked — try sliding along X or Z axis separately
+            Vector3 slideX = new Vector3(moveDir.x, 0f, 0f);
+            if (slideX.sqrMagnitude > 0.01f && !Physics.SphereCast(origin, 0.3f, slideX.normalized, out _, step + 0.1f))
+            {
+                var p = transform.position + slideX.normalized * step;
+                p.y = 0f;
+                transform.position = p;
+            }
+            else
+            {
+                Vector3 slideZ = new Vector3(0f, 0f, moveDir.z);
+                if (slideZ.sqrMagnitude > 0.01f && !Physics.SphereCast(origin, 0.3f, slideZ.normalized, out _, step + 0.1f))
+                {
+                    var p = transform.position + slideZ.normalized * step;
+                    p.y = 0f;
+                    transform.position = p;
+                }
+            }
+        }
 
         // Face movement direction
         if (moveDir.sqrMagnitude > 0.001f)
