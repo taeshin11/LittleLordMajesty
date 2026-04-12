@@ -151,7 +151,7 @@ public class RoamingBootstrap : MonoBehaviour
         var camGO = new GameObject("RoamingCamera");
         _roamingCam = camGO.AddComponent<Camera>();
         _roamingCam.orthographic = true;
-        _roamingCam.orthographicSize = 7.5f; // see ~15 units vertically — whole village
+        _roamingCam.orthographicSize = 5.0f; // see ~15 units vertically — whole village
         _roamingCam.clearFlags = CameraClearFlags.SolidColor;
         _roamingCam.backgroundColor = GrassGreen;
         _roamingCam.nearClipPlane = 0.1f;
@@ -165,7 +165,7 @@ public class RoamingBootstrap : MonoBehaviour
         _roamingCam.transparencySortAxis = new Vector3(0f, 1f, 0f);
 
         var follow = camGO.AddComponent<FollowCamera>();
-        follow.SetOrthoSize(7.5f);
+        follow.SetOrthoSize(5.0f);
     }
 
     // ---------------------------------------------------------------
@@ -435,7 +435,7 @@ public class RoamingBootstrap : MonoBehaviour
 
         // Small bush/shrub decorations
         PlaceSortedTile(28, 7, 10, parent, 0, "Shrub1");
-        PlaceSortedTile(15, 12, 10, parent, 0, "Bush1");
+        PlaceSortedTile(5, 12, 10, parent, 0, "Tree4"); // round green tree
         PlaceSortedTile(28, 6, 4, parent, 0, "Shrub2");
     }
 
