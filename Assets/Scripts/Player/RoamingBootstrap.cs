@@ -440,9 +440,10 @@ public class RoamingBootstrap : MonoBehaviour
         System.Random rng = new System.Random(42);
 
         // Tree tile indices to choose from
-        // Tile 4=green tree, 16=green bush cluster, 28=small green bush
-        // Avoid: 7,8(pine halves), 9,15(orange autumn), 3(also autumn)
-        int[] treeTiles = { 4, 4, 4, 16, 16, 28 }; // all GREEN
+        // tile 5=round green tree, 16=round tree variant, 17=double small trees
+        // tile 28=small bush, 30=small plant
+        // AVOID tile 4 (spiky pine = dark arch look!)
+        int[] treeTiles = { 5, 5, 16, 16, 17, 28 };
 
         // --- North edge (y=12..14) ---
         for (int y = 12; y <= 14; y++)
@@ -498,9 +499,9 @@ public class RoamingBootstrap : MonoBehaviour
         }
 
         // --- Scattered interior trees for flavor ---
-        PlaceSortedTile(4, 3, 10, parent, 0, "IntTree1");
+        PlaceSortedTile(5, 3, 10, parent, 0, "IntTree1");
         PlaceSortedTile(9, 16, 5, parent, 0, "IntTree2");
-        PlaceSortedTile(4, 7, 12, parent, 0, "IntTree3");
+        PlaceSortedTile(5, 7, 12, parent, 0, "IntTree3");
         PlaceSortedTile(11, 13, 12, parent, 0, "IntTree4"); // autumn tall
     }
 
