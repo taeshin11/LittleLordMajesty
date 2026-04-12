@@ -64,6 +64,14 @@ public class RoamingBootstrap : MonoBehaviour
         return go;
     }
 
+    /// <summary>Add a BoxCollider to a building so the player can't walk through it.</summary>
+    private static void AddBuildingCollider(GameObject building, Vector3 size, Vector3 center = default)
+    {
+        var col = building.AddComponent<BoxCollider>();
+        col.size = size;
+        col.center = center == default ? new Vector3(0f, size.y / 2f, 0f) : center;
+    }
+
     // Shared material — tries several shaders, falls through to Unlit/Color
     private static Material _sharedMaterial;
     private static Material GetSharedMaterial()
@@ -515,6 +523,9 @@ public class RoamingBootstrap : MonoBehaviour
         roof.transform.localScale = new Vector3(3.2f, 0.4f, 3.2f);
         ApplyColor(roof, new Color(0.25f, 0.20f, 0.40f)); // Dark purple roof
 
+        // Keep collider — player can't walk through the castle
+        AddBuildingCollider(keep, new Vector3(3f, 3f, 3f), new Vector3(0f, 1.5f, 0f));
+
         // Flag pole
         var pole = CreateVisualPrimitive(PrimitiveType.Cylinder, "FlagPole");
         pole.transform.SetParent(keep.transform, false);
@@ -547,6 +558,8 @@ public class RoamingBootstrap : MonoBehaviour
         roof.transform.localPosition = new Vector3(0f, 1.35f, 0f);
         roof.transform.localScale = new Vector3(3.2f, 0.15f, 2.2f);
         ApplyColor(roof, new Color(0.35f, 0.25f, 0.15f));
+
+        AddBuildingCollider(barracks, new Vector3(3f, 1.2f, 2f), new Vector3(0f, 0.6f, 0f));
     }
 
     private void SpawnFarm(Transform parent)
@@ -561,6 +574,8 @@ public class RoamingBootstrap : MonoBehaviour
         barn.transform.localPosition = new Vector3(0f, 0.5f, 0f);
         barn.transform.localScale = new Vector3(1.5f, 1f, 1.5f);
         ApplyColor(barn, new Color(0.50f, 0.30f, 0.15f));
+
+        AddBuildingCollider(barn, new Vector3(1.5f, 1f, 1.5f), new Vector3(0f, 0.5f, 0f));
 
         var barnRoof = CreateVisualPrimitive(PrimitiveType.Cube, "BarnRoof");
         barnRoof.transform.SetParent(farm.transform, false);
@@ -713,6 +728,8 @@ public class RoamingBootstrap : MonoBehaviour
         wall.transform.localPosition = pos;
         wall.transform.localScale = scale;
         ApplyColor(wall, color);
+        // Walls block the player
+        var col = wall.AddComponent<BoxCollider>();
     }
 
     // ---------------------------------------------------------------
@@ -785,6 +802,12 @@ public class RoamingBootstrap : MonoBehaviour
         canopy.transform.localScale = Vector3.one * canopySize;
         float greenVar = 0.35f + (float)(rng.NextDouble() * 0.15);
         ApplyColor(canopy, new Color(0.20f, greenVar, 0.12f));
+
+        // Small collider on trunk so player walks around trees
+        var col = tree.AddComponent<CapsuleCollider>();
+        col.radius = 0.3f;
+        col.height = trunkHeight + canopySize;
+        col.center = new Vector3(0f, (trunkHeight + canopySize) / 2f, 0f);
     }
 
     private void SpawnWell(Transform parent, Vector3 position)

@@ -20,6 +20,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float _bobAmplitude = 0.06f;
 
     private Transform _visualRoot;
+    private CharacterController _cc;
     private Facing _facing = Facing.Down;
     private bool _inputLocked;
     private float _bobTimer;
@@ -32,6 +33,17 @@ public class PlayerController : MonoBehaviour
     {
         if (walkSpeed > 0f) _walkSpeed = walkSpeed;
         _visualRoot = visualRoot;
+        // Add CharacterController for physics-based collision
+        _cc = gameObject.GetComponent<CharacterController>();
+        if (_cc == null)
+        {
+            _cc = gameObject.AddComponent<CharacterController>();
+            _cc.height = 1.8f;
+            _cc.radius = 0.3f;
+            _cc.center = new Vector3(0f, 0.9f, 0f);
+            _cc.slopeLimit = 45f;
+            _cc.stepOffset = 0.3f;
+        }
     }
 
     private void OnEnable()
@@ -81,9 +93,13 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Movement on XZ plane (Y is up)
+        // Movement on XZ plane (Y is up) — CharacterController handles collision
         Vector3 moveDir = new Vector3(input.x, 0f, input.y).normalized;
-        transform.position += moveDir * (_walkSpeed * Time.deltaTime);
+        Vector3 motion = moveDir * (_walkSpeed * Time.deltaTime);
+        if (_cc != null)
+            _cc.Move(motion + Vector3.down * 9.8f * Time.deltaTime); // gravity
+        else
+            transform.position += motion;
 
         // Rotate character to face movement direction
         if (moveDir.sqrMagnitude > 0.001f)
