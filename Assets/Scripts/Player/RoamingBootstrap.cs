@@ -24,11 +24,14 @@ public class RoamingBootstrap : MonoBehaviour
 
     // Isometric tile layout constants
     // Sprites are 256x512 at PPU=128 → 2x4 world units.
-    // The "ground diamond" of an isometric tile occupies roughly the
-    // bottom 2x2 portion. We space tiles by ~1.8 to overlap slightly
-    // and form a seamless ground.
-    private const float TileSpacingX = 1.8f;
-    private const float TileSpacingY = 0.9f; // half of X for isometric feel
+    // Grass diamond is 256x144px at the bottom of the 256x512 image.
+    // Diamond width = 2.0 WU, diamond height = 1.125 WU.
+    // Slightly reduced spacing so tiles overlap and eliminate gaps.
+    private const float TileSpacingX = 1.95f;
+    private const float TileSpacingY = 1.05f;
+
+    // Character scale — people should be smaller than buildings
+    private const float CharacterScale = 0.5f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInstall()
@@ -137,9 +140,9 @@ public class RoamingBootstrap : MonoBehaviour
         var camGO = new GameObject("RoamingCamera");
         _roamingCam = camGO.AddComponent<Camera>();
         _roamingCam.orthographic = true;
-        _roamingCam.orthographicSize = 5.5f;
+        _roamingCam.orthographicSize = 4.5f;
         _roamingCam.clearFlags = CameraClearFlags.SolidColor;
-        _roamingCam.backgroundColor = new Color(0.53f, 0.81f, 0.92f); // Sky blue
+        _roamingCam.backgroundColor = new Color(0.33f, 0.30f, 0.11f); // Match grass tile edge color
         _roamingCam.nearClipPlane = 0.1f;
         _roamingCam.farClipPlane = 100f;
         _roamingCam.depth = 10;
@@ -153,7 +156,7 @@ public class RoamingBootstrap : MonoBehaviour
         _roamingCam.transparencySortAxis = new Vector3(0f, 1f, 0f);
 
         var follow = camGO.AddComponent<FollowCamera>();
-        follow.SetOrthoSize(5.5f);
+        follow.SetOrthoSize(4.5f);
     }
 
     // ---------------------------------------------------------------
@@ -201,16 +204,15 @@ public class RoamingBootstrap : MonoBehaviour
         var groundRoot = new GameObject("Ground");
         groundRoot.transform.position = Vector3.zero;
 
-        // Tile a grid of grass sprites.
-        // Grid extends well beyond the visible area.
-        int halfExtent = 8; // tiles in each direction
+        // Tile a large grid of grass sprites so no background peeks through.
+        int halfExtent = 14; // generous — covers well beyond camera view
         for (int row = -halfExtent; row <= halfExtent; row++)
         {
             for (int col = -halfExtent; col <= halfExtent; col++)
             {
                 float x = col * TileSpacingX;
                 float y = row * TileSpacingY;
-                // Stagger every other row for isometric grid
+                // Stagger odd rows by half a tile width for isometric layout
                 if (Mathf.Abs(row) % 2 == 1)
                     x += TileSpacingX * 0.5f;
 
@@ -218,26 +220,28 @@ public class RoamingBootstrap : MonoBehaviour
                     groundRoot.transform, $"Grass_{row}_{col}", -10000);
                 if (go != null)
                 {
-                    // Ground always behind everything
                     var sr = go.GetComponent<SpriteRenderer>();
                     sr.sortingOrder = -10000;
                 }
             }
         }
 
-        // Scatter some path tiles for the courtyard
-        string[] pathTiles = {
-            "Ground/grassPathStraight_S",
-            "Ground/grassPathStraight_S",
-            "Ground/grassPathCrossing_S",
-            "Ground/grassPathStraight_S",
-            "Ground/grassPathStraight_S",
-        };
-        float pathY = -5f;
-        for (int i = 0; i < pathTiles.Length; i++)
+        // Path leading from gate to village center
+        for (int i = 0; i < 6; i++)
         {
-            PlaceSprite(pathTiles[i], new Vector3(0f, pathY + i * TileSpacingY, 0f),
+            float py = -4f + i * TileSpacingY;
+            string pathTile = (i == 3) ? "Ground/grassPathCrossing_S" : "Ground/grassPathStraight_S";
+            PlaceSprite(pathTile, new Vector3(0f, py, 0f),
                 groundRoot.transform, $"Path_{i}", -9999);
+        }
+
+        // East-west path branching from the crossing
+        for (int i = 1; i <= 3; i++)
+        {
+            PlaceSprite("Ground/grassPathStraight_S", new Vector3(i * TileSpacingX, -4f + 3 * TileSpacingY, 0f),
+                groundRoot.transform, $"PathE_{i}", -9999);
+            PlaceSprite("Ground/grassPathStraight_S", new Vector3(-i * TileSpacingX, -4f + 3 * TileSpacingY, 0f),
+                groundRoot.transform, $"PathW_{i}", -9999);
         }
     }
 
@@ -249,6 +253,7 @@ public class RoamingBootstrap : MonoBehaviour
     {
         _player = new GameObject("Player");
         _player.transform.position = _playerSpawn;
+        _player.transform.localScale = new Vector3(CharacterScale, CharacterScale, 1f);
 
         var sr = _player.AddComponent<SpriteRenderer>();
         sr.sortingOrder = 100; // Will be updated dynamically
@@ -319,6 +324,7 @@ public class RoamingBootstrap : MonoBehaviour
         root.transform.SetParent(_npcRoot, false);
         // Convert 3D XZ position to 2D XY
         root.transform.position = new Vector3(npc.WorldPosition.x, npc.WorldPosition.z, 0f);
+        root.transform.localScale = new Vector3(CharacterScale, CharacterScale, 1f);
 
         int variant = GetNPCCharacterVariant(npc);
         var sr = root.AddComponent<SpriteRenderer>();
@@ -353,7 +359,7 @@ public class RoamingBootstrap : MonoBehaviour
     {
         var promptGO = new GameObject("InteractPrompt");
         promptGO.transform.SetParent(npcRoot.transform, false);
-        promptGO.transform.localPosition = new Vector3(0f, 3.5f, 0f); // Above the sprite
+        promptGO.transform.localPosition = new Vector3(0f, 5f, 0f); // Above scaled sprite (localScale=0.5 so need larger local offset)
 
         var canvas = promptGO.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
@@ -415,81 +421,119 @@ public class RoamingBootstrap : MonoBehaviour
     //  BUILDINGS — isometric sprite castle
     // ---------------------------------------------------------------
 
+    /// <summary>
+    /// Helper to compose a building from wall + roof sprites at a given anchor.
+    /// Walls are placed at (x,y), roof on top with slight offsets for depth.
+    /// </summary>
+    private void PlaceBuilding(string wallSprite, string roofSprite,
+        Vector3 pos, Transform parent, string label, float roofOffsetY = 0.55f)
+    {
+        PlaceSprite($"Buildings/{wallSprite}", pos, parent, $"{label}_Wall");
+        if (roofSprite != null)
+            PlaceSprite($"Buildings/{roofSprite}", pos + new Vector3(0f, roofOffsetY, 0f),
+                parent, $"{label}_Roof", 1);
+    }
+
     private void SpawnBuildings()
     {
         var buildRoot = new GameObject("Buildings");
         buildRoot.transform.position = Vector3.zero;
 
-        // Castle walls — place stone wall sprites around the perimeter
-        float wallSpacing = 1.8f;
-        float castleHalf = 7f;
+        // ---- CENTRAL KEEP (stone, prominent) ----
+        // Two-wall wide structure with pointed roof
+        PlaceSprite("Buildings/stoneWallStructure_S", new Vector3(-0.5f, 2f, 0f),
+            buildRoot.transform, "Keep_L");
+        PlaceSprite("Buildings/stoneWallWindow_S", new Vector3(0.5f, 2f, 0f),
+            buildRoot.transform, "Keep_R");
+        PlaceSprite("Buildings/roof_S", new Vector3(-0.5f, 2.55f, 0f),
+            buildRoot.transform, "Keep_Roof_L", 1);
+        PlaceSprite("Buildings/roof_S", new Vector3(0.5f, 2.55f, 0f),
+            buildRoot.transform, "Keep_Roof_R", 1);
+        PlaceSprite("Buildings/stoneWallTop_S", new Vector3(0f, 3.1f, 0f),
+            buildRoot.transform, "Keep_Top", 2);
+        // Chimney on keep
+        PlaceSprite("Buildings/chimneyTop_S", new Vector3(0.7f, 3.3f, 0f),
+            buildRoot.transform, "Keep_Chimney", 3);
 
-        // South wall (left and right of gate)
-        for (float x = -castleHalf; x < -1f; x += wallSpacing)
-            PlaceSprite("Buildings/stoneWall_S", new Vector3(x, -castleHalf, 0f),
-                buildRoot.transform, "WallS");
-        for (float x = 1f; x <= castleHalf; x += wallSpacing)
-            PlaceSprite("Buildings/stoneWall_S", new Vector3(x, -castleHalf, 0f),
-                buildRoot.transform, "WallS");
+        // ---- SOUTH GATE ----
+        PlaceSprite("Buildings/stoneWallGateOpen_S", new Vector3(0f, -4f, 0f),
+            buildRoot.transform, "Gate");
+        // Gate flanking walls
+        PlaceSprite("Buildings/stoneWall_S", new Vector3(-1.5f, -4f, 0f),
+            buildRoot.transform, "GateWall_L");
+        PlaceSprite("Buildings/stoneWall_S", new Vector3(1.5f, -4f, 0f),
+            buildRoot.transform, "GateWall_R");
+        // Gate columns
+        PlaceSprite("Buildings/stoneWallColumn_S", new Vector3(-2.5f, -4f, 0f),
+            buildRoot.transform, "GateCol_L", 2);
+        PlaceSprite("Buildings/stoneWallColumn_S", new Vector3(2.5f, -4f, 0f),
+            buildRoot.transform, "GateCol_R", 2);
 
-        // Gate opening in south wall
-        PlaceSprite("Buildings/stoneWallGateOpen_S", new Vector3(0f, -castleHalf, 0f),
-            buildRoot.transform, "CastleGate");
+        // ---- WEST: Barracks / wooden buildings ----
+        // Barracks building 1
+        PlaceBuilding("woodWall_S", "roofSingle_S",
+            new Vector3(-4f, 0f, 0f), buildRoot.transform, "Barracks1");
+        PlaceBuilding("woodWallDoorOpen_S", "roofSingle_S",
+            new Vector3(-4f, -1.1f, 0f), buildRoot.transform, "Barracks2");
+        // Wooden fence enclosure
+        PlaceSprite("Buildings/fenceLow_S", new Vector3(-5.5f, -0.5f, 0f),
+            buildRoot.transform, "BarracksFence1");
+        PlaceSprite("Buildings/fenceLow_S", new Vector3(-5.5f, 0.5f, 0f),
+            buildRoot.transform, "BarracksFence2");
 
-        // North wall
-        for (float x = -castleHalf; x <= castleHalf; x += wallSpacing)
-            PlaceSprite("Buildings/stoneWall_S", new Vector3(x, castleHalf, 0f),
-                buildRoot.transform, "WallN");
-
-        // West wall
-        for (float y = -castleHalf + wallSpacing; y < castleHalf; y += wallSpacing)
-            PlaceSprite("Buildings/stoneWall_S", new Vector3(-castleHalf, y, 0f),
-                buildRoot.transform, "WallW");
-
-        // East wall
-        for (float y = -castleHalf + wallSpacing; y < castleHalf; y += wallSpacing)
-            PlaceSprite("Buildings/stoneWall_S", new Vector3(castleHalf, y, 0f),
-                buildRoot.transform, "WallE");
-
-        // Corner towers (using stoneWallColumn)
-        PlaceSprite("Buildings/stoneWallColumn_S", new Vector3(-castleHalf, -castleHalf, 0f),
-            buildRoot.transform, "TowerSW", 10);
-        PlaceSprite("Buildings/stoneWallColumn_S", new Vector3(castleHalf, -castleHalf, 0f),
-            buildRoot.transform, "TowerSE", 10);
-        PlaceSprite("Buildings/stoneWallColumn_S", new Vector3(-castleHalf, castleHalf, 0f),
-            buildRoot.transform, "TowerNW", 10);
-        PlaceSprite("Buildings/stoneWallColumn_S", new Vector3(castleHalf, castleHalf, 0f),
-            buildRoot.transform, "TowerNE", 10);
-
-        // Central keep — stacked wall structure
-        PlaceSprite("Buildings/stoneWallStructure_S", new Vector3(0f, 2f, 0f),
-            buildRoot.transform, "Keep", 5);
-        PlaceSprite("Buildings/stoneWallTop_S", new Vector3(0f, 4f, 0f),
-            buildRoot.transform, "KeepTop", 5);
-
-        // Windmill area (west side) — wood wall building
-        PlaceSprite("Buildings/woodWall_S", new Vector3(-4f, -1f, 0f),
-            buildRoot.transform, "WindmillBase");
-        PlaceSprite("Buildings/roof_S", new Vector3(-4f, 1f, 0f),
-            buildRoot.transform, "WindmillRoof", 5);
-        PlaceSprite("Buildings/chimneyTop_S", new Vector3(-3.5f, 2.5f, 0f),
-            buildRoot.transform, "WindmillChimney", 6);
-
-        // Market area (east side) — wood wall with open door
-        PlaceSprite("Buildings/woodWallDoorOpen_S", new Vector3(4f, -1f, 0f),
-            buildRoot.transform, "MarketStall");
-        PlaceSprite("Buildings/roofSingle_S", new Vector3(4f, 1f, 0f),
-            buildRoot.transform, "MarketRoof", 5);
-
-        // Barrels near market
-        PlaceSprite("Props/barrels_S", new Vector3(5.5f, -1.5f, 0f),
+        // ---- EAST: Market / workshop ----
+        PlaceBuilding("woodWallWindow_S", "roofSingle_S",
+            new Vector3(4f, 0f, 0f), buildRoot.transform, "Market1");
+        PlaceBuilding("woodWallDoorOpen_S", "roofSingleWall_S",
+            new Vector3(4f, -1.1f, 0f), buildRoot.transform, "MarketShop");
+        // Market props cluster
+        PlaceSprite("Props/barrels_S", new Vector3(5.2f, -0.5f, 0f),
             buildRoot.transform, "MarketBarrels");
+        PlaceSprite("Props/woodenCrates_S", new Vector3(5.2f, 0.5f, 0f),
+            buildRoot.transform, "MarketCrates");
+        PlaceSprite("Props/tableRoundChairs_S", new Vector3(3f, -1.8f, 0f),
+            buildRoot.transform, "MarketTable");
 
-        // Window building (north side)
-        PlaceSprite("Buildings/stoneWallWindow_S", new Vector3(-3f, 4f, 0f),
-            buildRoot.transform, "NorthBuilding");
-        PlaceSprite("Buildings/stoneWallWindow_S", new Vector3(3f, 4f, 0f),
-            buildRoot.transform, "NorthBuilding2");
+        // ---- NORTH: Farm area ----
+        // Farmhouse
+        PlaceBuilding("stoneWallDoor_S", "roof_S",
+            new Vector3(-3f, 4f, 0f), buildRoot.transform, "Farmhouse");
+        PlaceSprite("Buildings/chimneyBase_S", new Vector3(-2.5f, 4.8f, 0f),
+            buildRoot.transform, "FarmChimney", 3);
+        // Fenced crop area
+        PlaceSprite("Buildings/fenceLow_S", new Vector3(-1.5f, 3.5f, 0f),
+            buildRoot.transform, "FarmFence1");
+        PlaceSprite("Buildings/fenceLow_S", new Vector3(-0.5f, 3.5f, 0f),
+            buildRoot.transform, "FarmFence2");
+        PlaceSprite("Buildings/fenceLow_S", new Vector3(0.5f, 3.5f, 0f),
+            buildRoot.transform, "FarmFence3");
+        PlaceSprite("Props/corn_S", new Vector3(-1f, 4f, 0f),
+            buildRoot.transform, "Crops1");
+        PlaceSprite("Props/cornDouble_S", new Vector3(0f, 4f, 0f),
+            buildRoot.transform, "Crops2");
+        PlaceSprite("Props/corn_S", new Vector3(0.8f, 4f, 0f),
+            buildRoot.transform, "Crops3");
+        PlaceSprite("Props/hay_S", new Vector3(-1.5f, 4.5f, 0f),
+            buildRoot.transform, "FarmHay");
+        PlaceSprite("Props/hayBales_S", new Vector3(1f, 4.5f, 0f),
+            buildRoot.transform, "FarmHayBales");
+
+        // North-east storage building
+        PlaceBuilding("stoneWallWindow_S", "roofCorner_S",
+            new Vector3(3f, 4f, 0f), buildRoot.transform, "Storage");
+
+        // ---- PERIMETER ACCENT WALLS (compact, not full fortress) ----
+        // Just a few stone walls to suggest village boundary, not a full rectangle
+        // West boundary hints
+        PlaceSprite("Buildings/stoneWallHalf_S", new Vector3(-6f, -2f, 0f),
+            buildRoot.transform, "BoundW1");
+        PlaceSprite("Buildings/stoneWallHalf_S", new Vector3(-6f, 2f, 0f),
+            buildRoot.transform, "BoundW2");
+        // East boundary hints
+        PlaceSprite("Buildings/stoneWallHalf_S", new Vector3(6f, -2f, 0f),
+            buildRoot.transform, "BoundE1");
+        PlaceSprite("Buildings/stoneWallHalf_S", new Vector3(6f, 2f, 0f),
+            buildRoot.transform, "BoundE2");
     }
 
     // ---------------------------------------------------------------
@@ -501,59 +545,58 @@ public class RoamingBootstrap : MonoBehaviour
         var envRoot = new GameObject("Environment");
         envRoot.transform.position = Vector3.zero;
 
+        // ---- PERIMETER TREES (ring around village, radius ~8-12) ----
         System.Random rng = new System.Random(42);
-        float castleHalf = 7f;
-        float outerStart = castleHalf + 2f;
-        float outerEnd = castleHalf + 8f;
-
-        // Trees outside the castle walls
-        for (int i = 0; i < 30; i++)
+        float innerRing = 7.5f;
+        float outerRing = 12f;
+        for (int i = 0; i < 40; i++)
         {
             float angle = (float)(rng.NextDouble() * 360.0);
-            float dist = outerStart + (float)(rng.NextDouble() * (outerEnd - outerStart));
+            float dist = innerRing + (float)(rng.NextDouble() * (outerRing - innerRing));
             float x = Mathf.Cos(angle * Mathf.Deg2Rad) * dist;
             float y = Mathf.Sin(angle * Mathf.Deg2Rad) * dist;
+
+            // Skip the south (gate approach) — leave an opening
+            if (y < -4f && Mathf.Abs(x) < 3f) continue;
 
             string[] treePaths = { "Nature/treePineLarge_S", "Nature/treePineSmall_S", "Nature/treePineHuge_S" };
-            string treePath = treePaths[rng.Next(treePaths.Length)];
-            PlaceSprite(treePath, new Vector3(x, y, 0f), envRoot.transform, $"Tree_{i}");
+            PlaceSprite(treePaths[rng.Next(treePaths.Length)], new Vector3(x, y, 0f),
+                envRoot.transform, $"Tree_{i}");
         }
 
-        // Dead trees (sparse)
-        for (int i = 0; i < 5; i++)
-        {
-            float angle = (float)(rng.NextDouble() * 360.0);
-            float dist = outerStart + (float)(rng.NextDouble() * (outerEnd - outerStart));
-            float x = Mathf.Cos(angle * Mathf.Deg2Rad) * dist;
-            float y = Mathf.Sin(angle * Mathf.Deg2Rad) * dist;
-            PlaceSprite("Nature/treeDeadLarge_S", new Vector3(x, y, 0f),
-                envRoot.transform, $"DeadTree_{i}");
-        }
+        // A few dead trees for variety
+        PlaceSprite("Nature/treeDeadLarge_S", new Vector3(-9f, -6f, 0f), envRoot.transform, "DeadTree1");
+        PlaceSprite("Nature/treeDeadSmall_S", new Vector3(10f, 3f, 0f), envRoot.transform, "DeadTree2");
 
-        // Courtyard trees (small, near corners)
-        PlaceSprite("Nature/treePineSmall_S", new Vector3(-5f, 4f, 0f), envRoot.transform, "CourtyardTree1");
-        PlaceSprite("Nature/treePineSmall_S", new Vector3(5f, 4f, 0f), envRoot.transform, "CourtyardTree2");
-        PlaceSprite("Nature/treePineSmall_S", new Vector3(-5f, -4f, 0f), envRoot.transform, "CourtyardTree3");
-        PlaceSprite("Nature/treePineSmall_S", new Vector3(5f, -4f, 0f), envRoot.transform, "CourtyardTree4");
+        // ---- VILLAGE INTERIOR TREES (decorative, small) ----
+        PlaceSprite("Nature/treePineSmall_S", new Vector3(-2f, 1f, 0f), envRoot.transform, "VillageTree1");
+        PlaceSprite("Nature/treePineSmall_S", new Vector3(2f, 1f, 0f), envRoot.transform, "VillageTree2");
 
-        // Rocks outside walls
-        PlaceSprite("Ground/grassStoneLarge_S", new Vector3(-10f, -10f, 0f), envRoot.transform, "Rock1");
-        PlaceSprite("Ground/grassStoneSmall_S", new Vector3(10f, -10f, 0f), envRoot.transform, "Rock2");
-        PlaceSprite("Ground/grassStoneLarge_S", new Vector3(-10f, 10f, 0f), envRoot.transform, "Rock3");
-        PlaceSprite("Ground/grassStoneSmall_S", new Vector3(10f, 10f, 0f), envRoot.transform, "Rock4");
+        // ---- ROCKS (scattered near perimeter) ----
+        PlaceSprite("Ground/grassStoneLarge_S", new Vector3(-7f, -5f, 0f), envRoot.transform, "Rock1");
+        PlaceSprite("Ground/grassStoneSmall_S", new Vector3(7f, -5f, 0f), envRoot.transform, "Rock2");
+        PlaceSprite("Ground/grassStoneLarge_S", new Vector3(-7f, 5f, 0f), envRoot.transform, "Rock3");
+        PlaceSprite("Ground/grassStoneSmall_S", new Vector3(8f, 5f, 0f), envRoot.transform, "Rock4");
 
-        // Props inside courtyard
-        PlaceSprite("Props/barrel_S", new Vector3(-2f, -5f, 0f), envRoot.transform, "Barrel1");
-        PlaceSprite("Props/chestClosed_S", new Vector3(2f, -5f, 0f), envRoot.transform, "Chest1");
-        PlaceSprite("Props/tableRoundChairs_S", new Vector3(-2f, 0f, 0f), envRoot.transform, "Table1");
-        PlaceSprite("Props/hay_S", new Vector3(-5f, -2f, 0f), envRoot.transform, "Hay1");
-        PlaceSprite("Props/sack_S", new Vector3(5f, -2f, 0f), envRoot.transform, "Sack1");
-        PlaceSprite("Props/woodenCrate_S", new Vector3(3f, -4f, 0f), envRoot.transform, "Crate1");
-        PlaceSprite("Props/corn_S", new Vector3(-5f, 1f, 0f), envRoot.transform, "Crops1");
-        PlaceSprite("Props/cornDouble_S", new Vector3(-4.5f, 1.5f, 0f), envRoot.transform, "Crops2");
+        // ---- COURTYARD PROPS ----
+        // Near the gate entrance
+        PlaceSprite("Props/barrel_S", new Vector3(-1.5f, -3f, 0f), envRoot.transform, "Barrel1");
+        PlaceSprite("Props/sack_S", new Vector3(1.5f, -3f, 0f), envRoot.transform, "Sack1");
 
-        // Ground detail: tree stumps scattered
-        PlaceSprite("Ground/grassTreeStump_S", new Vector3(8f, 0f, 0f), envRoot.transform, "Stump1");
-        PlaceSprite("Ground/grassTreeStump_S", new Vector3(-8f, -3f, 0f), envRoot.transform, "Stump2");
+        // Central village square — well/gathering area
+        PlaceSprite("Props/chestClosed_S", new Vector3(1.5f, 0.5f, 0f), envRoot.transform, "Chest1");
+        PlaceSprite("Props/woodenPile_S", new Vector3(-1.5f, -1.5f, 0f), envRoot.transform, "WoodPile1");
+
+        // Near barracks (west)
+        PlaceSprite("Props/woodenCrate_S", new Vector3(-5f, -1.5f, 0f), envRoot.transform, "Crate1");
+        PlaceSprite("Props/sacksCrate_S", new Vector3(-5f, 0.8f, 0f), envRoot.transform, "SacksCrate1");
+
+        // Near market (east)
+        PlaceSprite("Props/barrelsStacked_S", new Vector3(5.5f, -1.5f, 0f), envRoot.transform, "BarrelsStacked1");
+        PlaceSprite("Props/chair_S", new Vector3(3.5f, -2.5f, 0f), envRoot.transform, "Chair1");
+
+        // Stumps
+        PlaceSprite("Ground/grassTreeStump_S", new Vector3(6f, 3f, 0f), envRoot.transform, "Stump1");
+        PlaceSprite("Nature/grassTreeStumpAxe_S", new Vector3(-6f, 3f, 0f), envRoot.transform, "Stump2");
     }
 }
