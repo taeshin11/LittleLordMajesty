@@ -636,54 +636,76 @@ public class RoamingBootstrap : MonoBehaviour
         barracks.transform.SetParent(parent, false);
         barracks.transform.localPosition = new Vector3(5f, 0f, -3f);
 
-        // Try Fantasy Town Kit wall + roof for a proper building look
-        var wallModel = LoadModel("Town/wall-window-shutters", barracks.transform, "BarracksWall");
-        if (wallModel != null)
+        // Use windmill.fbx as the barracks — it's a complete building model
+        var windmill = LoadModel("Town/windmill", barracks.transform, "BarracksBuilding");
+        if (windmill != null)
         {
-            wallModel.transform.localPosition = Vector3.zero;
-            wallModel.transform.localScale = Vector3.one * 1.5f;
-
-            // Add a second wall beside it for width
-            var wall2 = LoadModel("Town/wall-window-shutters", barracks.transform, "BarracksWall2");
-            if (wall2 != null)
-            {
-                wall2.transform.localPosition = new Vector3(1.5f, 0f, 0f);
-                wall2.transform.localScale = Vector3.one * 1.5f;
-            }
-
-            // Roof
-            var roofModel = LoadModel("Town/roof-gable", barracks.transform, "BarracksRoof");
-            if (roofModel != null)
-            {
-                roofModel.transform.localPosition = new Vector3(0.75f, 1.5f, 0f);
-                roofModel.transform.localScale = Vector3.one * 1.5f;
-            }
-
-            // Door
-            var doorModel = LoadModel("Town/wall-door", barracks.transform, "BarracksDoor");
-            if (doorModel != null)
-            {
-                doorModel.transform.localPosition = new Vector3(-0.75f, 0f, 0f);
-                doorModel.transform.localScale = Vector3.one * 1.5f;
-            }
+            windmill.transform.localPosition = Vector3.zero;
+            windmill.transform.localScale = Vector3.one * 1.2f;
         }
         else
         {
-            // Fallback
-            var body = CreateVisualPrimitive(PrimitiveType.Cube, "BarracksBody");
-            body.transform.SetParent(barracks.transform, false);
-            body.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-            body.transform.localScale = new Vector3(3f, 1.2f, 2f);
-            ApplyColor(body, new Color(0.50f, 0.30f, 0.20f));
+            // Fallback: compose 4 walls + roof into a proper house
+            float s = 1.5f; // scale for wall pieces
+            float hw = 0.75f; // half-width offset (wall is ~1 unit wide at scale 1, so 1.5*0.5)
 
-            var roof = CreateVisualPrimitive(PrimitiveType.Cube, "BarracksRoof");
-            roof.transform.SetParent(barracks.transform, false);
-            roof.transform.localPosition = new Vector3(0f, 1.35f, 0f);
-            roof.transform.localScale = new Vector3(3.2f, 0.15f, 2.2f);
-            ApplyColor(roof, new Color(0.35f, 0.25f, 0.15f));
+            // North wall (window)
+            var wallN = LoadModel("Town/wall-window-shutters", barracks.transform, "BarracksWallN");
+            if (wallN != null)
+            {
+                wallN.transform.localPosition = new Vector3(0f, 0f, hw);
+                wallN.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+                wallN.transform.localScale = Vector3.one * s;
+            }
+            // South wall (door)
+            var wallS = LoadModel("Town/wall-door", barracks.transform, "BarracksWallS");
+            if (wallS != null)
+            {
+                wallS.transform.localPosition = new Vector3(0f, 0f, -hw);
+                wallS.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+                wallS.transform.localScale = Vector3.one * s;
+            }
+            // East wall
+            var wallE = LoadModel("Town/wall", barracks.transform, "BarracksWallE");
+            if (wallE != null)
+            {
+                wallE.transform.localPosition = new Vector3(hw, 0f, 0f);
+                wallE.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
+                wallE.transform.localScale = Vector3.one * s;
+            }
+            // West wall
+            var wallW = LoadModel("Town/wall", barracks.transform, "BarracksWallW");
+            if (wallW != null)
+            {
+                wallW.transform.localPosition = new Vector3(-hw, 0f, 0f);
+                wallW.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+                wallW.transform.localScale = Vector3.one * s;
+            }
+            // Roof on top
+            var roofModel = LoadModel("Town/roof-gable", barracks.transform, "BarracksRoof");
+            if (roofModel != null)
+            {
+                roofModel.transform.localPosition = new Vector3(0f, s, 0f);
+                roofModel.transform.localScale = Vector3.one * s;
+            }
+            else
+            {
+                // Ultimate fallback: procedural box building
+                var body = CreateVisualPrimitive(PrimitiveType.Cube, "BarracksBody");
+                body.transform.SetParent(barracks.transform, false);
+                body.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+                body.transform.localScale = new Vector3(3f, 1.2f, 2f);
+                ApplyColor(body, new Color(0.50f, 0.30f, 0.20f));
+
+                var roofFb = CreateVisualPrimitive(PrimitiveType.Cube, "BarracksRoof");
+                roofFb.transform.SetParent(barracks.transform, false);
+                roofFb.transform.localPosition = new Vector3(0f, 1.35f, 0f);
+                roofFb.transform.localScale = new Vector3(3.2f, 0.15f, 2.2f);
+                ApplyColor(roofFb, new Color(0.35f, 0.25f, 0.15f));
+            }
         }
 
-        AddBuildingCollider(barracks, new Vector3(3f, 1.2f, 2f), new Vector3(0f, 0.6f, 0f));
+        AddBuildingCollider(barracks, new Vector3(2.5f, 2.5f, 2.5f), new Vector3(0f, 1.25f, 0f));
     }
 
     private void SpawnFarm(Transform parent)
@@ -692,7 +714,33 @@ public class RoamingBootstrap : MonoBehaviour
         farm.transform.SetParent(parent, false);
         farm.transform.localPosition = new Vector3(-5f, 0f, 3f);
 
-        // Try Kenney fence pieces
+        // Use watermill.fbx as the farm barn — it's a complete building model
+        var barnModel = LoadModel("Town/watermill", farm.transform, "FarmBarn");
+        if (barnModel != null)
+        {
+            barnModel.transform.localPosition = new Vector3(0f, 0f, 1f);
+            barnModel.transform.localScale = Vector3.one * 1.0f;
+            AddBuildingCollider(farm, new Vector3(2f, 2f, 2f), new Vector3(0f, 1f, 1f));
+        }
+        else
+        {
+            // Fallback: procedural barn
+            var barn = CreateVisualPrimitive(PrimitiveType.Cube, "Barn");
+            barn.transform.SetParent(farm.transform, false);
+            barn.transform.localPosition = new Vector3(0f, 0.5f, 1f);
+            barn.transform.localScale = new Vector3(1.5f, 1f, 1.5f);
+            ApplyColor(barn, new Color(0.50f, 0.30f, 0.15f));
+
+            var barnRoof = CreateVisualPrimitive(PrimitiveType.Cube, "BarnRoof");
+            barnRoof.transform.SetParent(farm.transform, false);
+            barnRoof.transform.localPosition = new Vector3(0f, 1.15f, 1f);
+            barnRoof.transform.localScale = new Vector3(1.7f, 0.15f, 1.7f);
+            ApplyColor(barnRoof, new Color(0.60f, 0.25f, 0.10f));
+
+            AddBuildingCollider(farm, new Vector3(1.5f, 1f, 1.5f), new Vector3(0f, 0.5f, 1f));
+        }
+
+        // Fence enclosure around the crop area
         bool hasFence = false;
         for (int i = -2; i <= 2; i++)
         {
@@ -730,21 +778,6 @@ public class RoamingBootstrap : MonoBehaviour
             fenceGate.transform.localPosition = new Vector3(0f, 0f, -2f);
             fenceGate.transform.localScale = Vector3.one * 1.0f;
         }
-
-        // Small barn — fallback to primitive since we don't have a barn model
-        var barn = CreateVisualPrimitive(PrimitiveType.Cube, "Barn");
-        barn.transform.SetParent(farm.transform, false);
-        barn.transform.localPosition = new Vector3(0f, 0.5f, 0f);
-        barn.transform.localScale = new Vector3(1.5f, 1f, 1.5f);
-        ApplyColor(barn, new Color(0.50f, 0.30f, 0.15f));
-
-        var barnRoof = CreateVisualPrimitive(PrimitiveType.Cube, "BarnRoof");
-        barnRoof.transform.SetParent(farm.transform, false);
-        barnRoof.transform.localPosition = new Vector3(0f, 1.15f, 0f);
-        barnRoof.transform.localScale = new Vector3(1.7f, 0.15f, 1.7f);
-        ApplyColor(barnRoof, new Color(0.60f, 0.25f, 0.10f));
-
-        AddBuildingCollider(barn, new Vector3(1.5f, 1f, 1.5f), new Vector3(0f, 0.5f, 0f));
 
         if (!hasFence)
         {
