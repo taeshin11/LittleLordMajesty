@@ -304,13 +304,15 @@ public class DialogueBoxUI : MonoBehaviour
         if (_nameLabel != null)
             _nameLabel.text = $"{npc.Name} ({npc.Profession})";
 
-        // Portrait: prefer the generated SDXL portrait, fall back to a
-        // procedurally generated placeholder portrait.
+        // Portrait: use isometric character idle sprite
         if (_portrait != null)
         {
-            var p = Resources.Load<Sprite>($"Art/Generated/portrait_{npcId}");
-            if (p == null)
-                p = PlaceholderArtGenerator.GetNPCPortrait(npc.Profession, npc.Name);
+            // Map NPC to character variant (same mapping as RoamingBootstrap)
+            int charIdx = npcId switch {
+                "vassal_01" => 1, "soldier_01" => 2,
+                "farmer_01" => 3, "merchant_01" => 4, _ => 0
+            };
+            var p = Resources.Load<Sprite>($"Art/Iso/Characters/Male_{charIdx}_Idle0");
             if (p != null) _portrait.sprite = p;
         }
 
