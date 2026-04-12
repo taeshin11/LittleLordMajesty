@@ -38,9 +38,9 @@ public class PlayerController : MonoBehaviour
         if (_cc == null)
         {
             _cc = gameObject.AddComponent<CharacterController>();
-            _cc.height = 1.8f;
-            _cc.radius = 0.3f;
-            _cc.center = new Vector3(0f, 0.9f, 0f);
+            _cc.height = 1.2f;
+            _cc.radius = 0.25f;
+            _cc.center = new Vector3(0f, 0.6f, 0f);
             _cc.slopeLimit = 45f;
             _cc.stepOffset = 0.3f;
         }

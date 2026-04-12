@@ -303,6 +303,9 @@ public class RoamingBootstrap : MonoBehaviour
         var visualRoot = new GameObject("Visual");
         visualRoot.transform.SetParent(_player.transform, false);
 
+        // Scale down entire character for miniature/cozy feel
+        visualRoot.transform.localScale = Vector3.one * 0.65f;
+
         // Body (capsule) — royal purple
         var body = CreateVisualPrimitive(PrimitiveType.Capsule, "Body");
         body.transform.SetParent(visualRoot.transform, false);
@@ -379,9 +382,10 @@ public class RoamingBootstrap : MonoBehaviour
         };
         Color skinColor = new Color(0.85f, 0.72f, 0.58f);
 
-        // Visual root for walk bob
+        // Visual root for walk bob — miniature scale for cozy feel
         var visualRoot = new GameObject("Visual");
         visualRoot.transform.SetParent(root.transform, false);
+        visualRoot.transform.localScale = Vector3.one * 0.65f;
 
         // Body (capsule)
         var body = CreateVisualPrimitive(PrimitiveType.Capsule, "Body");

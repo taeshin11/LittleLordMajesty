@@ -12,9 +12,9 @@ public class FollowCamera : MonoBehaviour
 {
     [SerializeField] private Transform _target;
     [Tooltip("Height above the target.")]
-    [SerializeField] private float _height = 12f;
+    [SerializeField] private float _height = 18f;
     [Tooltip("Horizontal distance behind the target.")]
-    [SerializeField] private float _distance = 10f;
+    [SerializeField] private float _distance = 14f;
     [Tooltip("Pitch angle in degrees (45 = classic isometric).")]
     [SerializeField] private float _pitch = 45f;
     [Tooltip("Yaw rotation around target in degrees (0 = looking south).")]
