@@ -83,7 +83,6 @@ public class DialogueBoxUI : MonoBehaviour
 
     private void BuildLayout()
     {
-        // Overlay canvas
         var canvasGO = new GameObject("DialogueBoxCanvas");
         canvasGO.transform.SetParent(transform, false);
         var canvas = canvasGO.AddComponent<Canvas>();
@@ -92,102 +91,105 @@ public class DialogueBoxUI : MonoBehaviour
         var scaler = canvasGO.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(960, 600);
-        scaler.matchWidthOrHeight  = 1f; // match height for landscape WebGL
+        scaler.matchWidthOrHeight = 1f;
         canvasGO.AddComponent<GraphicRaycaster>();
 
-        // Box: stretch to bottom, 5% margin each side, 40% screen height
+        // ── Main panel: frosted glass style ──
         _root = new GameObject("Box");
         _root.transform.SetParent(canvasGO.transform, false);
         var boxImg = _root.AddComponent<Image>();
-        boxImg.color = new Color(0.12f, 0.10f, 0.08f, 0.92f); // Dark parchment
+        boxImg.color = new Color(0.95f, 0.95f, 0.97f, 0.95f); // Light frosted white
         var boxRT = _root.GetComponent<RectTransform>();
-        boxRT.anchorMin = new Vector2(0.03f, 0f);
-        boxRT.anchorMax = new Vector2(0.97f, 0.40f);
-        boxRT.offsetMin = new Vector2(0f, 8f);
-        boxRT.offsetMax = new Vector2(0f, 0f);
-        var outline = _root.AddComponent<Outline>();
-        outline.effectColor = new Color(0.6f, 0.5f, 0.2f);
-        outline.effectDistance = new Vector2(2f, -2f);
+        boxRT.anchorMin = new Vector2(0.02f, 0.01f);
+        boxRT.anchorMax = new Vector2(0.98f, 0.38f);
+        boxRT.offsetMin = Vector2.zero;
+        boxRT.offsetMax = Vector2.zero;
 
-        // Portrait: anchored to left, square, with padding
-        var portraitGO = new GameObject("Portrait");
-        portraitGO.transform.SetParent(_root.transform, false);
-        _portrait = portraitGO.AddComponent<Image>();
-        _portrait.color = new Color(0.88f, 0.82f, 0.98f);
-        _portrait.preserveAspect = true;
-        var pRT = _portrait.rectTransform;
-        pRT.anchorMin = new Vector2(0f, 0f);
-        pRT.anchorMax = new Vector2(0f, 1f);
-        pRT.pivot = new Vector2(0f, 0.5f);
-        pRT.anchoredPosition = new Vector2(8f, 0f);
-        pRT.sizeDelta = new Vector2(140f, -16f); // width fixed, height stretches with padding
+        // Subtle shadow
+        var shadow = _root.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.3f);
+        shadow.effectDistance = new Vector2(0f, -3f);
 
-        // Right content area starts after portrait (x=156)
-        float contentLeft = 156f;
+        // ── Header bar (name + close) ──
+        var header = new GameObject("Header");
+        header.transform.SetParent(_root.transform, false);
+        var headerImg = header.AddComponent<Image>();
+        headerImg.color = new Color(0.28f, 0.47f, 0.75f, 1f); // Modern blue
+        var headerRT = header.GetComponent<RectTransform>();
+        headerRT.anchorMin = new Vector2(0f, 1f);
+        headerRT.anchorMax = new Vector2(1f, 1f);
+        headerRT.pivot = new Vector2(0.5f, 1f);
+        headerRT.anchoredPosition = Vector2.zero;
+        headerRT.sizeDelta = new Vector2(0f, 36f);
 
-        // Close button (top-right)
-        _closeBtn = CreateBtn(_root.transform, "CloseButton",
-            LocalizationManager.Instance?.Get("btn_close") ?? "X",
-            new Color(0.6f, 0.2f, 0.2f));
+        // Name in header
+        _nameLabel = CreateTMP(header.transform, "NameLabel", "",
+            16, TextAlignmentOptions.MidlineLeft, Color.white, bold: true);
+        var nameRT = _nameLabel.rectTransform;
+        nameRT.anchorMin = Vector2.zero; nameRT.anchorMax = Vector2.one;
+        nameRT.offsetMin = new Vector2(16f, 0f); nameRT.offsetMax = new Vector2(-50f, 0f);
+
+        // Close button in header
+        _closeBtn = CreateBtn(header.transform, "Close", "X",
+            new Color(1f, 1f, 1f, 0.2f), 14f);
         var closeRT = _closeBtn.GetComponent<RectTransform>();
-        closeRT.anchorMin = new Vector2(1f, 1f);
-        closeRT.anchorMax = new Vector2(1f, 1f);
-        closeRT.pivot = new Vector2(1f, 1f);
-        closeRT.anchoredPosition = new Vector2(-8f, -8f);
-        closeRT.sizeDelta = new Vector2(50f, 30f);
+        closeRT.anchorMin = new Vector2(1f, 0f); closeRT.anchorMax = new Vector2(1f, 1f);
+        closeRT.pivot = new Vector2(1f, 0.5f);
+        closeRT.anchoredPosition = new Vector2(-4f, 0f);
+        closeRT.sizeDelta = new Vector2(36f, 0f);
         _closeBtn.onClick.AddListener(Hide);
 
-        // Name label (top of content area)
-        _nameLabel = CreateTMP(_root.transform, "NameLabel", "NPC Name",
-            20, TextAlignmentOptions.Left, new Color(0.95f, 0.85f, 0.5f), bold: true);
-        var nameRT = _nameLabel.rectTransform;
-        nameRT.anchorMin = new Vector2(0f, 1f);
-        nameRT.anchorMax = new Vector2(1f, 1f);
-        nameRT.pivot = new Vector2(0f, 1f);
-        nameRT.anchoredPosition = new Vector2(contentLeft, -8f);
-        nameRT.sizeDelta = new Vector2(-contentLeft - 70f, 28f);
+        // ── Content area (below header) ──
+        float headerH = 36f;
 
-        // Message text (below name, fills available space)
-        _messageLabel = CreateTMP(_root.transform, "MessageLabel", "",
-            16, TextAlignmentOptions.TopLeft, new Color(0.85f, 0.80f, 0.70f));
+        // Message bubble — left-aligned chat bubble style
+        var bubbleGO = new GameObject("MessageBubble");
+        bubbleGO.transform.SetParent(_root.transform, false);
+        var bubbleImg = bubbleGO.AddComponent<Image>();
+        bubbleImg.color = new Color(0.92f, 0.95f, 1f, 1f); // Light blue tint
+        var bubbleRT = bubbleGO.GetComponent<RectTransform>();
+        bubbleRT.anchorMin = new Vector2(0.01f, 0.42f);
+        bubbleRT.anchorMax = new Vector2(0.99f, 1f);
+        bubbleRT.offsetMin = new Vector2(6f, 4f);
+        bubbleRT.offsetMax = new Vector2(-6f, -headerH - 4f);
+
+        _messageLabel = CreateTMP(bubbleGO.transform, "Message", "",
+            14, TextAlignmentOptions.TopLeft, new Color(0.15f, 0.15f, 0.20f));
         _messageLabel.overflowMode = TextOverflowModes.Ellipsis;
-        var msgRT = _messageLabel.rectTransform;
-        msgRT.anchorMin = new Vector2(0f, 0.45f);
-        msgRT.anchorMax = new Vector2(1f, 1f);
-        msgRT.offsetMin = new Vector2(contentLeft, 0f);
-        msgRT.offsetMax = new Vector2(-12f, -38f);
+        Stretch(_messageLabel.gameObject, 12f, 6f, -12f, -6f);
 
-        // Quick command row (bottom-middle area)
+        // ── Quick command pills ──
         var rowGO = new GameObject("QuickCommands");
         rowGO.transform.SetParent(_root.transform, false);
         var rowRT = rowGO.AddComponent<RectTransform>();
-        rowRT.anchorMin = new Vector2(0f, 0.2f);
-        rowRT.anchorMax = new Vector2(1f, 0.45f);
-        rowRT.offsetMin = new Vector2(contentLeft, 2f);
-        rowRT.offsetMax = new Vector2(-12f, -2f);
+        rowRT.anchorMin = new Vector2(0.01f, 0.22f);
+        rowRT.anchorMax = new Vector2(0.99f, 0.42f);
+        rowRT.offsetMin = new Vector2(6f, 2f);
+        rowRT.offsetMax = new Vector2(-6f, -2f);
         var hlg = rowGO.AddComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 6;
+        hlg.spacing = 8;
         hlg.childForceExpandWidth = true;
         hlg.childForceExpandHeight = true;
+        hlg.padding = new RectOffset(2, 2, 2, 2);
         _quickCmdRow = rowGO.transform;
 
-        // Input field + Send button row (bottom)
+        // ── Input row ──
         var inputBgGO = new GameObject("InputBg");
         inputBgGO.transform.SetParent(_root.transform, false);
         var inputBg = inputBgGO.AddComponent<Image>();
-        inputBg.color = new Color(0.25f, 0.22f, 0.18f);
+        inputBg.color = new Color(0.93f, 0.93f, 0.95f, 1f); // Light gray
         var inRT = inputBg.rectTransform;
-        inRT.anchorMin = new Vector2(0f, 0f);
-        inRT.anchorMax = new Vector2(0.82f, 0.2f);
-        inRT.offsetMin = new Vector2(contentLeft, 4f);
+        inRT.anchorMin = new Vector2(0.01f, 0.01f);
+        inRT.anchorMax = new Vector2(0.84f, 0.22f);
+        inRT.offsetMin = new Vector2(6f, 4f);
         inRT.offsetMax = new Vector2(-4f, -2f);
 
         _input = inputBgGO.AddComponent<TMP_InputField>();
         var inputTxtGO = new GameObject("Text");
         inputTxtGO.transform.SetParent(inputBgGO.transform, false);
         var inputTMP = inputTxtGO.AddComponent<TextMeshProUGUI>();
-        inputTMP.color = new Color(0.9f, 0.85f, 0.75f);
-        inputTMP.fontSize = 14;
+        inputTMP.color = new Color(0.15f, 0.15f, 0.20f);
+        inputTMP.fontSize = 13;
         inputTMP.richText = false;
         inputTMP.enableWordWrapping = false;
         Stretch(inputTxtGO, 10f, 4f, -10f, -4f);
@@ -195,26 +197,26 @@ public class DialogueBoxUI : MonoBehaviour
         var phTxtGO = new GameObject("Placeholder");
         phTxtGO.transform.SetParent(inputBgGO.transform, false);
         var phTMP = phTxtGO.AddComponent<TextMeshProUGUI>();
-        phTMP.text = LocalizationManager.Instance?.Get("cmd_input_placeholder") ?? "Issue a command...";
-        phTMP.color = new Color(0.55f, 0.50f, 0.40f, 0.7f);
-        phTMP.fontSize = 14;
+        phTMP.text = LocalizationManager.Instance?.Get("cmd_input_placeholder") ?? "명령을 입력하세요...";
+        phTMP.color = new Color(0.55f, 0.55f, 0.60f, 0.7f);
+        phTMP.fontSize = 13;
         phTMP.richText = false;
         phTMP.enableWordWrapping = false;
         Stretch(phTxtGO, 10f, 4f, -10f, -4f);
 
         _input.textComponent = inputTMP;
-        _input.placeholder   = phTMP;
+        _input.placeholder = phTMP;
         _input.onSubmit.AddListener(_ => OnSendClicked());
 
-        // Send button
-        _sendBtn = CreateBtn(_root.transform, "SendButton",
-            LocalizationManager.Instance?.Get("btn_send") ?? "Send",
-            new Color(0.25f, 0.50f, 0.30f));
+        // Send button — accent blue
+        _sendBtn = CreateBtn(_root.transform, "Send",
+            LocalizationManager.Instance?.Get("btn_send") ?? "보내기",
+            new Color(0.28f, 0.47f, 0.75f), 13f);
         var sendRT = _sendBtn.GetComponent<RectTransform>();
-        sendRT.anchorMin = new Vector2(0.82f, 0f);
-        sendRT.anchorMax = new Vector2(1f, 0.2f);
+        sendRT.anchorMin = new Vector2(0.84f, 0.01f);
+        sendRT.anchorMax = new Vector2(0.99f, 0.22f);
         sendRT.offsetMin = new Vector2(2f, 4f);
-        sendRT.offsetMax = new Vector2(-8f, -2f);
+        sendRT.offsetMax = new Vector2(-6f, -2f);
         _sendBtn.onClick.AddListener(OnSendClicked);
     }
 
@@ -256,19 +258,19 @@ public class DialogueBoxUI : MonoBehaviour
         return tmp;
     }
 
-    private static Button CreateBtn(Transform parent, string name, string label, Color bg, float fontSize = 13f)
+    private static Button CreateBtn(Transform parent, string name, string label, Color bg, float fontSize = 12f)
     {
         var go = new GameObject(name);
         go.transform.SetParent(parent, false);
         var img = go.AddComponent<Image>();
         img.color = bg;
         var btn = go.AddComponent<Button>();
-        // Modern look: no outline, subtle color shift on hover
         var colors = btn.colors;
-        colors.highlightedColor = new Color(bg.r + 0.1f, bg.g + 0.1f, bg.b + 0.1f);
-        colors.pressedColor = new Color(bg.r - 0.1f, bg.g - 0.1f, bg.b - 0.1f);
+        colors.normalColor = Color.white;
+        colors.highlightedColor = new Color(0.92f, 0.95f, 1f);
+        colors.pressedColor = new Color(0.8f, 0.85f, 0.9f);
         btn.colors = colors;
-        PinCenter(go.GetComponent<RectTransform>(), Vector2.zero, new Vector2(100f, 40f));
+        PinCenter(go.GetComponent<RectTransform>(), Vector2.zero, new Vector2(100f, 32f));
 
         var txtGO = new GameObject("Label");
         txtGO.transform.SetParent(go.transform, false);
@@ -276,12 +278,12 @@ public class DialogueBoxUI : MonoBehaviour
         tmp.text = label;
         tmp.fontSize = fontSize;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = Color.white;
+        tmp.color = bg.grayscale > 0.5f ? new Color(0.15f, 0.15f, 0.2f) : Color.white;
         tmp.richText = false;
         tmp.enableWordWrapping = false;
         var txtRT = tmp.rectTransform;
         txtRT.anchorMin = Vector2.zero; txtRT.anchorMax = Vector2.one;
-        txtRT.offsetMin = Vector2.zero; txtRT.offsetMax = Vector2.zero;
+        txtRT.offsetMin = new Vector2(4f, 0f); txtRT.offsetMax = new Vector2(-4f, 0f);
         return btn;
     }
 
@@ -349,7 +351,7 @@ public class DialogueBoxUI : MonoBehaviour
         foreach (var key in keys)
         {
             string text = loc?.Get(key) ?? key;
-            var btn = CreateBtn(_quickCmdRow, $"Q_{key}", text, new Color(0.80f, 0.85f, 0.98f));
+            var btn = CreateBtn(_quickCmdRow, $"Q_{key}", text, new Color(0.88f, 0.91f, 0.96f), 11f);
             string captured = text;
             btn.onClick.AddListener(() => SendCommand(captured));
         }
