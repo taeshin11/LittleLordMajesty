@@ -167,7 +167,7 @@ Foundation, voice/localization, AI personas, 3D scene, bug fixes, multiplayer, A
 
 | Phase | Name | Status |
 |-------|------|--------|
-| M16 | **2D Roaming Foundation** — Anokolisa asset integration, 2D orthographic camera, tilemap courtyard, player controller, virtual joystick, NPC spawn, legacy card UI retirement, dialogue box | 🔲 **Active** |
+| M16 | **2D Roaming Foundation** — Anokolisa asset integration, 2D orthographic camera, tilemap courtyard, player controller, virtual joystick, NPC spawn, legacy card UI retirement, dialogue box | ✅ **Complete** |
 | M17 | **NPC Routines & Animations** — Anokolisa walk/idle animations wired, waypoint routines, time-of-day | 🔲 Planned |
 | M18 | **Tilemap World Building** — Full courtyard tilemap (Farm tileset), collision, buildings, decorations | 🔲 Planned |
 | M19 | **In-world Events** — Orc raids (Anokolisa enemy sprites), fire/crisis markers, walk-to-resolve | 🔲 Planned |
