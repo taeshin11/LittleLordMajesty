@@ -72,8 +72,10 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Movement with wall collision check
-        Vector3 moveDir = new Vector3(input.x, 0f, input.y).normalized;
+        // Rotate input by camera yaw so joystick "up" = screen "up"
+        float camYaw = Camera.main != null ? Camera.main.transform.eulerAngles.y : 0f;
+        Vector3 rawDir = new Vector3(input.x, 0f, input.y);
+        Vector3 moveDir = (Quaternion.Euler(0f, camYaw, 0f) * rawDir).normalized;
         float step = _walkSpeed * Time.deltaTime;
         Vector3 origin = transform.position + Vector3.up * 0.5f; // Check from waist height
 
