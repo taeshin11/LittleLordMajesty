@@ -2,11 +2,11 @@
 
 > **Note:** Living document. Update whenever architecture or scope changes.
 >
-> **2026-04-12 — Full rebuild pivot.** From card-grid dialogue sim → **2D top-down cozy
-> roaming RPG** (Zelda: Echoes of Wisdom inspiration). Art assets switch from
-> SDXL-generated portraits to **Anokolisa Pixel Crawler** (16×16 hand-crafted pixel art).
-> SDXL retired for in-game sprites; kept only for menu backgrounds and dialogue portraits.
-> AI NPC core, localization, and infrastructure carry forward.
+> **2026-04-12 — Isometric Low-Poly 3D pivot.** From card-grid dialogue sim →
+> **Isometric Low-Poly 3D cozy roaming RPG**. Art style: Kenney 3D asset packs
+> (Castle Kit, Fantasy Town Kit, Nature Kit) rendered with **orthographic camera**
+> at 45° isometric angle for a "miniature diorama" feel. Characters are
+> low-poly 3D (blocky humanoids). AI NPC core, localization, infrastructure carry forward.
 
 ---
 
@@ -17,8 +17,8 @@
 | **Product Name** | LittleLordMajesty (LLM) |
 | **Platforms** | WebGL (primary, mobile browser), then Steam PC, Android / iOS |
 | **Genre** | Cozy Kingdom Roaming RPG + AI NPC Interaction |
-| **Art Style** | 16×16 pixel art top-down (Anokolisa Pixel Crawler pack). Consistent single-artist aesthetic — no mixed asset packs. |
-| **Core Concept** | "Walk your kingdom. Rule with a single word." Inherit a tiny pixel-art castle, explore on foot, talk to NPCs in natural language, resolve crises through conversation, grow from "Little Lord" to "Majesty." |
+| **Art Style** | **Isometric Low-Poly 3D** — Kenney 3D packs (Castle Kit, Fantasy Town Kit, Nature Kit) + orthographic camera at 45° isometric angle. Miniature diorama aesthetic. |
+| **Core Concept** | "Walk your kingdom. Rule with a single word." Inherit a tiny low-poly castle, explore on foot, talk to NPCs in natural language, resolve crises through conversation, grow from "Little Lord" to "Majesty." |
 
 ---
 

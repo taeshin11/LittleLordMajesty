@@ -240,16 +240,16 @@ public class RoamingBootstrap : MonoBehaviour
 
         var camGO = new GameObject("RoamingCamera");
         _roamingCam = camGO.AddComponent<Camera>();
-        _roamingCam.orthographic = false;  // 3D perspective
-        _roamingCam.fieldOfView = 40f;
+        _roamingCam.orthographic = true;  // Isometric orthographic
+        _roamingCam.orthographicSize = 12f;
         _roamingCam.clearFlags = CameraClearFlags.SolidColor;
         _roamingCam.backgroundColor = new Color(0.53f, 0.81f, 0.92f); // Sky blue
-        _roamingCam.nearClipPlane = 0.3f;
+        _roamingCam.nearClipPlane = 0.1f;
         _roamingCam.farClipPlane = 200f;
         _roamingCam.depth = 10;
-        // Initial position — will be overridden by FollowCamera
-        camGO.transform.position = new Vector3(0f, 12f, -10f);
-        camGO.transform.rotation = Quaternion.Euler(45f, 0f, 0f);
+        // Isometric angle: 35° pitch, 45° yaw
+        camGO.transform.position = new Vector3(20f, 20f, -20f);
+        camGO.transform.rotation = Quaternion.Euler(35f, 45f, 0f);
         try { camGO.tag = "MainCamera"; } catch { }
 
         var follow = camGO.AddComponent<FollowCamera>();
