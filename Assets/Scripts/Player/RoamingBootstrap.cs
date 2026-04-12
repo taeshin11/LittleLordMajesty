@@ -178,7 +178,9 @@ public class RoamingBootstrap : MonoBehaviour
         var spriteGO = new GameObject("Sprite");
         spriteGO.transform.SetParent(_player.transform, false);
         spriteGO.transform.localPosition = Vector3.zero;
-        spriteGO.transform.localScale = new Vector3(1.8f, 1.8f, 1f);
+        // SDXL sprites are 512x768 at 100 PPU = 5.12x7.68 world units.
+        // Scale down so the character is ~1 world unit tall.
+        spriteGO.transform.localScale = new Vector3(0.15f, 0.15f, 1f);
         var sr = spriteGO.AddComponent<SpriteRenderer>();
         sr.sortingOrder = 10;
 
@@ -244,7 +246,7 @@ public class RoamingBootstrap : MonoBehaviour
         var spriteGO = new GameObject("Sprite");
         spriteGO.transform.SetParent(root.transform, false);
         spriteGO.transform.localPosition = Vector3.zero;
-        spriteGO.transform.localScale = new Vector3(1.8f, 1.8f, 1f);
+        spriteGO.transform.localScale = new Vector3(0.15f, 0.15f, 1f);
         var sr = spriteGO.AddComponent<SpriteRenderer>();
         sr.sortingOrder = 5;
 
