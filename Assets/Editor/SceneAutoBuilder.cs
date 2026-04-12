@@ -280,14 +280,7 @@ public static class SceneAutoBuilder
         // ── Wire SettingsUI ─────────────────────────────────────
         WireSettingsUI(settingsPanel);
 
-        // ── 3D World Scene ───────────────────────────────────────
-        var castleScene3DGO = new GameObject("CastleScene3D");
-        castleScene3DGO.AddComponent<CastleScene3D>();
-
-        // Set camera reference in CastleScene3D
-        var soCastle3D = new SerializedObject(castleScene3DGO.GetComponent<CastleScene3D>());
-        soCastle3D.FindProperty("_mainCamera").objectReferenceValue = camGO.GetComponent<Camera>();
-        soCastle3D.ApplyModifiedProperties();
+        // ── World Scene (handled at runtime by RoamingBootstrap) ────
 
         // ── Input & Debug ─────────────────────────────────────────
         var inputHandlerGO = new GameObject("InputHandler");
