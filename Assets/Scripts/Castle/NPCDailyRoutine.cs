@@ -260,15 +260,12 @@ public class NPCDailyRoutine : MonoBehaviour
     {
         _isMoving = true;
         Vector3 startPos = transform.position;
-        Vector3 endPos   = stop.WorldPosition;
+        // Map 3D XZ positions to 2D XY (WorldPosition.x → x, WorldPosition.z → y, z=0)
+        Vector3 endPos = new Vector3(stop.WorldPosition.x, stop.WorldPosition.z, 0f);
 
         float distance = Vector3.Distance(startPos, endPos);
         float duration = distance / MoveSpeed;
         float elapsed  = 0;
-
-        // Face direction of travel
-        if (distance > 0.1f)
-            transform.LookAt(new Vector3(endPos.x, transform.position.y, endPos.z));
 
         while (elapsed < duration)
         {
@@ -289,7 +286,7 @@ public class NPCDailyRoutine : MonoBehaviour
     {
         _currentStop = GetCurrentScheduledStop(_currentHour);
         if (_currentStop != null)
-            transform.position = _currentStop.WorldPosition;
+            transform.position = new Vector3(_currentStop.WorldPosition.x, _currentStop.WorldPosition.z, 0f);
     }
 
     private RoutineStop GetCurrentScheduledStop(int hour)

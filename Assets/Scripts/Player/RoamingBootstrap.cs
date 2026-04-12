@@ -255,6 +255,10 @@ public class RoamingBootstrap : MonoBehaviour
         bb.SetCharacterId(npc.Id);
         bb.AssignSpriteRenderer(sr);
 
+        // Wire daily routine so NPC walks around the courtyard
+        var routine = root.AddComponent<NPCDailyRoutine>();
+        routine.NpcId = npc.Id;
+
         // Build interact prompt UI programmatically
         BuildInteractPrompt(root, npc.Name);
 

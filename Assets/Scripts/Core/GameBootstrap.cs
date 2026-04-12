@@ -86,15 +86,19 @@ public class GameBootstrap : MonoBehaviour
             yield return null; // Wait for Awake/Start
             yield return null; // Extra frame
 
-            // Check if UIManager exists
-            if (UIManager.Instance != null)
+            // Auto-start: skip main menu, go directly to Castle roaming
+            _statusText = "Starting game...";
+            yield return null;
+            var gm = GameManager.Instance;
+            if (gm != null)
             {
-                _statusText = "UIManager found, setting MainMenu...";
-                GameManager.Instance?.SetGameState(GameManager.GameState.MainMenu);
+                var loc = LocalizationManager.Instance;
+                string defaultName = loc?.Get("name_default_player") ?? "Lord";
+                gm.NewGame(defaultName);
                 _statusText = "Running!";
                 yield break;
             }
-            _statusText = "UIManager NOT found — building fallback UI...";
+            _statusText = "GameManager NOT found — building fallback UI...";
         }
         else
         {
