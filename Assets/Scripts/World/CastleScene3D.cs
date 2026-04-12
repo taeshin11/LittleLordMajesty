@@ -151,52 +151,11 @@ public class CastleScene3D : MonoBehaviour
 
     private void Start()
     {
-        // WebGL: skip all 3D scene construction. The 2D NPC card grid in
-        // CastleViewUI is the primary interaction surface; CastleScene3D is
-        // purely decorative and its primitive-creation path has had repeated
-        // wasm crashes across multiple Unity module stripping paths. Defer
-        // the 3D world to native/desktop builds where it's stable.
-        //
-        // CRITICAL: also disable THIS component so LateUpdate/Update do not
-        // fire. The camera-pan path touches _mainCamera.transform every frame
-        // and — in combination with CreatePrimitive-stripped colliders / a
-        // null Camera.main — produces the "RuntimeError: null function" crash
-        // on the first post-NewGame tick. Disabling the component is the
-        // cleanest kill-switch while the 3D path is WebGL-unsafe.
-#if UNITY_WEBGL && !UNITY_EDITOR
-        Debug.Log("[CastleScene3D] Skipping 3D scene construction on WebGL (2D UI handles gameplay)");
+        // The 3D roaming world is now built by RoamingBootstrap.
+        // CastleScene3D is retired — disable to prevent duplicate world
+        // construction and camera conflicts.
+        Debug.Log("[CastleScene3D] Disabled — 3D world is now managed by RoamingBootstrap");
         enabled = false;
-        return;
-#else
-        try { SetupTerrain(); }
-        catch (System.Exception e) { Debug.LogError($"[CastleScene3D] SetupTerrain failed: {e.Message}"); }
-        try { SetupCastle(); }
-        catch (System.Exception e) { Debug.LogError($"[CastleScene3D] SetupCastle failed: {e.Message}"); }
-
-        _npcInteractionUI = FindFirstObjectByType<NPCInteractionUI>(FindObjectsInactive.Include);
-
-        // Spawn NPCs that already exist (if NPCManager initialized before we did)
-        // plus subscribe to future additions.
-        if (GameManager.Instance?.NPCManager != null)
-        {
-            var existingNPCs = GameManager.Instance.NPCManager.GetAllNPCs();
-            if (existingNPCs != null)
-                foreach (var npc in existingNPCs)
-                    SpawnNPC3D(npc);
-
-            GameManager.Instance.NPCManager.OnNPCAdded += SpawnNPC3D;
-        }
-
-        if (BuildingManager.Instance != null)
-            BuildingManager.Instance.OnBuildingConstructed += SpawnBuilding3D;
-
-        // Subscribe to input
-        if (InputHandler.Instance != null)
-        {
-            InputHandler.Instance.OnPinchZoom += HandleZoom;
-            InputHandler.Instance.OnSwipe     += HandlePan;
-        }
-#endif
     }
 
     private void OnDestroy()

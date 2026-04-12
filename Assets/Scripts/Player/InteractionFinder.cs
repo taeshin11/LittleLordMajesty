@@ -1,27 +1,18 @@
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
-/// M16 roaming pivot — finds the nearest interactable NPC in a sphere around
-/// the player and surfaces an "E to Talk" prompt over that NPC's head.
+/// Finds the nearest interactable NPC in a radius around the player
+/// and surfaces an "E to Talk" prompt. Distance check on XZ plane only
+/// (ignores Y height differences).
 ///
-/// Ticks at 10 Hz (every 0.1 s) — enough to feel responsive, cheap enough
-/// that we don't burn frames on physics queries. Uses Physics.OverlapSphere
-/// against a configurable "NPC" layer mask so we never include walls,
-/// buildings, or the player itself.
-///
-/// Pressing the interact key while a target is highlighted routes to
-/// DialogueBoxUI (if present) to open the NPC conversation. If no dialogue
-/// UI is wired yet, we fire GameManager.SetGameState(Dialogue) so the
-/// existing state graph at least blocks input — lets us develop the finder
-/// and the dialogue box in separate commits without temporarily breaking
-/// the player controller.
+/// Ticks at 10 Hz (every 0.1 s). Uses the static RegisteredNPCs list
+/// maintained by NPCIdentity.OnEnable/OnDisable.
 /// </summary>
 public class InteractionFinder : MonoBehaviour
 {
     [Header("Search")]
-    [SerializeField] private float _searchRadius = 2.2f;
+    [SerializeField] private float _searchRadius = 3f;
     [Tooltip("Seconds between proximity ticks. 0.1 = 10 Hz.")]
     [SerializeField] private float _tickInterval = 0.1f;
 
@@ -34,9 +25,6 @@ public class InteractionFinder : MonoBehaviour
 
     /// <summary>
     /// Process-wide registry maintained by NPCIdentity.OnEnable/OnDisable.
-    /// Avoids any dependency on Unity physics layers (they're a pain to
-    /// configure at runtime) and keeps the proximity tick free of
-    /// GetComponent calls — we can iterate a live list of ~20 NPCs cheaply.
     /// </summary>
     public static readonly List<NPCIdentity> RegisteredNPCs = new();
 
@@ -50,12 +38,8 @@ public class InteractionFinder : MonoBehaviour
 
         if (_currentTarget != null)
         {
-            // Keyboard interact.
             if (Input.GetKeyDown(_interactKey))
                 TriggerInteract();
-            // Mobile tap: any touch that isn't on the joystick area
-            // (left side of screen). Simple heuristic: tap on right
-            // half of screen while near an NPC = interact.
             if (Input.touchCount > 0)
             {
                 var touch = Input.GetTouch(0);
@@ -70,11 +54,18 @@ public class InteractionFinder : MonoBehaviour
     {
         float bestDistSq = _searchRadius * _searchRadius;
         NPCIdentity best = null;
+
+        Vector3 myPos = transform.position;
+
         for (int i = 0; i < RegisteredNPCs.Count; i++)
         {
             var id = RegisteredNPCs[i];
             if (id == null) continue;
-            float d2 = (id.transform.position - transform.position).sqrMagnitude;
+
+            // XZ plane distance only (ignore Y height difference)
+            Vector3 delta = id.transform.position - myPos;
+            float d2 = delta.x * delta.x + delta.z * delta.z;
+
             if (d2 < bestDistSq)
             {
                 bestDistSq = d2;
@@ -84,7 +75,6 @@ public class InteractionFinder : MonoBehaviour
 
         if (best == _currentTarget) return;
 
-        // Target changed: hide old prompt, show new one.
         if (_currentPrompt != null) _currentPrompt.Hide();
         _currentTarget = best;
         if (_currentTarget != null)
@@ -98,9 +88,6 @@ public class InteractionFinder : MonoBehaviour
     private void TriggerInteract()
     {
         string npcId = _currentTarget.NpcId;
-        // Prefer the dialogue box UI if it's present in the scene, otherwise
-        // fall back to the legacy NPCInteractionUI (still alive until M16-06
-        // ships its replacement). Either path ends in the same Gemini flow.
         var box = DialogueBoxUI.Instance;
         if (box != null) box.Open(npcId);
         else
