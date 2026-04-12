@@ -278,7 +278,7 @@ public class DialogueBoxUI : MonoBehaviour
         tmp.text = label;
         tmp.fontSize = fontSize;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = bg.grayscale > 0.5f ? new Color(0.15f, 0.15f, 0.2f) : Color.white;
+        tmp.color = bg.grayscale > 0.6f ? new Color(0.15f, 0.15f, 0.2f) : Color.white;
         tmp.richText = false;
         tmp.enableWordWrapping = false;
         var txtRT = tmp.rectTransform;
