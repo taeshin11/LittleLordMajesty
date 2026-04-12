@@ -123,7 +123,7 @@ public class RoamingBootstrap : MonoBehaviour
         _roamingCam.orthographic = true;
         _roamingCam.orthographicSize = 5.5f;
         _roamingCam.clearFlags = CameraClearFlags.SolidColor;
-        _roamingCam.backgroundColor = new Color(0.55f, 0.78f, 0.45f); // pastel grass
+        _roamingCam.backgroundColor = new Color(0.2f, 0.47f, 0.01f); // match Anokolisa grass
         _roamingCam.nearClipPlane = 0.1f;
         _roamingCam.farClipPlane = 100f;
         _roamingCam.depth = 10;
@@ -144,13 +144,9 @@ public class RoamingBootstrap : MonoBehaviour
         {
             var grassSprite = Sprite.Create(grassTex,
                 new Rect(0, 0, grassTex.width, grassTex.height),
-                new Vector2(0.5f, 0.5f), 16f);
+                new Vector2(0.5f, 0.5f), PixelCrawlerSprites.PPU);
             sr.sprite = grassSprite;
-            // 192px at 16 PPU = 12 world units. Scale to cover courtyard (~22 units).
-            float spriteW = grassTex.width / 16f;
-            float targetSize = 22f;
-            float scale = targetSize / spriteW;
-            ground.transform.localScale = new Vector3(scale, scale, 1f);
+            // 384px at 16 PPU = 24 WU. Already covers full camera view, no scale needed.
         }
         else
         {
@@ -168,8 +164,8 @@ public class RoamingBootstrap : MonoBehaviour
         var spriteGO = new GameObject("Sprite");
         spriteGO.transform.SetParent(_player.transform, false);
         spriteGO.transform.localPosition = Vector3.zero;
-        // Anokolisa Body_A is 64x64 at 64 PPU = 1 world unit. Scale up slightly.
-        spriteGO.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
+        // Body_A: 64x64 at 16 PPU = 4 WU. Scale 0.5 → character ~1.9 WU tall.
+        spriteGO.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
         var sr = spriteGO.AddComponent<SpriteRenderer>();
         sr.sortingOrder = 10;
 
@@ -226,8 +222,8 @@ public class RoamingBootstrap : MonoBehaviour
         var spriteGO = new GameObject("Sprite");
         spriteGO.transform.SetParent(root.transform, false);
         spriteGO.transform.localPosition = Vector3.zero;
-        // NPC sprites are 32x32 at 32 PPU = 1 world unit. Scale up to match player.
-        spriteGO.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
+        // NPC: 32x32 at 16 PPU = 2 WU. Scale 0.5 → character ~1.9 WU tall (matches player).
+        spriteGO.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
         var sr = spriteGO.AddComponent<SpriteRenderer>();
         sr.sortingOrder = 5;
         sr.color = PixelCrawlerSprites.GetNPCTint(npc.Id);

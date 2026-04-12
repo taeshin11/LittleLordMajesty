@@ -10,6 +10,10 @@ public static class PixelCrawlerSprites
 {
     private static readonly Dictionary<string, Sprite[]> _cache = new();
 
+    // Consistent PPU across all sprites so pixel sizes match on screen.
+    // 16 PPU = 1 Anokolisa base tile per world unit.
+    public const float PPU = 16f;
+
     /// <summary>
     /// Load a sprite sheet from Resources and slice it into individual frames.
     /// </summary>
@@ -33,7 +37,7 @@ public static class PixelCrawlerSprites
         for (int i = 0; i < frameCount; i++)
         {
             var rect = new Rect(i * frameSize, 0, frameSize, tex.height);
-            sprites[i] = Sprite.Create(tex, rect, new Vector2(0.5f, 0.5f), frameSize);
+            sprites[i] = Sprite.Create(tex, rect, new Vector2(0.5f, 0.5f), PPU);
         }
 
         _cache[key] = sprites;
