@@ -440,7 +440,9 @@ public class RoamingBootstrap : MonoBehaviour
         System.Random rng = new System.Random(42);
 
         // Tree tile indices to choose from
-        int[] treeTiles = { 4, 7, 8, 9 }; // small, pine L, pine R, autumn
+        // Use only single-tile trees (4=round green, 9=autumn orange, 15=small bush)
+        // Tiles 7,8 are pine HALVES — don't use alone
+        int[] treeTiles = { 4, 4, 4, 9, 15 }; // mostly green, some autumn, some bushes
 
         // --- North edge (y=12..14) ---
         for (int y = 12; y <= 14; y++)
