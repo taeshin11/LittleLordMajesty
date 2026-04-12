@@ -253,8 +253,8 @@ public class RoamingBootstrap : MonoBehaviour
         try { camGO.tag = "MainCamera"; } catch { }
 
         var follow = camGO.AddComponent<FollowCamera>();
-        follow.SetHeight(10f);
-        follow.SetDistance(8f);
+        // FollowCamera now uses orthoSize, not height/distance
+        follow.SetOrthoSize(12f);
     }
 
     // ---------------------------------------------------------------
