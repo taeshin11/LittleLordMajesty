@@ -15,6 +15,9 @@ public static class LocalDialogueBank
 {
     public enum Context { Greeting, Idle, Accept, Refuse, GoodNews, BadNews }
 
+    // Top-level dict is keyed by language ("en", "ko").
+    // Each value is the old profession → context → lines structure.
+    private static Dictionary<string, Dictionary<string, Dictionary<string, List<string>>>> _bankByLang;
     private static Dictionary<string, Dictionary<string, List<string>>> _bank;
     private static bool _loaded;
     private static bool? _canRenderHangul;
@@ -52,7 +55,54 @@ public static class LocalDialogueBank
         }
         try
         {
-            _bank = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<string>>>>(asset.text);
+            // Try language-keyed format first: { "en": { ... }, "ko": { ... } }
+            _bankByLang = JsonConvert.DeserializeObject<
+                Dictionary<string, Dictionary<string, Dictionary<string, List<string>>>>>(asset.text);
+
+            // Detect whether top-level keys are language codes or profession names.
+            // Language-keyed format uses "en"/"ko"; legacy format uses "vassal"/"soldier"/etc.
+            bool isLangKeyed = _bankByLang != null
+                && (_bankByLang.ContainsKey("en") || _bankByLang.ContainsKey("ko"));
+
+            if (isLangKeyed)
+            {
+                // Pick language: prefer English, fall back to Korean if Hangul is renderable.
+                if (_bankByLang.TryGetValue("en", out var enBank))
+                    _bank = enBank;
+
+                if (CanRenderHangul() && _bankByLang.TryGetValue("ko", out var koBank))
+                {
+                    // If we already have English, merge Korean lines in so both pools
+                    // are available; otherwise just use Korean.
+                    if (_bank != null)
+                    {
+                        foreach (var kv in koBank)
+                        {
+                            if (!_bank.ContainsKey(kv.Key))
+                                _bank[kv.Key] = kv.Value;
+                            else
+                                foreach (var slot in kv.Value)
+                                {
+                                    if (!_bank[kv.Key].ContainsKey(slot.Key))
+                                        _bank[kv.Key][slot.Key] = slot.Value;
+                                    else
+                                        _bank[kv.Key][slot.Key].AddRange(slot.Value);
+                                }
+                        }
+                    }
+                    else
+                    {
+                        _bank = koBank;
+                    }
+                }
+            }
+            else
+            {
+                // Legacy flat format (all Korean): re-parse as old shape.
+                _bank = JsonConvert.DeserializeObject<
+                    Dictionary<string, Dictionary<string, List<string>>>>(asset.text);
+            }
+
             int total = 0;
             if (_bank != null)
                 foreach (var role in _bank.Values)
@@ -76,12 +126,6 @@ public static class LocalDialogueBank
     {
         EnsureLoaded();
         if (_bank == null) return null;
-        // Every line in the bank is Korean. If the default TMP font asset can't
-        // render Hangul (i.e. NotoSansKR isn't wired as a fallback yet), feeding
-        // a Korean string to TMP crashes the wasm runtime in
-        // TMP_FontAsset.TryAddCharacterInternal — so silently return null and
-        // let the caller fall back to English/Gemini.
-        if (!CanRenderHangul()) return null;
         if (!_professionToRole.TryGetValue(profession, out string roleId)) return null;
         if (!_bank.TryGetValue(roleId, out var slots)) return null;
         if (!_contextKeys.TryGetValue(context, out string ctxKey)) return null;
