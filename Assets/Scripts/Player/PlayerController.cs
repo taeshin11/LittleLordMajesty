@@ -5,8 +5,9 @@ using UnityEngine;
 ///
 /// Direct transform-based movement in the XY plane. No Rigidbody, no
 /// CharacterController. Supports keyboard (WASD/arrows) and touch
-/// (via VirtualJoystick). 3-direction sprite system (Down/Side/Up)
-/// with horizontal flip for left/right, using Anokolisa Pixel Crawler sheets.
+/// (via VirtualJoystick). 4-direction sprite system using Kenney RPG
+/// Urban Pack individual tile PNGs (front/back/left/right).
+/// Simulates walk by toggling a slight Y offset on the sprite.
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
@@ -33,13 +34,13 @@ public class PlayerController : MonoBehaviour
 
     [Header("Visual")]
     [SerializeField] private SpriteRenderer _sprite;
-    [SerializeField] private float _frameDuration = 0.12f;
+    [SerializeField] private float _bobFrequency = 8f;
+    [SerializeField] private float _bobAmplitude = 0.04f;
 
     private PixelCrawlerSprites.PlayerSpriteSet _sprites;
     private Facing _facing = Facing.Down;
-    private int _frame;
-    private float _frameTimer;
     private bool _inputLocked;
+    private float _bobTimer;
 
     private void OnEnable()
     {
@@ -83,8 +84,7 @@ public class PlayerController : MonoBehaviour
 
         if (input.sqrMagnitude < 0.01f)
         {
-            _frame = 0;
-            _frameTimer = 0f;
+            _bobTimer = 0f;
             ApplySprite(false);
             return;
         }
@@ -93,7 +93,6 @@ public class PlayerController : MonoBehaviour
         transform.position += new Vector3(moveDir.x, moveDir.y, 0f) * (_walkSpeed * Time.deltaTime);
 
         UpdateFacing(moveDir);
-        AdvanceFrame();
         ApplySprite(true);
     }
 
@@ -107,54 +106,26 @@ public class PlayerController : MonoBehaviour
             _facing = moveDir.y > 0 ? Facing.Up : Facing.Down;
     }
 
-    private void AdvanceFrame()
-    {
-        _frameTimer += Time.deltaTime;
-        if (_frameTimer >= _frameDuration)
-        {
-            _frameTimer = 0f;
-            // Get current walk array to know frame count
-            var arr = GetWalkArray();
-            if (arr != null && arr.Length > 0)
-                _frame = (_frame + 1) % arr.Length;
-        }
-    }
-
-    private Sprite[] GetWalkArray()
-    {
-        if (_sprites == null) return null;
-        return _facing switch
-        {
-            Facing.Down => _sprites.WalkDown,
-            Facing.Up => _sprites.WalkUp,
-            Facing.Right or Facing.Left => _sprites.WalkSide,
-            _ => _sprites.WalkDown,
-        };
-    }
-
-    private Sprite[] GetIdleArray()
-    {
-        if (_sprites == null) return null;
-        return _facing switch
-        {
-            Facing.Down => _sprites.IdleDown,
-            Facing.Up => _sprites.IdleUp,
-            Facing.Right or Facing.Left => _sprites.IdleSide,
-            _ => _sprites.IdleDown,
-        };
-    }
-
     private void ApplySprite(bool walking)
     {
         if (_sprite == null || _sprites == null) return;
 
-        var arr = walking ? GetWalkArray() : GetIdleArray();
-        if (arr == null || arr.Length == 0) return;
+        var s = _sprites.GetFacing((int)_facing);
+        if (s != null) _sprite.sprite = s;
 
-        int idx = _frame % arr.Length;
-        if (arr[idx] != null) _sprite.sprite = arr[idx];
+        // No flipX needed — left and right are separate sprites
+        _sprite.flipX = false;
 
-        // Flip horizontally for Left facing (Side sheets face right)
-        _sprite.flipX = _facing == Facing.Left;
+        // Walk bob: slight Y oscillation on the sprite child to simulate stepping
+        if (walking)
+        {
+            _bobTimer += Time.deltaTime * _bobFrequency;
+            float bob = Mathf.Sin(_bobTimer * Mathf.PI * 2f) * _bobAmplitude;
+            _sprite.transform.localPosition = new Vector3(0f, bob, 0f);
+        }
+        else
+        {
+            _sprite.transform.localPosition = Vector3.zero;
+        }
     }
 }

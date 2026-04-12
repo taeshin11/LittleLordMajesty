@@ -113,3 +113,6 @@ tools/playwright_test/screenshots/
 # SDXL seed-variant review dumps (not part of the game build)
 /tools/image_gen/variants/
 *.zip
+
+# Kenney raw asset downloads (only Assets/Resources/Art/Kenney/ is committed)
+Kenny/

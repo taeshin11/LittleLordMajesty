@@ -2,114 +2,109 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// Utility to load and slice Anokolisa Pixel Crawler sprite sheets at runtime.
-/// Sprite sheets are horizontal strips — each frame is frameSize x frameSize.
-/// Caches sliced sprites to avoid repeat work.
+/// Utility to load Kenney RPG Urban Pack sprites at runtime.
+/// Each sprite is a separate 16x16 PNG file loaded from Resources/Art/Kenney/.
+/// Provides player and NPC directional sprites (front, back, left, right).
+/// Replaces the old Anokolisa sheet-slicing approach.
 /// </summary>
 public static class PixelCrawlerSprites
 {
-    private static readonly Dictionary<string, Sprite[]> _cache = new();
+    private static readonly Dictionary<string, Sprite> _cache = new();
 
-    // Consistent PPU across all sprites so pixel sizes match on screen.
-    // 16 PPU = 1 Anokolisa base tile per world unit.
+    // 16 PPU = 1 Kenney tile (16px) per world unit.
     public const float PPU = 16f;
 
     /// <summary>
-    /// Load a sprite sheet from Resources and slice it into individual frames.
+    /// Load a single sprite PNG from Resources/Art/Kenney/.
     /// </summary>
-    /// <param name="resourcePath">Path relative to Resources/ (no extension)</param>
-    /// <param name="frameSize">Width and height of each frame in pixels</param>
-    /// <returns>Array of sprites, one per frame, left-to-right</returns>
-    public static Sprite[] LoadSheet(string resourcePath, int frameSize)
+    public static Sprite LoadSprite(string name)
     {
-        string key = $"{resourcePath}@{frameSize}";
-        if (_cache.TryGetValue(key, out var cached)) return cached;
+        if (_cache.TryGetValue(name, out var cached)) return cached;
 
-        var tex = Resources.Load<Texture2D>(resourcePath);
+        string path = $"Art/Kenney/{name}";
+        var tex = Resources.Load<Texture2D>(path);
         if (tex == null)
         {
-            Debug.LogWarning($"[PixelCrawlerSprites] Missing texture: {resourcePath}");
-            return System.Array.Empty<Sprite>();
+            Debug.LogWarning($"[KenneySprites] Missing texture: {path}");
+            return null;
         }
 
-        int frameCount = tex.width / frameSize;
-        var sprites = new Sprite[frameCount];
-        for (int i = 0; i < frameCount; i++)
-        {
-            var rect = new Rect(i * frameSize, 0, frameSize, tex.height);
-            sprites[i] = Sprite.Create(tex, rect, new Vector2(0.5f, 0.5f), PPU);
-        }
-
-        _cache[key] = sprites;
-        return sprites;
+        var sprite = Sprite.Create(tex,
+            new Rect(0, 0, tex.width, tex.height),
+            new Vector2(0.5f, 0.5f), PPU);
+        sprite.name = name;
+        _cache[name] = sprite;
+        return sprite;
     }
 
     /// <summary>
-    /// Load player character sprites (Body_A). Returns idle and walk arrays
-    /// for Down, Side, and Up directions.
+    /// Load player character sprites — 4 directions, 1 frame each.
     /// </summary>
     public static PlayerSpriteSet LoadPlayerSprites()
     {
         return new PlayerSpriteSet
         {
-            IdleDown = LoadSheet("Art/PixelCrawler/Player/Idle_Down", 64),
-            IdleSide = LoadSheet("Art/PixelCrawler/Player/Idle_Side", 64),
-            IdleUp   = LoadSheet("Art/PixelCrawler/Player/Idle_Up",   64),
-            WalkDown = LoadSheet("Art/PixelCrawler/Player/Walk_Down", 64),
-            WalkSide = LoadSheet("Art/PixelCrawler/Player/Walk_Side", 64),
-            WalkUp   = LoadSheet("Art/PixelCrawler/Player/Walk_Up",   64),
+            Front = LoadSprite("player_front"),
+            Back  = LoadSprite("player_back"),
+            Left  = LoadSprite("player_left"),
+            Right = LoadSprite("player_right"),
         };
     }
 
     /// <summary>
-    /// Load NPC sprites (Knight, Rogue, or Wizzard). Front-facing only.
+    /// Load NPC sprites — 4 directions, 1 frame each.
+    /// NPC id maps directly to file names (e.g. vassal_01_front).
     /// </summary>
-    public static NPCSpriteSet LoadNPCSprites(string npcType)
+    public static NPCSpriteSet LoadNPCSprites(string npcId)
     {
         return new NPCSpriteSet
         {
-            Idle = LoadSheet($"Art/PixelCrawler/NPCs/{npcType}/Idle", 32),
+            Front = LoadSprite($"{npcId}_front"),
+            Back  = LoadSprite($"{npcId}_back"),
+            Left  = LoadSprite($"{npcId}_left"),
+            Right = LoadSprite($"{npcId}_right"),
         };
     }
 
     /// <summary>
-    /// Map NPC id to Anokolisa NPC sprite type.
+    /// Get front-facing sprite for an NPC (for portraits, etc.)
     /// </summary>
-    public static string GetNPCSpriteType(string npcId)
+    public static Sprite GetNPCPortrait(string npcId)
     {
-        return npcId switch
-        {
-            "vassal_01"   => "Knight",
-            "soldier_01"  => "Knight",
-            "farmer_01"   => "Rogue",
-            "merchant_01" => "Wizzard",
-            _ => "Knight",
-        };
-    }
-
-    /// <summary>
-    /// Get a tint color to differentiate NPCs that share the same sprite type.
-    /// </summary>
-    public static Color GetNPCTint(string npcId)
-    {
-        return npcId switch
-        {
-            "vassal_01"   => Color.white,
-            "soldier_01"  => new Color(0.85f, 0.92f, 1f),    // Slight blue tint
-            "farmer_01"   => new Color(1f, 0.95f, 0.85f),    // Warm tint
-            "merchant_01" => new Color(0.95f, 0.85f, 1f),    // Purple tint
-            _ => Color.white,
-        };
+        return LoadSprite($"{npcId}_front");
     }
 
     public class PlayerSpriteSet
     {
-        public Sprite[] IdleDown, IdleSide, IdleUp;
-        public Sprite[] WalkDown, WalkSide, WalkUp;
+        public Sprite Front, Back, Left, Right;
+
+        public Sprite GetFacing(int facing)
+        {
+            return facing switch
+            {
+                0 => Front, // Down
+                1 => Back,  // Up
+                2 => Right,
+                3 => Left,
+                _ => Front,
+            };
+        }
     }
 
     public class NPCSpriteSet
     {
-        public Sprite[] Idle;
+        public Sprite Front, Back, Left, Right;
+
+        public Sprite GetFacing(int facing)
+        {
+            return facing switch
+            {
+                0 => Front,
+                1 => Back,
+                2 => Right,
+                3 => Left,
+                _ => Front,
+            };
+        }
     }
 }

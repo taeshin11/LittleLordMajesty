@@ -300,18 +300,13 @@ public class DialogueBoxUI : MonoBehaviour
             _nameLabel.text = $"{npc.Name} ({npc.Profession})";
 
         // Portrait: prefer the generated SDXL portrait, fall back to the
-        // front-facing sprite, then a colored placeholder.
+        // Kenney front-facing sprite, then a colored placeholder.
         if (_portrait != null)
         {
             var p = Resources.Load<Sprite>($"Art/Generated/portrait_{npcId}");
-            // Fallback: use first frame of Anokolisa NPC idle sprite
+            // Fallback: use Kenney NPC front-facing sprite
             if (p == null)
-            {
-                string npcType = PixelCrawlerSprites.GetNPCSpriteType(npcId);
-                var npcSprites = PixelCrawlerSprites.LoadNPCSprites(npcType);
-                if (npcSprites.Idle != null && npcSprites.Idle.Length > 0)
-                    p = npcSprites.Idle[0];
-            }
+                p = PixelCrawlerSprites.GetNPCPortrait(npcId);
             if (p != null) _portrait.sprite = p;
         }
 

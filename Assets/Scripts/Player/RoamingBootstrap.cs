@@ -3,10 +3,10 @@ using TMPro;
 
 /// <summary>
 /// M16 roaming pivot — runtime bootstrap that spawns the player avatar,
-/// wires the follow camera, and loads Anokolisa Pixel Crawler sprites.
+/// wires the follow camera, and loads Kenney RPG Urban Pack sprites.
 ///
-/// 2D top-down version: orthographic camera, XY plane movement,
-/// no 3D billboard rotation needed. Supports mobile via VirtualJoystick.
+/// 2D top-down version: orthographic camera, XY plane movement.
+/// Supports mobile via VirtualJoystick.
 /// </summary>
 public class RoamingBootstrap : MonoBehaviour
 {
@@ -71,8 +71,9 @@ public class RoamingBootstrap : MonoBehaviour
         BuildPlayer();
         WireCamera();
         SpawnNPCs();
+        SpawnEnvironment();
         _spawned = true;
-        Debug.Log("[RoamingBootstrap] 2D roaming world built (Anokolisa Pixel Crawler)");
+        Debug.Log("[RoamingBootstrap] 2D roaming world built (Kenney RPG Urban Pack)");
     }
 
     // --- Legacy UI Removal ---
@@ -123,7 +124,8 @@ public class RoamingBootstrap : MonoBehaviour
         _roamingCam.orthographic = true;
         _roamingCam.orthographicSize = 5.5f;
         _roamingCam.clearFlags = CameraClearFlags.SolidColor;
-        _roamingCam.backgroundColor = new Color(0.2f, 0.47f, 0.01f); // match Anokolisa grass
+        // Match Kenney grass tile dominant color (RGB 56, 203, 171)
+        _roamingCam.backgroundColor = new Color(0.22f, 0.80f, 0.67f);
         _roamingCam.nearClipPlane = 0.1f;
         _roamingCam.farClipPlane = 100f;
         _roamingCam.depth = 10;
@@ -138,20 +140,20 @@ public class RoamingBootstrap : MonoBehaviour
         ground.transform.position = new Vector3(0f, 0f, 1f);
         var sr = ground.AddComponent<SpriteRenderer>();
 
-        // Use Anokolisa tiled grass ground (pixel art, matches game sprites)
-        var grassTex = Resources.Load<Texture2D>("Art/PixelCrawler/Tilesets/Ground_Grass");
+        // Use Kenney tiled grass ground (pixel art, matches game sprites)
+        var grassTex = Resources.Load<Texture2D>("Art/Kenney/ground_tiled");
         if (grassTex != null)
         {
             var grassSprite = Sprite.Create(grassTex,
                 new Rect(0, 0, grassTex.width, grassTex.height),
                 new Vector2(0.5f, 0.5f), PixelCrawlerSprites.PPU);
             sr.sprite = grassSprite;
-            // 384px at 16 PPU = 24 WU. Already covers full camera view, no scale needed.
+            // 384px at 16 PPU = 24 WU. Covers full camera view.
         }
         else
         {
-            // Fallback: solid pastel green
-            sr.color = new Color(0.35f, 0.65f, 0.2f);
+            // Fallback: solid Kenney grass green
+            sr.color = new Color(0.22f, 0.80f, 0.67f);
         }
         sr.sortingOrder = -100;
     }
@@ -164,17 +166,17 @@ public class RoamingBootstrap : MonoBehaviour
         var spriteGO = new GameObject("Sprite");
         spriteGO.transform.SetParent(_player.transform, false);
         spriteGO.transform.localPosition = Vector3.zero;
-        // Body_A: 64x64 at 16 PPU = 4 WU. Scale 0.5 → character ~1.9 WU tall.
-        spriteGO.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+        // Kenney: 16x16 at 16 PPU = 1 WU. Scale 1.5x so character is 1.5 WU tall.
+        spriteGO.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
         var sr = spriteGO.AddComponent<SpriteRenderer>();
         sr.sortingOrder = 10;
 
-        // Load Anokolisa player sprite set
+        // Load Kenney player sprite set
         var sprites = PixelCrawlerSprites.LoadPlayerSprites();
 
-        // Set initial sprite
-        if (sprites.IdleDown != null && sprites.IdleDown.Length > 0)
-            sr.sprite = sprites.IdleDown[0];
+        // Set initial sprite (front-facing)
+        if (sprites.Front != null)
+            sr.sprite = sprites.Front;
 
         var ctrl = _player.AddComponent<PlayerController>();
         ctrl.ConfigureAtRuntime(new PlayerController.RuntimeConfig {
@@ -222,11 +224,10 @@ public class RoamingBootstrap : MonoBehaviour
         var spriteGO = new GameObject("Sprite");
         spriteGO.transform.SetParent(root.transform, false);
         spriteGO.transform.localPosition = Vector3.zero;
-        // NPC: 32x32 at 16 PPU = 2 WU. Scale 0.5 → character ~1.9 WU tall (matches player).
-        spriteGO.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+        // Kenney NPC: 16x16 at 16 PPU = 1 WU. Scale 1.5x to match player.
+        spriteGO.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
         var sr = spriteGO.AddComponent<SpriteRenderer>();
         sr.sortingOrder = 5;
-        sr.color = PixelCrawlerSprites.GetNPCTint(npc.Id);
 
         var identity = root.AddComponent<NPCIdentity>();
         identity.SetIdentity(npc.Id, npc.Name);
@@ -283,5 +284,64 @@ public class RoamingBootstrap : MonoBehaviour
         prompt.SetupRuntime(canvas, tmp);
 
         canvas.gameObject.SetActive(false);
+    }
+
+    // --- Environment Decoration ---
+
+    private void SpawnEnvironment()
+    {
+        // Place trees and bushes around the courtyard edges for visual interest
+        string[] treeNames = { "tree_01", "tree_02" };
+        string[] bushNames = { "bush_01", "bush_02", "bush_03" };
+
+        var envRoot = new GameObject("Environment");
+        envRoot.transform.position = Vector3.zero;
+
+        // Ring of trees around the courtyard perimeter
+        float courtSize = 10f;
+        System.Random rng = new System.Random(123);
+
+        // Top and bottom edges
+        for (float x = -courtSize; x <= courtSize; x += 2.5f)
+        {
+            PlaceDecor(envRoot.transform, treeNames[rng.Next(treeNames.Length)],
+                new Vector3(x + (float)(rng.NextDouble() * 0.5), courtSize + (float)(rng.NextDouble()), 0.5f));
+            PlaceDecor(envRoot.transform, treeNames[rng.Next(treeNames.Length)],
+                new Vector3(x + (float)(rng.NextDouble() * 0.5), -courtSize - (float)(rng.NextDouble()), 0.5f));
+        }
+
+        // Left and right edges
+        for (float y = -courtSize; y <= courtSize; y += 2.5f)
+        {
+            PlaceDecor(envRoot.transform, treeNames[rng.Next(treeNames.Length)],
+                new Vector3(-courtSize - (float)(rng.NextDouble()), y + (float)(rng.NextDouble() * 0.5), 0.5f));
+            PlaceDecor(envRoot.transform, treeNames[rng.Next(treeNames.Length)],
+                new Vector3(courtSize + (float)(rng.NextDouble()), y + (float)(rng.NextDouble() * 0.5), 0.5f));
+        }
+
+        // Scatter a few bushes inside the courtyard
+        Vector2[] bushPositions = {
+            new(-3f, 4f), new(4f, 3f), new(-5f, -3f), new(6f, -4f),
+            new(2f, 6f), new(-6f, 2f), new(5f, -6f), new(-4f, -6f),
+        };
+        foreach (var pos in bushPositions)
+        {
+            PlaceDecor(envRoot.transform, bushNames[rng.Next(bushNames.Length)],
+                new Vector3(pos.x, pos.y, 0.5f));
+        }
+    }
+
+    private void PlaceDecor(Transform parent, string spriteName, Vector3 position)
+    {
+        var sprite = PixelCrawlerSprites.LoadSprite(spriteName);
+        if (sprite == null) return;
+
+        var go = new GameObject($"Decor_{spriteName}");
+        go.transform.SetParent(parent, false);
+        go.transform.position = position;
+        go.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = sprite;
+        sr.sortingOrder = -10;
     }
 }
