@@ -85,34 +85,55 @@ public class RoamingBootstrap : MonoBehaviour
 
     private void RetireLegacyCardUI()
     {
-        // Walk all UI panels and kill the ones that are part of the
-        // pre-pivot card experience. Identify by GameObject name instead
-        // of adding a new tag — avoids scene YAML churn.
+        // M16-07 fix: SetActive(false) isn't enough because UIManager
+        // re-activates _castleViewPanel/_dialoguePanel on every state
+        // transition (see UIManager.ShowPanel — it always turns the castle
+        // panel back on when entering Castle/Dialogue/Event). Destroy the
+        // legacy GameObjects instead. UIManager's SetPanelActive has a
+        // null guard, so subsequent ShowPanel calls silently no-op.
+        //
+        // Also destroy the EventPanel (same re-activation pattern) and
+        // TutorialOverlay (tutorial would re-assert itself otherwise).
         string[] retireNames = {
             "CastleViewPanel",
             "DialoguePanel",
+            "EventPanel",
+            "TutorialOverlay",
         };
         foreach (var name in retireNames)
         {
-            var go = GameObject.Find(name);
+            // Search INCLUDING inactive objects — by this point some panels
+            // may already be inactive due to state transitions, and
+            // GameObject.Find skips inactive.
+            var go = FindIncludingInactive(name);
             if (go != null)
             {
-                go.SetActive(false);
-                Debug.Log($"[RoamingBootstrap] Retired legacy UI: {name}");
+                Destroy(go);
+                Debug.Log($"[RoamingBootstrap] Destroyed legacy UI: {name}");
             }
         }
     }
 
+    private static GameObject FindIncludingInactive(string name)
+    {
+        var all = Resources.FindObjectsOfTypeAll<GameObject>();
+        foreach (var go in all)
+        {
+            if (go == null) continue;
+            if (go.name != name) continue;
+            // Skip prefab assets — only return scene instances.
+            if (go.scene.name == null) continue;
+            if (!go.scene.IsValid()) continue;
+            return go;
+        }
+        return null;
+    }
+
     private void SuppressLegacyTutorial()
     {
-        var overlay = GameObject.Find("TutorialOverlay");
-        if (overlay != null)
-        {
-            overlay.SetActive(false);
-            Debug.Log("[RoamingBootstrap] Suppressed legacy tutorial overlay");
-        }
-        // Also tell TutorialSystem to consider it done so it doesn't
-        // reassert itself next frame.
+        // TutorialOverlay GameObject is destroyed in RetireLegacyCardUI.
+        // We still need to disable the TutorialSystem MonoBehaviour so it
+        // doesn't try to instantiate a replacement next frame.
         var tut = TutorialSystem.Instance;
         if (tut != null)
         {
