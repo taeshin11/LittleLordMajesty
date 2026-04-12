@@ -565,9 +565,9 @@ public class RoamingBootstrap : MonoBehaviour
             NPCPersona.NPCProfession.Farmer    => TinyTileset.TD_BrownHair,   // simple farmer
             NPCPersona.NPCProfession.Merchant  => TinyTileset.TD_Archer,      // merchant
             NPCPersona.NPCProfession.Mage      => TinyTileset.TD_Wizard,      // purple hat wizard
-            NPCPersona.NPCProfession.Priest    => TinyTileset.TD_Blonde,      // blonde priest
-            NPCPersona.NPCProfession.Scout     => TinyTileset.TD_DarkFemale,  // scout
-            NPCPersona.NPCProfession.Blacksmith => TinyTileset.TD_LightChar,  // blacksmith
+            NPCPersona.NPCProfession.Priest    => TinyTileset.TD_Warrior,     // priest
+            NPCPersona.NPCProfession.Scout     => TinyTileset.TD_DarkHair,   // scout
+            NPCPersona.NPCProfession.Blacksmith => TinyTileset.TD_BrownHair, // blacksmith
             _ => TinyTileset.TD_Bard,
         };
     }
