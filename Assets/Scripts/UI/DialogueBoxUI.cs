@@ -208,10 +208,13 @@ public class DialogueBoxUI : MonoBehaviour
         _input.placeholder = phTMP;
         _input.onSubmit.AddListener(_ => OnSendClicked());
 
-        // Send button — accent blue
+        // Send button — accent blue, force white text
         _sendBtn = CreateBtn(_root.transform, "Send",
             LocalizationManager.Instance?.Get("btn_send") ?? "보내기",
             new Color(0.28f, 0.47f, 0.75f), 13f);
+        // Force white text on the send button label
+        var sendLabel = _sendBtn.GetComponentInChildren<TextMeshProUGUI>();
+        if (sendLabel != null) sendLabel.color = Color.white;
         var sendRT = _sendBtn.GetComponent<RectTransform>();
         sendRT.anchorMin = new Vector2(0.84f, 0.01f);
         sendRT.anchorMax = new Vector2(0.99f, 0.22f);
@@ -371,9 +374,20 @@ public class DialogueBoxUI : MonoBehaviour
         if (_isWaitingForResponse || string.IsNullOrEmpty(_currentNPCId)) return;
         _isWaitingForResponse = true;
         PlayText("...");
+
+        // Try Gemini first, but if no API key, use LocalDialogueBank
+        var npc = NPCManager.Instance?.GetNPC(_currentNPCId);
         NPCManager.Instance?.IssueCommandToNPC(_currentNPCId, command, response =>
         {
             _isWaitingForResponse = false;
+            // If got the generic fallback, try local dialogue instead
+            if (npc != null && (response.Contains("cannot answer") || response.Contains("대답할 수 없")))
+            {
+                string local = LocalDialogueBank.GetRandom(
+                    npc.Profession, LocalDialogueBank.Context.Accept)
+                    ?? LocalDialogueBank.GetRandom(npc.Profession, LocalDialogueBank.Context.Idle);
+                if (!string.IsNullOrEmpty(local)) response = local;
+            }
             PlayText(response);
         });
     }
