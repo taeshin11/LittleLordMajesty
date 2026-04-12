@@ -1,14 +1,15 @@
 using UnityEngine;
 
 /// <summary>
-/// 2D isometric player controller on the XY plane.
-/// Simple transform-based movement with sprite animation support.
-/// No physics — uses Physics2D.OverlapCircle for collision checks.
+/// 2D top-down player controller on the XY plane.
+/// Simple transform-based movement. Single sprite (no animation for 16x16 tiles).
+/// Flips sprite horizontally for left/right movement.
+/// Updates sortingOrder based on Y position for correct draw order.
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float _walkSpeed = 4f;
+    [SerializeField] private float _walkSpeed = 3.5f;
 
     [Header("Animation")]
     [SerializeField] private float _runFPS = 10f;
@@ -86,7 +87,11 @@ public class PlayerController : MonoBehaviour
         newPos.z = 0f;
         transform.position = newPos;
 
-        // Animate run cycle
+        // Flip sprite based on horizontal movement direction
+        if (_spriteRenderer != null && Mathf.Abs(input.x) > 0.1f)
+            _spriteRenderer.flipX = input.x < 0f;
+
+        // Animate run cycle (if run frames provided)
         if (_spriteRenderer != null && _runFrames != null && _runFrames.Length > 0)
         {
             _animTimer += Time.deltaTime * _runFPS;
@@ -95,7 +100,8 @@ public class PlayerController : MonoBehaviour
                 _animTimer -= 1f;
                 _animFrame = (_animFrame + 1) % _runFrames.Length;
             }
-            _spriteRenderer.sprite = _runFrames[_animFrame];
+            if (_runFrames[_animFrame] != null)
+                _spriteRenderer.sprite = _runFrames[_animFrame];
         }
 
         // Update sorting order based on Y position (lower Y = in front = higher order)

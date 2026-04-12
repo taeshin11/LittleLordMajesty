@@ -4,7 +4,7 @@ using System.Collections.Generic;
 /// <summary>
 /// Finds the nearest interactable NPC in a radius around the player
 /// and surfaces an "E to Talk" prompt. Distance check on XY plane
-/// (2D isometric world).
+/// (2D top-down world).
 ///
 /// Ticks at 10 Hz (every 0.1 s). Uses the static RegisteredNPCs list
 /// maintained by NPCIdentity.OnEnable/OnDisable.

@@ -260,7 +260,7 @@ public class NPCDailyRoutine : MonoBehaviour
     {
         _isMoving = true;
         Vector3 startPos = transform.position;
-        // 2D isometric: use X for X, Z mapped to Y, flat on z=0 plane
+        // 2D top-down: use X for X, Z mapped to Y, flat on z=0 plane
         Vector3 endPos = new Vector3(stop.WorldPosition.x, stop.WorldPosition.z, 0f);
 
         float distance = Vector3.Distance(startPos, endPos);

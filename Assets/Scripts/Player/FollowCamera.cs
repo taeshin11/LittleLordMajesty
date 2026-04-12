@@ -1,10 +1,10 @@
 using UnityEngine;
 
 /// <summary>
-/// 2D orthographic follow camera for isometric sprite world.
+/// 2D orthographic follow camera for top-down pixel art world.
 ///
 /// Camera sits at z=-10 looking at z=0. Smooth follow on XY plane.
-/// Sprites create the isometric depth illusion — no 3D rotation needed.
+/// Designed for 16x16 Kenney Tiny Town/Dungeon tiles at PPU=16.
 /// </summary>
 [DefaultExecutionOrder(100)]
 public class FollowCamera : MonoBehaviour
@@ -12,7 +12,7 @@ public class FollowCamera : MonoBehaviour
     [SerializeField] private Transform _target;
 
     [Tooltip("Orthographic size — smaller = more zoomed in.")]
-    [SerializeField] private float _orthoSize = 5.5f;
+    [SerializeField] private float _orthoSize = 5f;
 
     [Tooltip("Higher = snappier follow.")]
     [SerializeField] private float _smooth = 5f;

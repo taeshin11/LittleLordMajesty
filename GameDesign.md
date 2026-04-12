@@ -17,14 +17,14 @@
 
 ### 2. NPC Roster & Persona
 
-Four starting NPCs, each with a distinct Kenney character sprite and AI personality:
+Four starting NPCs, each with a distinct Tiny Dungeon character tile and AI personality:
 
 | Name | Profession | Personality | Loyalty | Visual | Dialogue Character |
 |------|-----------|-------------|---------|--------|-------------------|
-| **Aldric** | Vassal | Loyal | 80 | Blue-haired knight type | Formal, deferential. 20 years of service. Calls the player "my lord" without irony. Pragmatic — pushes for safe decisions. |
-| **Bram** | Soldier | Brave | 65 | Brown-haired adventurer | Blunt, eager. Young and hungry for glory. Short punchy sentences. Enthusiastic about combat, drags feet on farming. |
-| **Marta** | Farmer | Hardworking | 70 | Green-shirted villager | Warm, plain-spoken. Knows the land. Pushes back on orders that waste food. Gives practical seasonal advice. |
-| **Sivaro** | Merchant | Greedy | 40 | Dark-haired trader | Slippery, calculating. Low loyalty — here for profit. Resists charity, responds to gold incentives. |
+| **Aldric** | Vassal | Loyal | 80 | Tiny Dungeon knight (female variant) | Formal, deferential. 20 years of service. Calls the player "my lord" without irony. Pragmatic — pushes for safe decisions. |
+| **Bram** | Soldier | Brave | 65 | Tiny Dungeon viking | Blunt, eager. Young and hungry for glory. Short punchy sentences. Enthusiastic about combat, drags feet on farming. |
+| **Marta** | Farmer | Hardworking | 70 | Tiny Dungeon peasant | Warm, plain-spoken. Knows the land. Pushes back on orders that waste food. Gives practical seasonal advice. |
+| **Sivaro** | Merchant | Greedy | 40 | Tiny Dungeon rogue | Slippery, calculating. Low loyalty — here for profit. Resists charity, responds to gold incentives. |
 
 **AI Persona System:** Each NPC's Gemini system prompt encodes personality, loyalty, mood, background, current task, and current location. NPCs stay in character, use period-appropriate language, keep to 1-3 sentences. Personality directly shapes responses to orders.
 
@@ -52,35 +52,38 @@ Four starting NPCs, each with a distinct Kenney character sprite and AI personal
 
 ### 5. Aesthetic & Vibe
 
-**Target mood: Cozy isometric miniature kingdom diorama.**
+**Target mood: Bright cute Zelda-like top-down kingdom.**
 
-- **Art style: Kenney Isometric Miniature packs** (Overworld + Farm + Dungeon) — Pre-rendered isometric sprites (256x512 at PPU 128) on an orthographic 2D plane. Characters are charming miniature figures with south-facing isometric perspective. Each NPC uses a distinct Male_N variant for visual differentiation.
-- **Walk animation:** Characters cycle through 10-frame Run sprite sequences when moving. When idle, display single Idle frame. Smooth and lively.
-- **Environment:** Isometric grass tile grid with stone castle walls, path tiles, and scattered trees/rocks. The courtyard feels like a miniature diorama — a tiny protected kingdom to explore.
-- **Dialogue box:** Dark semi-transparent panel at screen bottom. NPC portrait (idle sprite) on the left, name + message text on right. Modern, clean look. Quick command buttons below text, input field + send at bottom.
-- **Color palette:** Natural greens (grass tiles), grey stone (castle walls), warm browns (wood buildings). The overall feel is a sunny isometric miniature world.
+- **Art style: Kenney Tiny Town + Tiny Dungeon** — 16x16 pixel art tiles at PPU=16 (1 tile = 1 world unit). Point-filtered for crisp pixels. Top-down orthographic view. Bright, colorful, inspired by Zelda: Echoes of Wisdom.
+- **Characters:** Single 16x16 tiles per character (knight, viking, peasant, rogue, mage, etc.) from Tiny Dungeon. Scaled 1.3x for visibility. Flip horizontally for left/right movement. No animation frames.
+- **Environment:** 30x30 grass tile grid with Tiny Town tiles — stone paths, orange-roofed houses, castle walls with towers, fences, crops, water with lily pads, bridges, flowers, trees (green + autumn), mushrooms. Perimeter trees ring the village.
+- **Village layout:** Central castle with towers and flags, east market district (houses + shops), west barracks (stone buildings + training yard), north farm (fenced crops, scarecrow, animals). Pond with bridge south-west. Stone gate entrance to the south.
+- **Dialogue box:** Warm parchment-toned panel at screen bottom. NPC portrait (Tiny Dungeon tile) on the left, name + message text on right. Quick command buttons below text, input field + send at bottom.
+- **Color palette:** Bright greens (grass), warm orange (roofs), grey stone (castle), blue (water), autumn red/yellow (trees). Everything is cheerful and inviting — NO dark dungeon aesthetic.
 - **Sound:** TTS voices (Google Cloud) give NPCs spoken responses when API key is configured. Bridges text and character personality.
 
 ---
 
 ## Art Direction Notes
 
-### Asset Packs: Kenney Isometric Miniature Series (kenney.nl)
+### Asset Packs: Kenney Tiny Town + Tiny Dungeon (kenney.nl)
 - **License:** CC0 (public domain) — free for commercial use
-- **Resolution:** 256x512 per sprite, PPU 128 = 2x4 world units
-- **Packs used:** Isometric Miniature Overworld (grass, trees, paths), Farm (wood walls, roofs, fences, crops), Dungeon (stone walls, props, characters)
-- **Characters:** 8 male variants (Male_0..Male_7), each with Idle (1 frame), Run (10 frames), Pickup (10 frames)
-- **Environment:** Ground tiles, stone/wood walls, roofs, trees, rocks, barrels, chests, furniture
-- **Direction:** South-facing (_S) sprites used as standard isometric view
+- **Resolution:** 16x16 per tile, PPU 16 = 1x1 world units
+- **Tiny Town (132 tiles):** Grass, paths, trees (green/autumn), houses (orange roofs), castle walls, towers, water, bridges, fences, flowers, crops, animals, props (barrels, crates, well, cart, etc.)
+- **Tiny Dungeon (132 tiles):** Characters (knights, mages, rogues, monsters), items (swords, shields, potions), dungeon floors/walls, furniture, doors, chests
+- **Characters:** Single tile per character — no animation frames needed
+- **Tilemap:** 12 columns x 11 rows, 1px spacing between tiles
 
-### Why Isometric Miniature over 3D or Pixel Art?
-- Pre-rendered isometric look without 3D engine complexity (no meshes, shaders, lighting)
-- Individual PNG per sprite — no sheet slicing needed
+### Why Tiny Town/Dungeon over Isometric or 3D?
+- Bright, cute aesthetic that matches Zelda: Echoes of Wisdom target
+- 16x16 pixel art — universally appealing retro charm
+- Individual PNG per tile — no sheet slicing needed
 - CC0 license — zero legal risk
-- Consistent scale across all three packs (256x512)
-- Character animation frames included (Run cycle)
-- Miniature diorama aesthetic matches game feel perfectly
+- Consistent scale and style across both packs
+- Top-down view is simpler than isometric (no stagger calculations)
+- 264 total tiles cover all needs: village, characters, items, environment
+- Point filtering gives crisp pixel-perfect rendering at any screen size
 
 ---
 
-*Next milestone: M17 — NPC walk animations, waypoint routines refined, time-of-day visual changes.*
+*Next milestone: M17 — NPC waypoint routines refined, time-of-day visual changes, additional Tiny Town building compositions.*

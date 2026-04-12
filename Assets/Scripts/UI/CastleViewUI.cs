@@ -134,10 +134,10 @@ public class CastleViewUI : MonoBehaviour
         if (GeminiImageClient.Instance == null) return;
 
         const string prompt =
-            "Cute isometric diorama of a tiny stylized medieval castle courtyard, miniature toy world, " +
-            "pastel storybook colors, soft Nintendo style, smooth pastel cobblestones, small wooden market " +
-            "stalls, round potted plants, tiny banners, thick clean outlines, soft cel-shaded lighting, " +
-            "Zelda Echoes of Wisdom inspired, 3-quarter top-down isometric view, no characters, no text.";
+            "Cute top-down pixel art village, bright green grass, tiny orange-roofed houses, " +
+            "small stone castle with flags, colorful flowers, little trees, stone paths, " +
+            "pastel storybook colors, Nintendo style, Zelda Echoes of Wisdom inspired, " +
+            "16-bit retro pixel art, top-down view, no characters, no text.";
 
         var targetImage = _backgroundArt;
         GeminiImageClient.Instance.GenerateImage(prompt,

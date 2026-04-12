@@ -2,11 +2,11 @@
 
 > **Note:** Living document. Update whenever architecture or scope changes.
 >
-> **2026-04-12 — Isometric Low-Poly 3D pivot.** From card-grid dialogue sim →
-> **Isometric Low-Poly 3D cozy roaming RPG**. Art style: Kenney 3D asset packs
-> (Castle Kit, Fantasy Town Kit, Nature Kit) rendered with **orthographic camera**
-> at 45° isometric angle for a "miniature diorama" feel. Characters are
-> low-poly 3D (blocky humanoids). AI NPC core, localization, infrastructure carry forward.
+> **2026-04-12 — Cute 16x16 pixel art top-down pivot.** From dark isometric sprites →
+> **Bright cute top-down 2D roaming RPG**. Art style: Kenney Tiny Town + Tiny Dungeon
+> packs (16x16 pixel art, PPU=16) with **orthographic camera**, top-down Zelda-style view.
+> Characters are single 16x16 tiles. Zelda Echoes of Wisdom-inspired bright colorful aesthetic.
+> AI NPC core, localization, infrastructure carry forward.
 
 ---
 
@@ -17,7 +17,7 @@
 | **Product Name** | LittleLordMajesty (LLM) |
 | **Platforms** | WebGL (primary, mobile browser), then Steam PC, Android / iOS |
 | **Genre** | Cozy Kingdom Roaming RPG + AI NPC Interaction |
-| **Art Style** | **Isometric 2D Sprite** — Kenney Isometric Miniature packs (Overworld + Farm + Dungeon). Pre-rendered isometric sprites (256x512) placed on orthographic 2D plane. Miniature diorama aesthetic without 3D complexity. Characters have Run animation frames. |
+| **Art Style** | **Cute 16x16 pixel art top-down** — Kenney Tiny Town + Tiny Dungeon packs (16x16 at PPU=16). Bright colorful Zelda-inspired aesthetic. Orthographic 2D camera, top-down view. Characters are single 16x16 tiles, scaled 1.3x for visibility. Point-filtered pixel art. |
 | **Core Concept** | "Walk your kingdom. Rule with a single word." Inherit a tiny low-poly castle, explore on foot, talk to NPCs in natural language, resolve crises through conversation, grow from "Little Lord" to "Majesty." |
 
 ---
@@ -34,32 +34,31 @@
 
 ## 3. Key Feature Requirements
 
-### 3.1. Art & Assets *(new — Anokolisa Pixel Crawler)*
+### 3.1. Art & Assets *(Kenney Tiny Town + Tiny Dungeon)*
 
 | Category | Source | Details |
 |----------|--------|---------|
-| **Player + NPC sprites** | Anokolisa Pixel Crawler (free, 16×16) | 3 hero types, idle/walk/run/attack/death/fishing animations |
-| **Enemies** | Anokolisa Pixel Crawler | 8 types (skeleton × 4, orc × 4), death/run/idle animations |
-| **Weapons** | Anokolisa Pixel Crawler | 50+ (swords, axes, bows, staffs, shields, tools) |
-| **Tileset — environment** | Anokolisa Pixel Crawler | Dungeon, Forest, Farm, Mines, Snow, Cave |
+| **Overworld tiles** | Kenney Tiny Town (CC0, 16×16) | 132 tiles: grass, paths, trees, houses (orange roofs), castle walls, water, bridges, fences, flowers, crops, animals |
+| **Characters + items** | Kenney Tiny Dungeon (CC0, 16×16) | 132 tiles: knights, mages, rogues, monsters, swords, shields, potions, dungeon floors/walls, furniture |
 | **Dialogue portraits** | SDXL base 1.0 (local) | Per-NPC portrait for dialogue box only |
 | **Menu backgrounds** | SDXL base 1.0 (local) | Main menu, loading screens |
 | **UI elements** | Procedural (code-built) | Dialogue box, HUD, joystick — built via `PinCenterRect` pattern |
 
-**Why not SDXL for game sprites?**
-- SDXL generates 512×768 portrait-style images, not game-ready 16×16 sprites
-- No animation consistency between frames
-- GPU cost (30s/image × 40 = 20min VRAM)
-- Inconsistent style across characters
-- Can't generate tilesets
+**Why Kenney Tiny packs?**
+- Bright, cute, Zelda-like aesthetic (matching Echoes of Wisdom target)
+- 16x16 pixel art — crisp at any scale with Point filtering
+- CC0 license — zero legal risk
+- Consistent style across Town + Dungeon packs
+- 264 total tiles covers village, characters, items, dungeon
+- No animation needed — single tile per character
 
-**Expansion path:** Same artist's paid packs (tone-matched) when more content is needed.
+**Expansion path:** Other Kenney 16x16 packs (Tiny Ski, Tiny Battle, etc.) for tone-matched expansion.
 
 ### 3.2. Player Avatar & Movement
 
-- **Pure 2D orthographic** — Camera (orthoSize 5.5) tracking player in XY. Camera at z=-10, sprites at z=0, tilemap at z=1.
-- **Free movement** — `transform.position += dir * speed * dt` in XY plane. No NavMesh, no Rigidbody.
-- **Sprite animations** — Anokolisa sprite sheets: idle (4 frames), walk (4 frames), per cardinal direction. Sliced in Unity Sprite Editor at 16×16.
+- **Pure 2D orthographic** — Camera (orthoSize 5) tracking player in XY. Camera at z=-10, sprites at z=0, tiles at PPU=16 (1 tile = 1 world unit).
+- **Free movement** — `transform.position += dir * speed * dt` in XY plane. Speed ~3.5 WU/s. No NavMesh, no Rigidbody.
+- **Single sprite per character** — Kenney Tiny Dungeon character tiles (16×16). Sprite flips horizontally for left/right. No animation frames.
 - **Input — mobile-first:**
   - **Mobile**: Virtual joystick (bottom-left) + tap right side to interact
   - **PC**: WASD/arrows + `E` to interact + `Esc` for menu
@@ -67,15 +66,15 @@
 
 ### 3.3. World Building
 
-- **Tilemap-based** — Unity Tilemap with Anokolisa tilesets (Farm for courtyard, Dungeon for basement, Forest for outskirts). Collision via Tilemap Collider 2D.
-- **Castle courtyard** — Main play area. Grid-painted in Unity Tilemap from Anokolisa Farm + town tiles.
+- **Tile grid** — 30x30 Kenney Tiny Town tiles placed procedurally by RoamingBootstrap. Grass base with paths, buildings, trees, water.
+- **Castle courtyard** — Main play area. Central castle (stone walls + towers), east market houses, west barracks, north farm with fences/crops.
 - **World Map** — Second scene. Player icon traverses overworld tilemap.
 - **Scene transitions** — Castle ↔ World Map via scene load, avatar position preserved.
 
 ### 3.4. NPC Roaming & Daily Routines
 
 - **NPCs walk the courtyard** along waypoint routines (time-of-day driven). `Vector3.MoveTowards` between waypoints.
-- **Anokolisa NPC sprites** — Each NPC uses one of the 3 hero character types with palette-swap or accessory differentiation.
+- **Tiny Dungeon NPC sprites** — Each NPC uses a distinct character tile (knight, viking, peasant, rogue, etc.).
 - **Dialogue door** — Walk up + interact → dialogue box with SDXL portrait + Gemini conversation.
 - **Reused state layer** — `NPCManager`, `NPCDailyRoutine`, `ResourceManager`, `EventManager`, `GameManager`, `LocalDialogueBank`, `GeminiAPIClient` — all untouched.
 
@@ -143,8 +142,8 @@ Six systems in `Assets/Scripts/Warfare/`. Re-plumbed for in-world triggers post-
 | Layer | Technology |
 |-------|-----------|
 | Engine | Unity 2022.3.62f1 LTS (C#) |
-| Rendering | 2D orthographic, SpriteRenderer + Unity Tilemap |
-| Art — game sprites | Anokolisa Pixel Crawler (16×16 pixel art, free commercial) |
+| Rendering | 2D orthographic, SpriteRenderer (procedural tile placement) |
+| Art — game sprites | Kenney Tiny Town + Tiny Dungeon (16×16 pixel art, CC0) |
 | Art — portraits/BG | SDXL base 1.0 (local fp16) — dialogue portraits + menu only |
 | Player/NPC movement | Custom transform-based 2D controller + VirtualJoystick |
 | AI Dialogue | Gemini 2.0 Flash Lite REST (runtime) + EXAONE 3.5 7.8B (build-time) |
@@ -167,7 +166,7 @@ Foundation, voice/localization, AI personas, 3D scene, bug fixes, multiplayer, A
 
 | Phase | Name | Status |
 |-------|------|--------|
-| M16 | **2D Roaming Foundation** — Anokolisa asset integration, 2D orthographic camera, tilemap courtyard, player controller, virtual joystick, NPC spawn, legacy card UI retirement, dialogue box | ✅ **Complete** |
+| M16 | **2D Roaming Foundation** — Kenney Tiny Town/Dungeon asset integration, 2D orthographic camera, procedural tile courtyard, player controller, virtual joystick, NPC spawn, legacy card UI retirement, dialogue box | ✅ **Complete** |
 | M17 | **NPC Routines & Animations** — Anokolisa walk/idle animations wired, waypoint routines, time-of-day | 🔲 Planned |
 | M18 | **Tilemap World Building** — Full courtyard tilemap (Farm tileset), collision, buildings, decorations | 🔲 Planned |
 | M19 | **In-world Events** — Orc raids (Anokolisa enemy sprites), fire/crisis markers, walk-to-resolve | 🔲 Planned |
@@ -188,7 +187,9 @@ Foundation, voice/localization, AI personas, 3D scene, bug fixes, multiplayer, A
 | Warfare systems (6 subsystems) | ✅ Kept, re-plumbed later |
 | `PinCenterRect` anchor fix pattern | ✅ Kept for procedural UI |
 | SDXL pipeline | ⚠️ Partially kept — portraits + menu BG only |
-| SDXL game sprites (`generate_sprites.py`, 40 PNGs) | ❌ Retired — replaced by Anokolisa |
+| SDXL game sprites (`generate_sprites.py`, 40 PNGs) | ❌ Retired — replaced by Kenney Tiny packs |
+| Isometric Miniature sprites (256x512) | ❌ Retired — replaced by 16x16 top-down |
+| Anokolisa Pixel Crawler sprites | ❌ Retired — replaced by Kenney Tiny packs |
 | Card-grid UI (CastleViewPanel, NPC cards) | ❌ Retired |
 | NPCInteractionUI full-screen chat | ❌ Retired |
 | 3D scene geometry / billboard rotation | ❌ Retired |
@@ -428,7 +429,8 @@ Assets/
 │   └── Utils/       Helpers
 ├── Resources/
 │   ├── Art/
-│   │   ├── PixelCrawler/   Anokolisa sprites + tilesets (16×16)
+│   │   ├── TinyTown/       Kenney Tiny Town tiles (132 × 16×16)
+│   │   ├── TinyDungeon/    Kenney Tiny Dungeon tiles (132 × 16×16)
 │   │   └── Generated/      SDXL portraits + menu BGs
 │   ├── Config/      GameConfig.asset
 │   ├── Dialogue/    dialogue_lines.json
@@ -475,7 +477,7 @@ tools/
 - 막힐 때 CLI로 해결 가능하면 자동화.
 - 모든 UI 텍스트는 LocalizationManager 키 사용. 하드코딩 금지.
 - API 키는 GameConfig.asset에만 저장.
-- **게임 내 스프라이트는 Anokolisa Pixel Crawler만 사용. 다른 에셋 팩 혼합 금지 (톤 불일치 방지).**
+- **게임 내 스프라이트는 Kenney Tiny Town + Tiny Dungeon만 사용. 다른 에셋 팩 혼합 금지 (톤 불일치 방지).**
 - SDXL은 대화 초상화 + 메뉴 배경 전용. 게임 내 캐릭터/타일에 사용 금지.
 - 공유 GPU: `scripts/gpu_lock.py` 우선순위 LLM > SPINAI > PillScan.
 - 프로시저럴 UI: `PinCenterRect`로 앵커 명시.

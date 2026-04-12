@@ -1,9 +1,10 @@
 using UnityEngine;
 
 /// <summary>
-/// 2D isometric NPC visual controller — manages the sprite-based character.
+/// 2D top-down NPC visual controller for Tiny Dungeon character sprites.
 ///
-/// Handles run animation when moving, idle sprite when stationary.
+/// Single 16x16 sprite per character (no animation frames).
+/// Flips sprite horizontally when moving left.
 /// Updates sortingOrder based on Y position for correct draw order.
 /// </summary>
 [DefaultExecutionOrder(50)]
@@ -30,6 +31,18 @@ public class NPCBillboard : MonoBehaviour
         _spriteRenderer = sr;
     }
 
+    /// <summary>
+    /// Set the idle sprite only (for single-tile characters with no animation).
+    /// </summary>
+    public void SetIdleSprite(Sprite idle)
+    {
+        _idleSprite = idle;
+        _runFrames = null;
+    }
+
+    /// <summary>
+    /// Legacy compatibility — set run frames if available.
+    /// </summary>
     public void SetRunFrames(Sprite idle, Sprite[] runFrames)
     {
         _idleSprite = idle;
@@ -69,7 +82,11 @@ public class NPCBillboard : MonoBehaviour
         // Update sorting order based on Y position (lower Y = in front)
         _spriteRenderer.sortingOrder = Mathf.RoundToInt(-transform.position.y * 100f);
 
-        // Animate
+        // Flip sprite based on horizontal movement direction
+        if (_isMoving && Mathf.Abs(delta.x) > 0.001f)
+            _spriteRenderer.flipX = delta.x < 0f;
+
+        // Animate if run frames exist
         if (_isMoving && _runFrames != null && _runFrames.Length > 0)
         {
             _animTimer += Time.deltaTime * _runFPS;
@@ -81,7 +98,7 @@ public class NPCBillboard : MonoBehaviour
             if (_runFrames[_animFrame] != null)
                 _spriteRenderer.sprite = _runFrames[_animFrame];
         }
-        else if (_idleSprite != null)
+        else if (!_isMoving && _idleSprite != null)
         {
             _spriteRenderer.sprite = _idleSprite;
             _animTimer = 0f;
