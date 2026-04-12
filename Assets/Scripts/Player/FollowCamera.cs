@@ -45,6 +45,11 @@ public class FollowCamera : MonoBehaviour
     {
         if (_target == null) return;
 
+        // Keep ortho size in sync every frame
+        var cam = GetComponent<Camera>();
+        if (cam != null && cam.orthographicSize != _orthoSize)
+            cam.orthographicSize = _orthoSize;
+
         // Fixed isometric rotation
         Quaternion rot = Quaternion.Euler(_pitchAngle, _yawAngle, 0f);
         transform.rotation = rot;

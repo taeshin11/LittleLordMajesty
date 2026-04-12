@@ -72,10 +72,20 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Rotate input by camera yaw so joystick "up" = screen "up"
-        float camYaw = Camera.main != null ? Camera.main.transform.eulerAngles.y : 0f;
-        Vector3 rawDir = new Vector3(input.x, 0f, input.y);
-        Vector3 moveDir = (Quaternion.Euler(0f, camYaw, 0f) * rawDir).normalized;
+        // Camera-relative movement: joystick direction matches screen direction
+        Vector3 moveDir;
+        if (Camera.main != null)
+        {
+            Vector3 camFwd = Camera.main.transform.forward;
+            Vector3 camRight = Camera.main.transform.right;
+            camFwd.y = 0f; camFwd.Normalize();
+            camRight.y = 0f; camRight.Normalize();
+            moveDir = (camRight * input.x + camFwd * input.y).normalized;
+        }
+        else
+        {
+            moveDir = new Vector3(input.x, 0f, input.y).normalized;
+        }
         float step = _walkSpeed * Time.deltaTime;
         Vector3 origin = transform.position + Vector3.up * 0.5f; // Check from waist height
 
