@@ -1,173 +1,139 @@
 using UnityEngine;
 
 /// <summary>
-/// Static tile index mapping for Kenney Tiny Town + Tiny Dungeon packs.
-/// Both tilemaps are 12 columns x 11 rows, 16x16 pixels each.
-/// Index = row * 12 + col, tile files are tile_NNNN.png.
-/// Resource path: Art/TinyTown/tile_NNNN or Art/TinyDungeon/tile_NNNN
-///
-/// INDICES VERIFIED against annotated tilemap images 2026-04-12.
+/// Verified tile index reference for Kenney Tiny Town + Tiny Dungeon.
+/// Each pack: 12 cols × 11 rows = 132 tiles (16x16 pixel art).
+/// Indices verified visually from tilemap_packed.png 2026-04-13.
 /// </summary>
 public static class TinyTileset
 {
-    // ---------------------------------------------------------------
-    //  TINY TOWN — Overworld / Village tiles
-    //  Resource prefix: "Art/TinyTown/"
-    // ---------------------------------------------------------------
+    // ═══════════════════════════════════════════════════════════
+    //  TINY TOWN (TT) — bright outdoor village tiles
+    // ═══════════════════════════════════════════════════════════
 
-    // --- Ground (row 0, indices 0-3) ---
-    public const string TT_Grass           = "Art/TinyTown/tile_0000"; // solid bright green
-    public const string TT_GrassAlt1       = "Art/TinyTown/tile_0001"; // grass + small detail
-    public const string TT_GrassAlt2       = "Art/TinyTown/tile_0002"; // grass variant
-    public const string TT_GrassFlower     = "Art/TinyTown/tile_0003"; // yellow flower/star
+    // ─── Ground (full 16x16, opaque) ───
+    public const string TT_Grass1     = "Art/TinyTown/tile_0000"; // bright green grass
+    public const string TT_Grass2     = "Art/TinyTown/tile_0001"; // grass variant
+    public const string TT_Grass3     = "Art/TinyTown/tile_0002"; // grass variant (slightly yellow)
 
-    // --- Trees (indices 4-11) ---
-    public const string TT_TreeSmall       = "Art/TinyTown/tile_0004"; // round green tree (small)
-    public const string TT_TreeMedL        = "Art/TinyTown/tile_0005"; // round green tree (medium, left)
-    public const string TT_TreeMedR        = "Art/TinyTown/tile_0006"; // round green tree (medium, right)
-    public const string TT_PineL           = "Art/TinyTown/tile_0007"; // tall pine (left)
-    public const string TT_PineR           = "Art/TinyTown/tile_0008"; // tall pine (right)
-    public const string TT_AutumnSmall     = "Art/TinyTown/tile_0009"; // autumn tree (orange, small)
-    public const string TT_AutumnPair      = "Art/TinyTown/tile_0010"; // autumn tree pair
-    public const string TT_AutumnTall      = "Art/TinyTown/tile_0011"; // autumn tree (tall)
+    // ─── Dirt/Sand (full, opaque) ───
+    public const string TT_DirtTL     = "Art/TinyTown/tile_0024";
+    public const string TT_DirtTC     = "Art/TinyTown/tile_0025";
+    public const string TT_DirtTR     = "Art/TinyTown/tile_0026";
+    public const string TT_DirtBL     = "Art/TinyTown/tile_0036";
+    public const string TT_DirtBC     = "Art/TinyTown/tile_0037";
+    public const string TT_DirtBR     = "Art/TinyTown/tile_0038";
 
-    // --- More nature (row 1) ---
-    public const string TT_BushSmall       = "Art/TinyTown/tile_0015"; // small bush
-    public const string TT_TreesCluster    = "Art/TinyTown/tile_0016"; // small trees cluster
+    // ─── Path/Stone (full, opaque) ───
+    public const string TT_PathLight  = "Art/TinyTown/tile_0040";
+    public const string TT_PathEdge   = "Art/TinyTown/tile_0041";
+    public const string TT_PathDark   = "Art/TinyTown/tile_0042";
+    public const string TT_PathGreen  = "Art/TinyTown/tile_0043";
 
-    // --- Dirt/Path (rows 2-3) ---
-    public const string TT_DirtTL          = "Art/TinyTown/tile_0024"; // dirt ground top-left corner
-    public const string TT_DirtCenter      = "Art/TinyTown/tile_0025"; // dirt ground center
-    public const string TT_DirtTR          = "Art/TinyTown/tile_0026"; // dirt ground top-right corner
-    public const string TT_BushShrub       = "Art/TinyTown/tile_0028"; // small bush/shrub
-    public const string TT_Mushroom        = "Art/TinyTown/tile_0029"; // red mushroom
-    public const string TT_SmallPlant      = "Art/TinyTown/tile_0030"; // small plant
-    public const string TT_DirtBL          = "Art/TinyTown/tile_0036"; // dirt bottom-left
-    public const string TT_DirtBC          = "Art/TinyTown/tile_0037"; // dirt bottom-center
-    public const string TT_DirtBR          = "Art/TinyTown/tile_0038"; // dirt bottom-right
-    public const string TT_StonePath       = "Art/TinyTown/tile_0040"; // stone path (light)
-    public const string TT_GrassStone      = "Art/TinyTown/tile_0041"; // grass-stone transition
-    public const string TT_Cobblestone     = "Art/TinyTown/tile_0042"; // cobblestone path
-    public const string TT_GreenPath       = "Art/TinyTown/tile_0043"; // green path tile
+    // ─── Trees GREEN (use these!) ───
+    public const string TT_TreeRound  = "Art/TinyTown/tile_0005"; // ★ BEST — round green tree
+    public const string TT_TreeRound2 = "Art/TinyTown/tile_0006"; // round green variant
+    public const string TT_TreeBush   = "Art/TinyTown/tile_0016"; // ★ green bush/small tree
+    public const string TT_TreeDouble = "Art/TinyTown/tile_0017"; // two small trees
+    public const string TT_BushSmall  = "Art/TinyTown/tile_0028"; // ★ small green bush
+    public const string TT_PlantSmall = "Art/TinyTown/tile_0030"; // small green plant
+    // AVOID: tile 4 (spiky dark pine), 7/8 (pine halves)
 
-    // --- Props (scattered indices) ---
-    public const string TT_Barrel          = "Art/TinyTown/tile_0045"; // chest/barrel
-    public const string TT_Table           = "Art/TinyTown/tile_0046"; // table/wood surface
+    // ─── Trees AUTUMN (orange — use sparingly) ───
+    public const string TT_AutumnA    = "Art/TinyTown/tile_0009";
+    public const string TT_AutumnB    = "Art/TinyTown/tile_0015";
 
-    // --- Castle walls — gray stone (rows 4-5) ---
-    public const string TT_StoneWallTL     = "Art/TinyTown/tile_0048"; // stone wall top-left
-    public const string TT_StoneWallTop    = "Art/TinyTown/tile_0049"; // stone wall top
-    public const string TT_StoneWallTR     = "Art/TinyTown/tile_0050"; // stone wall top-right
-    public const string TT_StoneWallH      = "Art/TinyTown/tile_0051"; // stone wall horizontal
-    public const string TT_StonePattern1   = "Art/TinyTown/tile_0052"; // stone pattern
-    public const string TT_StonePattern2   = "Art/TinyTown/tile_0053"; // stone pattern
-    public const string TT_StonePattern3   = "Art/TinyTown/tile_0054"; // stone pattern
-    public const string TT_StonePattern4   = "Art/TinyTown/tile_0055"; // stone pattern
-    public const string TT_StoneWallL      = "Art/TinyTown/tile_0060"; // stone wall left
-    public const string TT_StoneWallBL     = "Art/TinyTown/tile_0061"; // stone wall bottom-left
-    public const string TT_StoneWallBot    = "Art/TinyTown/tile_0062"; // stone wall bottom
-    public const string TT_StoneWallBR     = "Art/TinyTown/tile_0063"; // stone wall bottom-right
+    // ─── Decorations ───
+    public const string TT_Mushroom   = "Art/TinyTown/tile_0029"; // red mushroom
 
-    // --- Houses — wood + colored roofs (rows 5-6) ---
-    public const string TT_RedRoofL        = "Art/TinyTown/tile_0064"; // red roof left
-    public const string TT_RedRoofC        = "Art/TinyTown/tile_0065"; // red roof center
-    public const string TT_RedRoofR        = "Art/TinyTown/tile_0066"; // red roof right
-    public const string TT_BlueRoofL       = "Art/TinyTown/tile_0067"; // blue/gray roof left
-    public const string TT_BlueRoofC       = "Art/TinyTown/tile_0068"; // blue/gray roof center
-    public const string TT_WoodWallWinL    = "Art/TinyTown/tile_0072"; // wood wall left (window)
-    public const string TT_WoodWallDoor    = "Art/TinyTown/tile_0073"; // wood wall center (door)
-    public const string TT_WoodWallR       = "Art/TinyTown/tile_0074"; // wood wall right
-    public const string TT_WoodWallL2      = "Art/TinyTown/tile_0075"; // wood wall left
-    public const string TT_WoodWallOpen    = "Art/TinyTown/tile_0076"; // wood wall (open)
-    public const string TT_WoodWallC2      = "Art/TinyTown/tile_0077"; // wood wall center
-    public const string TT_WoodWallR2      = "Art/TinyTown/tile_0078"; // wood wall right
-    public const string TT_StoneWallBlue   = "Art/TinyTown/tile_0079"; // stone wall (blue roof)
+    // ─── Castle Walls (blue-gray, opaque) ───
+    public const string TT_WallTL     = "Art/TinyTown/tile_0048";
+    public const string TT_WallTC     = "Art/TinyTown/tile_0049";
+    public const string TT_WallTR     = "Art/TinyTown/tile_0050";
+    public const string TT_WallH      = "Art/TinyTown/tile_0051";
+    public const string TT_WallML     = "Art/TinyTown/tile_0060";
+    public const string TT_WallBL     = "Art/TinyTown/tile_0061";
+    public const string TT_WallBC     = "Art/TinyTown/tile_0062";
+    public const string TT_WallBR     = "Art/TinyTown/tile_0063";
 
-    // --- More props ---
-    public const string TT_BeamH           = "Art/TinyTown/tile_0080"; // horizontal beam
-    public const string TT_BeamLong        = "Art/TinyTown/tile_0081"; // long beam
-    public const string TT_SignPost        = "Art/TinyTown/tile_0082"; // sign post
-    public const string TT_SmallStone      = "Art/TinyTown/tile_0093"; // small stone
-    public const string TT_KeyCoin         = "Art/TinyTown/tile_0105"; // key/coin
+    // ─── Red Roofs (row 4) ───
+    public const string TT_RoofRedL   = "Art/TinyTown/tile_0052";
+    public const string TT_RoofRedC   = "Art/TinyTown/tile_0053";
+    public const string TT_RoofRedR   = "Art/TinyTown/tile_0054";
 
-    // --- Castle gate (rows 9-10) ---
-    public const string TT_CastleFloor     = "Art/TinyTown/tile_0108"; // castle floor (gray)
-    public const string TT_CastleFloor2    = "Art/TinyTown/tile_0109"; // castle floor
-    public const string TT_CastleFloor3    = "Art/TinyTown/tile_0110"; // castle floor
-    public const string TT_GateArchTL      = "Art/TinyTown/tile_0112"; // gate arch (top-left)
-    public const string TT_GateArchTR      = "Art/TinyTown/tile_0113"; // gate arch (top-right)
-    public const string TT_GateArchBL      = "Art/TinyTown/tile_0114"; // gate arch (bottom-left)
-    public const string TT_GateArchBR      = "Art/TinyTown/tile_0115"; // gate arch (bottom-right)
-    public const string TT_Well            = "Art/TinyTown/tile_0116"; // well
-    public const string TT_Tool            = "Art/TinyTown/tile_0117"; // tool
-    public const string TT_GateBaseL       = "Art/TinyTown/tile_0124"; // gate base left
-    public const string TT_GateBaseR       = "Art/TinyTown/tile_0125"; // gate base right
-    public const string TT_GateOpenL       = "Art/TinyTown/tile_0126"; // gate opening left
-    public const string TT_GateOpenR       = "Art/TinyTown/tile_0127"; // gate opening right
+    // ─── Blue/Gray Roofs (row 5) ───
+    public const string TT_RoofBlueL  = "Art/TinyTown/tile_0064";
+    public const string TT_RoofBlueC  = "Art/TinyTown/tile_0065";
+    public const string TT_RoofBlueR  = "Art/TinyTown/tile_0066";
 
-    // ---------------------------------------------------------------
-    //  TINY DUNGEON — Characters
-    //  Resource prefix: "Art/TinyDungeon/"
-    // ---------------------------------------------------------------
+    // ─── Wood House Walls (row 6, brown/orange) ───
+    public const string TT_HouseWallL = "Art/TinyTown/tile_0072";
+    public const string TT_HouseWallC = "Art/TinyTown/tile_0073"; // has door
+    public const string TT_HouseWallR = "Art/TinyTown/tile_0074";
 
-    // Row 7: characters (indices 84-87)
-    public const string TD_Wizard          = "Art/TinyDungeon/tile_0084"; // wizard (purple hat)
-    public const string TD_Knight          = "Art/TinyDungeon/tile_0085"; // warrior/knight (helmet)
-    public const string TD_Blonde          = "Art/TinyDungeon/tile_0086"; // blonde character
-    public const string TD_Archer          = "Art/TinyDungeon/tile_0087"; // archer/ranger
+    // ─── Stone House Walls (row 6, blue-gray) ───
+    public const string TT_StoneWallL = "Art/TinyTown/tile_0076";
+    public const string TT_StoneWallC = "Art/TinyTown/tile_0077";
+    public const string TT_StoneWallR = "Art/TinyTown/tile_0078";
 
-    // Row 8: characters (indices 96-99)
-    public const string TD_RedHair         = "Art/TinyDungeon/tile_0096"; // red-hair character
-    public const string TD_DarkFemale      = "Art/TinyDungeon/tile_0097"; // dark-hair female
-    public const string TD_BrownHair       = "Art/TinyDungeon/tile_0098"; // brown-hair character
-    public const string TD_LightChar       = "Art/TinyDungeon/tile_0099"; // light character
+    // ─── Props ───
+    public const string TT_Barrel     = "Art/TinyTown/tile_0044";
+    public const string TT_Crate      = "Art/TinyTown/tile_0045";
+    public const string TT_Sign       = "Art/TinyTown/tile_0082";
+    public const string TT_Stone      = "Art/TinyTown/tile_0093";
+    public const string TT_Coin       = "Art/TinyTown/tile_0094";
 
-    // Row 9: characters (indices 108-111)
-    public const string TD_Ghost           = "Art/TinyDungeon/tile_0108"; // ghost/special
-    public const string TD_GreenCreature   = "Art/TinyDungeon/tile_0109"; // green creature
-    public const string TD_RedFemale       = "Art/TinyDungeon/tile_0110"; // red-hair female
-    public const string TD_Bard            = "Art/TinyDungeon/tile_0111"; // bard/special
+    // ─── Castle Gate ───
+    public const string TT_GateFloor  = "Art/TinyTown/tile_0109";
+    public const string TT_GateArchTL = "Art/TinyTown/tile_0111";
+    public const string TT_GateArchTR = "Art/TinyTown/tile_0112";
+    public const string TT_GateArchBL = "Art/TinyTown/tile_0123";
+    public const string TT_GateArchBR = "Art/TinyTown/tile_0124";
+    public const string TT_GateOpen   = "Art/TinyTown/tile_0125";
 
-    // Dungeon environment tiles (kept for compatibility)
-    public const string TD_FloorStone      = "Art/TinyDungeon/tile_0000";
-    public const string TD_FloorStoneAlt   = "Art/TinyDungeon/tile_0001";
-    public const string TD_FloorDirt       = "Art/TinyDungeon/tile_0002";
-    public const string TD_WallTop         = "Art/TinyDungeon/tile_0012";
-    public const string TD_WallMid         = "Art/TinyDungeon/tile_0024";
-    public const string TD_WallBottom      = "Art/TinyDungeon/tile_0036";
-    public const string TD_DoorClosed      = "Art/TinyDungeon/tile_0038";
-    public const string TD_DoorOpen        = "Art/TinyDungeon/tile_0039";
-    public const string TD_ChestClosed     = "Art/TinyDungeon/tile_0044";
-    public const string TD_ChestOpen       = "Art/TinyDungeon/tile_0045";
-    public const string TD_Torch           = "Art/TinyDungeon/tile_0046";
-    public const string TD_Barrel          = "Art/TinyDungeon/tile_0048";
-    public const string TD_Crate           = "Art/TinyDungeon/tile_0049";
-    public const string TD_Table           = "Art/TinyDungeon/tile_0050";
-    public const string TD_Chair           = "Art/TinyDungeon/tile_0051";
-    public const string TD_Bookshelf       = "Art/TinyDungeon/tile_0052";
-    public const string TD_Ladder          = "Art/TinyDungeon/tile_0053";
+    // ─── Water ───
+    public const string TT_WaterEdge  = "Art/TinyTown/tile_0012";
+    public const string TT_WaterFull  = "Art/TinyTown/tile_0013";
 
-    // ---------------------------------------------------------------
-    //  HELPER: Load a sprite by resource path
-    // ---------------------------------------------------------------
+    // ═══════════════════════════════════════════════════════════
+    //  TINY DUNGEON (TD) — characters + props
+    // ═══════════════════════════════════════════════════════════
 
-    public static Sprite Load(string resourcePath)
-    {
-        var sprite = Resources.Load<Sprite>(resourcePath);
-        if (sprite == null)
-            Debug.LogWarning($"[TinyTileset] Sprite not found: {resourcePath}");
-        return sprite;
-    }
+    // ─── Characters (rows 7-10) ───
+    public const string TD_Wizard     = "Art/TinyDungeon/tile_0084"; // purple wizard
+    public const string TD_Knight     = "Art/TinyDungeon/tile_0085"; // armored knight
+    public const string TD_Warrior    = "Art/TinyDungeon/tile_0086"; // blonde warrior
+    public const string TD_Archer     = "Art/TinyDungeon/tile_0087"; // ranger
+    public const string TD_Fighter    = "Art/TinyDungeon/tile_0088"; // brown fighter
+    public const string TD_Villager   = "Art/TinyDungeon/tile_0089"; // NPC villager
+    public const string TD_Peasant    = "Art/TinyDungeon/tile_0090"; // peasant
+    public const string TD_Guard      = "Art/TinyDungeon/tile_0091"; // guard
+    public const string TD_RedHair    = "Art/TinyDungeon/tile_0096"; // red-haired
+    public const string TD_DarkHair   = "Art/TinyDungeon/tile_0097"; // dark-haired female
+    public const string TD_BrownHair  = "Art/TinyDungeon/tile_0098"; // brown-haired
+    public const string TD_Viking     = "Art/TinyDungeon/tile_0099"; // viking
+    public const string TD_Noble      = "Art/TinyDungeon/tile_0100"; // noble
+    public const string TD_Ghost      = "Art/TinyDungeon/tile_0108"; // ghost (green)
+    public const string TD_Bard       = "Art/TinyDungeon/tile_0109"; // bard
+    public const string TD_Rogue      = "Art/TinyDungeon/tile_0110"; // red rogue
+    public const string TD_Elf        = "Art/TinyDungeon/tile_0111"; // elf
 
-    /// <summary>
-    /// Convenience: build a TinyTown resource path from a tile index.
-    /// TT(64) => "Art/TinyTown/tile_0064"
-    /// </summary>
+    // ─── Props ───
+    public const string TD_Chest      = "Art/TinyDungeon/tile_0066";
+    public const string TD_Barrel     = "Art/TinyDungeon/tile_0063";
+    public const string TD_Sword      = "Art/TinyDungeon/tile_0113";
+    public const string TD_Potion     = "Art/TinyDungeon/tile_0115";
+    public const string TD_Key        = "Art/TinyDungeon/tile_0117";
+
+    // ═══════════════════════════════════════════════════════════
+    //  HELPERS
+    // ═══════════════════════════════════════════════════════════
+
     public static string TT(int index) => $"Art/TinyTown/tile_{index:D4}";
-
-    /// <summary>
-    /// Convenience: build a TinyDungeon resource path from a tile index.
-    /// TD(84) => "Art/TinyDungeon/tile_0084"
-    /// </summary>
     public static string TD(int index) => $"Art/TinyDungeon/tile_{index:D4}";
+
+    // ─── BUILDING RECIPES ───
+    // Red roof house: roof 52,53,54 on top + walls 72,73,74 on bottom
+    // Blue roof house: roof 64,65,66 on top + walls 76,77,78 on bottom
+    // Castle wall box: TL=48, TC=49, TR=50 / ML=60, BL=61, BC=62, BR=63
 }
