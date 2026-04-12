@@ -83,22 +83,9 @@ public class NPCBillboard : MonoBehaviour
 
     private void LateUpdate()
     {
-        // Yaw-align the sprite holder to the camera so the quad always
-        // faces the viewer. Kept in LateUpdate so the follow camera has
-        // already moved this frame.
-        if (_sprite != null && Camera.main != null)
-        {
-            Vector3 camPos = Camera.main.transform.position;
-            Vector3 forward = _sprite.transform.position - camPos;
-            forward.y = 0;
-            if (forward.sqrMagnitude > 0.0001f)
-                _sprite.transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
-        }
-
-        // Infer motion from position delta. NPCDailyRoutine owns movement,
-        // so we don't touch transform.position here.
+        // 2D mode: no billboard rotation needed. Just infer facing from
+        // position delta and animate walk frames.
         Vector3 delta = transform.position - _lastPosition;
-        delta.y = 0;
         _lastPosition = transform.position;
 
         if (delta.sqrMagnitude < _motionThresholdSq)
@@ -109,17 +96,11 @@ public class NPCBillboard : MonoBehaviour
             return;
         }
 
-        // Facing derivation identical to PlayerController — pick the
-        // cardinal direction closest to the motion vector in camera space.
-        Vector3 camF = Camera.main != null ? Camera.main.transform.forward : Vector3.forward;
-        Vector3 camR = Camera.main != null ? Camera.main.transform.right   : Vector3.right;
-        camF.y = camR.y = 0; camF.Normalize(); camR.Normalize();
-        float dF = Vector3.Dot(delta.normalized, camF);
-        float dR = Vector3.Dot(delta.normalized, camR);
-        if (Mathf.Abs(dR) > Mathf.Abs(dF))
-            _facing = dR > 0 ? Facing.East : Facing.West;
+        // 2D facing: pick dominant axis from raw XY delta.
+        if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+            _facing = delta.x > 0 ? Facing.East : Facing.West;
         else
-            _facing = dF > 0 ? Facing.North : Facing.South;
+            _facing = delta.y > 0 ? Facing.North : Facing.South;
 
         _walkFrameTimer += Time.deltaTime;
         if (_walkFrameTimer >= _walkFrameDuration)

@@ -48,8 +48,22 @@ public class InteractionFinder : MonoBehaviour
             RefreshTarget();
         }
 
-        if (_currentTarget != null && Input.GetKeyDown(_interactKey))
-            TriggerInteract();
+        if (_currentTarget != null)
+        {
+            // Keyboard interact.
+            if (Input.GetKeyDown(_interactKey))
+                TriggerInteract();
+            // Mobile tap: any touch that isn't on the joystick area
+            // (left side of screen). Simple heuristic: tap on right
+            // half of screen while near an NPC = interact.
+            if (Input.touchCount > 0)
+            {
+                var touch = Input.GetTouch(0);
+                if (touch.phase == TouchPhase.Began &&
+                    touch.position.x > Screen.width * 0.4f)
+                    TriggerInteract();
+            }
+        }
     }
 
     private void RefreshTarget()
