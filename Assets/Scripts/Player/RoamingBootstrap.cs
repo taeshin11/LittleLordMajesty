@@ -241,7 +241,7 @@ public class RoamingBootstrap : MonoBehaviour
         var camGO = new GameObject("RoamingCamera");
         _roamingCam = camGO.AddComponent<Camera>();
         _roamingCam.orthographic = true;  // Isometric orthographic
-        _roamingCam.orthographicSize = 12f;
+        _roamingCam.orthographicSize = 7f;
         _roamingCam.clearFlags = CameraClearFlags.SolidColor;
         _roamingCam.backgroundColor = new Color(0.53f, 0.81f, 0.92f); // Sky blue
         _roamingCam.nearClipPlane = 0.1f;
@@ -254,7 +254,7 @@ public class RoamingBootstrap : MonoBehaviour
 
         var follow = camGO.AddComponent<FollowCamera>();
         // FollowCamera now uses orthoSize, not height/distance
-        follow.SetOrthoSize(12f);
+        follow.SetOrthoSize(7f);
     }
 
     // ---------------------------------------------------------------
@@ -295,17 +295,33 @@ public class RoamingBootstrap : MonoBehaviour
         _player = new GameObject("Player");
         _player.transform.position = _playerSpawn;
 
-        // Blocky humanoid via CharacterBuilder
-        var playerConfig = new CharacterBuilder.CharacterConfig
+        // Try Kenney Mini Character FBX first, fall back to CharacterBuilder cubes
+        GameObject visualRoot = null;
+        var fbxPrefab = Resources.Load<GameObject>("Models/Characters/character-male-a");
+        if (fbxPrefab != null)
         {
-            bodyColor  = new Color(0.45f, 0.25f, 0.65f),  // royal purple
-            pantsColor = new Color(0.3f, 0.15f, 0.45f),   // dark purple
-            skinColor  = new Color(0.92f, 0.78f, 0.62f),  // warm skin
-            hairColor  = new Color(0.4f, 0.25f, 0.12f),   // brown
-            hasHair    = true,
-            accessory  = CharacterBuilder.AccessoryType.Crown,
-        };
-        var visualRoot = CharacterBuilder.BuildCharacter(_player.transform, playerConfig);
+            visualRoot = new GameObject("Visual");
+            visualRoot.transform.SetParent(_player.transform, false);
+            var model = Instantiate(fbxPrefab);
+            model.name = "CharacterModel";
+            model.transform.SetParent(visualRoot.transform, false);
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localScale = Vector3.one * 1.0f;
+        }
+        else
+        {
+            // Fallback: blocky humanoid via CharacterBuilder
+            var playerConfig = new CharacterBuilder.CharacterConfig
+            {
+                bodyColor  = new Color(0.45f, 0.25f, 0.65f),  // royal purple
+                pantsColor = new Color(0.3f, 0.15f, 0.45f),   // dark purple
+                skinColor  = new Color(0.92f, 0.78f, 0.62f),  // warm skin
+                hairColor  = new Color(0.4f, 0.25f, 0.12f),   // brown
+                hasHair    = true,
+                accessory  = CharacterBuilder.AccessoryType.Crown,
+            };
+            visualRoot = CharacterBuilder.BuildCharacter(_player.transform, playerConfig);
+        }
 
         var ctrl = _player.AddComponent<PlayerController>();
         ctrl.ConfigureAtRuntime(_playerWalkSpeed, visualRoot.transform);
@@ -338,6 +354,22 @@ public class RoamingBootstrap : MonoBehaviour
         npcm.OnNPCAdded += SpawnOneNPC;
     }
 
+    /// <summary>
+    /// Returns the Kenney Mini Character FBX resource path for a given NPC, or null if unknown.
+    /// </summary>
+    private static string GetNPCCharacterModel(NPCManager.NPCData npc)
+    {
+        // Map by profession (matching the known cast)
+        return npc.Profession switch
+        {
+            NPCPersona.NPCProfession.Vassal   => "Models/Characters/character-male-c",   // Aldric
+            NPCPersona.NPCProfession.Soldier   => "Models/Characters/character-male-d",   // Bram
+            NPCPersona.NPCProfession.Farmer    => "Models/Characters/character-female-a",  // Marta
+            NPCPersona.NPCProfession.Merchant  => "Models/Characters/character-male-e",   // Sivaro
+            _ => null,
+        };
+    }
+
     private void SpawnOneNPC(NPCManager.NPCData npc)
     {
         if (npc == null || string.IsNullOrEmpty(npc.Id)) return;
@@ -348,9 +380,27 @@ public class RoamingBootstrap : MonoBehaviour
         // Use 3D world positions directly (XZ ground plane)
         root.transform.position = new Vector3(npc.WorldPosition.x, 0f, npc.WorldPosition.z);
 
-        // Build blocky humanoid via CharacterBuilder
-        var config = GetNPCCharacterConfig(npc);
-        var visualRoot = CharacterBuilder.BuildCharacter(root.transform, config);
+        // Try Kenney Mini Character FBX first, fall back to CharacterBuilder cubes
+        GameObject visualRoot = null;
+        string modelPath = GetNPCCharacterModel(npc);
+        GameObject fbxPrefab = modelPath != null ? Resources.Load<GameObject>(modelPath) : null;
+
+        if (fbxPrefab != null)
+        {
+            visualRoot = new GameObject("Visual");
+            visualRoot.transform.SetParent(root.transform, false);
+            var model = Instantiate(fbxPrefab);
+            model.name = "CharacterModel";
+            model.transform.SetParent(visualRoot.transform, false);
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localScale = Vector3.one * 1.0f;
+        }
+        else
+        {
+            // Fallback: blocky humanoid via CharacterBuilder
+            var config = GetNPCCharacterConfig(npc);
+            visualRoot = CharacterBuilder.BuildCharacter(root.transform, config);
+        }
 
         var identity = root.AddComponent<NPCIdentity>();
         identity.SetIdentity(npc.Id, npc.Name);
@@ -670,7 +720,8 @@ public class RoamingBootstrap : MonoBehaviour
             {
                 seg.transform.localPosition = pos;
                 seg.transform.localRotation = Quaternion.Euler(0f, yRot, 0f);
-                seg.transform.localScale = Vector3.one * CastleScale;
+                // Scale walls slightly larger than CastleScale to eliminate gaps between segments
+                seg.transform.localScale = Vector3.one * (CastleScale * 1.05f);
             }
         }
 

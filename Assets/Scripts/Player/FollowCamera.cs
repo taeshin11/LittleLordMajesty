@@ -13,7 +13,7 @@ public class FollowCamera : MonoBehaviour
     [SerializeField] private Transform _target;
 
     [Tooltip("Orthographic size — smaller = more zoomed in.")]
-    [SerializeField] private float _orthoSize = 12f;
+    [SerializeField] private float _orthoSize = 7f;
 
     [Tooltip("Isometric rotation around Y axis (45 = classic iso).")]
     [SerializeField] private float _yawAngle = 45f;
