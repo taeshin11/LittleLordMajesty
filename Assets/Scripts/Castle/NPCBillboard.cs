@@ -1,22 +1,23 @@
 using UnityEngine;
 
 /// <summary>
-/// 3D NPC visual controller — manages the procedural 3D character model
-/// (capsule body + sphere head). Replaces the old 2D sprite billboard.
+/// 2D isometric NPC visual controller — manages the sprite-based character.
 ///
-/// Facing is inferred from movement delta each frame. The character model
-/// rotates to face its movement direction. Walk bob simulates stepping.
+/// Handles run animation when moving, idle sprite when stationary.
+/// Updates sortingOrder based on Y position for correct draw order.
 /// </summary>
 [DefaultExecutionOrder(50)]
 public class NPCBillboard : MonoBehaviour
 {
     [SerializeField] private string _npcId;
-    [SerializeField] private float _bobFrequency = 6f;
-    [SerializeField] private float _bobAmplitude = 0.04f;
+    [SerializeField] private float _runFPS = 10f;
 
-    private Transform _visualRoot;
+    private SpriteRenderer _spriteRenderer;
+    private Sprite _idleSprite;
+    private Sprite[] _runFrames;
     private Vector3 _lastPos;
-    private float _bobTimer;
+    private float _animTimer;
+    private int _animFrame;
     private bool _isMoving;
 
     public void SetCharacterId(string id)
@@ -24,25 +25,29 @@ public class NPCBillboard : MonoBehaviour
         _npcId = id;
     }
 
-    /// <summary>
-    /// Assign the visual root transform (parent of body+head meshes)
-    /// so we can apply walk bob to it.
-    /// </summary>
-    public void AssignVisualRoot(Transform root)
+    public void AssignSpriteRenderer(SpriteRenderer sr)
     {
-        _visualRoot = root;
+        _spriteRenderer = sr;
     }
 
-    // Legacy compatibility — no-op for 3D mode
-    public void AssignSpriteRenderer(SpriteRenderer sr) { }
+    public void SetRunFrames(Sprite idle, Sprite[] runFrames)
+    {
+        _idleSprite = idle;
+        _runFrames = runFrames;
+    }
+
+    /// <summary>
+    /// Legacy compatibility — no-op for 2D mode (visual root not needed).
+    /// </summary>
+    public void AssignVisualRoot(Transform root) { }
 
     /// <summary>
     /// Get a placeholder portrait sprite for dialogue UI.
-    /// Uses PlaceholderArtGenerator since we no longer have 2D sprites.
+    /// Returns the idle sprite if available.
     /// </summary>
     public Sprite GetPortraitSprite()
     {
-        return null; // Handled by PlaceholderArtGenerator / LocalArtBank now
+        return _idleSprite;
     }
 
     private void Start()
@@ -55,28 +60,32 @@ public class NPCBillboard : MonoBehaviour
         Vector3 delta = transform.position - _lastPos;
         _lastPos = transform.position;
 
-        // Only consider XZ movement (ignore Y)
-        Vector2 deltaXZ = new Vector2(delta.x, delta.z);
-        _isMoving = deltaXZ.sqrMagnitude > 0.0001f;
+        // Only consider XY movement
+        Vector2 deltaXY = new Vector2(delta.x, delta.y);
+        _isMoving = deltaXY.sqrMagnitude > 0.0001f;
 
-        // Rotate to face movement direction
-        if (_isMoving)
-        {
-            float angle = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
-            transform.rotation = Quaternion.Euler(0f, angle, 0f);
-        }
+        if (_spriteRenderer == null) return;
 
-        // Walk bob on the visual root
-        if (_isMoving && _visualRoot != null)
+        // Update sorting order based on Y position (lower Y = in front)
+        _spriteRenderer.sortingOrder = Mathf.RoundToInt(-transform.position.y * 100f);
+
+        // Animate
+        if (_isMoving && _runFrames != null && _runFrames.Length > 0)
         {
-            _bobTimer += Time.deltaTime * _bobFrequency;
-            float bob = Mathf.Abs(Mathf.Sin(_bobTimer * Mathf.PI * 2f)) * _bobAmplitude;
-            _visualRoot.localPosition = new Vector3(0f, bob, 0f);
+            _animTimer += Time.deltaTime * _runFPS;
+            if (_animTimer >= 1f)
+            {
+                _animTimer -= 1f;
+                _animFrame = (_animFrame + 1) % _runFrames.Length;
+            }
+            if (_runFrames[_animFrame] != null)
+                _spriteRenderer.sprite = _runFrames[_animFrame];
         }
-        else if (_visualRoot != null)
+        else if (_idleSprite != null)
         {
-            _bobTimer = 0f;
-            _visualRoot.localPosition = Vector3.zero;
+            _spriteRenderer.sprite = _idleSprite;
+            _animTimer = 0f;
+            _animFrame = 0;
         }
     }
 }

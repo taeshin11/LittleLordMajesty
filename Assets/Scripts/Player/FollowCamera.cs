@@ -1,11 +1,10 @@
 using UnityEngine;
 
 /// <summary>
-/// Isometric orthographic follow camera — low-poly diorama style.
+/// 2D orthographic follow camera for isometric sprite world.
 ///
-/// Orthographic projection removes perspective distortion, making the
-/// scene look like a miniature toy diorama. Fixed 45° isometric angle
-/// gives the classic 2.5D feel (StarCraft, RollerCoaster Tycoon).
+/// Camera sits at z=-10 looking at z=0. Smooth follow on XY plane.
+/// Sprites create the isometric depth illusion — no 3D rotation needed.
 /// </summary>
 [DefaultExecutionOrder(100)]
 public class FollowCamera : MonoBehaviour
@@ -13,19 +12,13 @@ public class FollowCamera : MonoBehaviour
     [SerializeField] private Transform _target;
 
     [Tooltip("Orthographic size — smaller = more zoomed in.")]
-    [SerializeField] private float _orthoSize = 7f;
-
-    [Tooltip("Isometric rotation around Y axis (45 = classic iso).")]
-    [SerializeField] private float _yawAngle = 45f;
-
-    [Tooltip("Pitch angle from horizontal (30-35 = classic iso).")]
-    [SerializeField] private float _pitchAngle = 35f;
-
-    [Tooltip("Distance from target (affects shadow/clipping, not visual size).")]
-    [SerializeField] private float _distance = 30f;
+    [SerializeField] private float _orthoSize = 5.5f;
 
     [Tooltip("Higher = snappier follow.")]
     [SerializeField] private float _smooth = 5f;
+
+    [Tooltip("Camera Z position (behind the sprite plane).")]
+    [SerializeField] private float _cameraZ = -10f;
 
     private void Start()
     {
@@ -35,28 +28,26 @@ public class FollowCamera : MonoBehaviour
             cam.orthographic = true;
             cam.orthographicSize = _orthoSize;
             cam.nearClipPlane = 0.1f;
-            cam.farClipPlane = 200f;
+            cam.farClipPlane = 100f;
         }
-        // Set fixed rotation immediately
-        transform.rotation = Quaternion.Euler(_pitchAngle, _yawAngle, 0f);
+        // Face straight forward along Z (no rotation)
+        transform.rotation = Quaternion.identity;
     }
 
     private void LateUpdate()
     {
         if (_target == null) return;
 
-        // Keep ortho size in sync every frame
+        // Keep ortho size in sync
         var cam = GetComponent<Camera>();
         if (cam != null && cam.orthographicSize != _orthoSize)
             cam.orthographicSize = _orthoSize;
 
-        // Fixed isometric rotation
-        Quaternion rot = Quaternion.Euler(_pitchAngle, _yawAngle, 0f);
-        transform.rotation = rot;
+        // No rotation — flat 2D view
+        transform.rotation = Quaternion.identity;
 
-        // Position: offset from target along the camera's back direction
-        Vector3 offset = rot * new Vector3(0f, 0f, -_distance);
-        Vector3 desired = _target.position + offset;
+        // Follow target on XY, keep fixed Z
+        Vector3 desired = new Vector3(_target.position.x, _target.position.y, _cameraZ);
 
         float t = 1f - Mathf.Exp(-_smooth * Time.deltaTime);
         transform.position = Vector3.Lerp(transform.position, desired, t);

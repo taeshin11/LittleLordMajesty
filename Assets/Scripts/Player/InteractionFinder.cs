@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Finds the nearest interactable NPC in a radius around the player
-/// and surfaces an "E to Talk" prompt. Distance check on XZ plane only
-/// (ignores Y height differences).
+/// and surfaces an "E to Talk" prompt. Distance check on XY plane
+/// (2D isometric world).
 ///
 /// Ticks at 10 Hz (every 0.1 s). Uses the static RegisteredNPCs list
 /// maintained by NPCIdentity.OnEnable/OnDisable.
@@ -62,9 +62,9 @@ public class InteractionFinder : MonoBehaviour
             var id = RegisteredNPCs[i];
             if (id == null) continue;
 
-            // XZ plane distance only (ignore Y height difference)
+            // XY plane distance (2D isometric world)
             Vector3 delta = id.transform.position - myPos;
-            float d2 = delta.x * delta.x + delta.z * delta.z;
+            float d2 = delta.x * delta.x + delta.y * delta.y;
 
             if (d2 < bestDistSq)
             {

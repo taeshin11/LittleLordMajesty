@@ -52,32 +52,34 @@ Four starting NPCs, each with a distinct Kenney character sprite and AI personal
 
 ### 5. Aesthetic & Vibe
 
-**Target mood: Cozy pixel storybook kingdom.**
+**Target mood: Cozy isometric miniature kingdom diorama.**
 
-- **Art style: Kenney RPG Urban Pack** — Clean, colorful 16x16 pixel art. Characters are small and charming with 4 directional sprites. The art is deliberately simple and readable — no visual clutter. Each character is immediately distinguishable by hair/outfit color.
-- **Walk animation:** Characters bob gently when moving (sine wave on Y axis), giving life without requiring animation frames. When idle, perfectly still.
-- **Environment:** Green grass courtyard with trees forming a natural perimeter. Bushes scattered inside for visual texture. The courtyard feels like a protected garden — safe, intimate, yours.
-- **Dialogue box:** Dark semi-transparent panel at screen bottom. NPC portrait (their front-facing sprite, scaled up) on the left, name + message text on right. Modern, clean look — not medieval parchment. Quick command buttons below text, input field + send at bottom.
-- **Color palette:** Earthy greens (grass), warm browns (UI accents), soft whites (text). The overall feel is warm daylight in a small garden.
+- **Art style: Kenney Isometric Miniature packs** (Overworld + Farm + Dungeon) — Pre-rendered isometric sprites (256x512 at PPU 128) on an orthographic 2D plane. Characters are charming miniature figures with south-facing isometric perspective. Each NPC uses a distinct Male_N variant for visual differentiation.
+- **Walk animation:** Characters cycle through 10-frame Run sprite sequences when moving. When idle, display single Idle frame. Smooth and lively.
+- **Environment:** Isometric grass tile grid with stone castle walls, path tiles, and scattered trees/rocks. The courtyard feels like a miniature diorama — a tiny protected kingdom to explore.
+- **Dialogue box:** Dark semi-transparent panel at screen bottom. NPC portrait (idle sprite) on the left, name + message text on right. Modern, clean look. Quick command buttons below text, input field + send at bottom.
+- **Color palette:** Natural greens (grass tiles), grey stone (castle walls), warm browns (wood buildings). The overall feel is a sunny isometric miniature world.
 - **Sound:** TTS voices (Google Cloud) give NPCs spoken responses when API key is configured. Bridges text and character personality.
 
 ---
 
 ## Art Direction Notes
 
-### Asset Pack: Kenney RPG Urban Pack (kenney.nl)
+### Asset Packs: Kenney Isometric Miniature Series (kenney.nl)
 - **License:** CC0 (public domain) — free for commercial use
-- **Resolution:** 16x16 per tile
-- **Characters:** 18 unique character types, 4 directions each (front/back/left/right)
-- **Environment:** Ground tiles, trees, bushes, buildings, furniture, props
-- **Expansion:** Kenney has 100+ compatible packs in the same style
+- **Resolution:** 256x512 per sprite, PPU 128 = 2x4 world units
+- **Packs used:** Isometric Miniature Overworld (grass, trees, paths), Farm (wood walls, roofs, fences, crops), Dungeon (stone walls, props, characters)
+- **Characters:** 8 male variants (Male_0..Male_7), each with Idle (1 frame), Run (10 frames), Pickup (10 frames)
+- **Environment:** Ground tiles, stone/wood walls, roofs, trees, rocks, barrels, chests, furniture
+- **Direction:** South-facing (_S) sprites used as standard isometric view
 
-### Why Kenney over Anokolisa?
-- Consistent tile sizes (always 16x16, no mixed 32x32/64x64 frame confusion)
-- Individual PNG per sprite (no complex sheet slicing needed)
-- Huge variety in one pack (486 tiles in RPG Urban alone)
+### Why Isometric Miniature over 3D or Pixel Art?
+- Pre-rendered isometric look without 3D engine complexity (no meshes, shaders, lighting)
+- Individual PNG per sprite — no sheet slicing needed
 - CC0 license — zero legal risk
-- Clean, modern pixel art style — "cozy" not "dark fantasy"
+- Consistent scale across all three packs (256x512)
+- Character animation frames included (Run cycle)
+- Miniature diorama aesthetic matches game feel perfectly
 
 ---
 

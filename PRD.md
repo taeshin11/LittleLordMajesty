@@ -17,7 +17,7 @@
 | **Product Name** | LittleLordMajesty (LLM) |
 | **Platforms** | WebGL (primary, mobile browser), then Steam PC, Android / iOS |
 | **Genre** | Cozy Kingdom Roaming RPG + AI NPC Interaction |
-| **Art Style** | **Isometric Low-Poly 3D** — Kenney 3D packs (Castle Kit, Fantasy Town Kit, Nature Kit) + orthographic camera at 45° isometric angle. Miniature diorama aesthetic. |
+| **Art Style** | **Isometric 2D Sprite** — Kenney Isometric Miniature packs (Overworld + Farm + Dungeon). Pre-rendered isometric sprites (256x512) placed on orthographic 2D plane. Miniature diorama aesthetic without 3D complexity. Characters have Run animation frames. |
 | **Core Concept** | "Walk your kingdom. Rule with a single word." Inherit a tiny low-poly castle, explore on foot, talk to NPCs in natural language, resolve crises through conversation, grow from "Little Lord" to "Majesty." |
 
 ---
