@@ -46,12 +46,21 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
             Object.DontDestroyOnLoad(es);
         }
 
-        // Background circle (semi-transparent).
+        // Background circle — try Kenney mobile control sprite first.
         float bgSize = 260f;
         var bgGO = new GameObject("JoystickBG");
         bgGO.transform.SetParent(canvasGO.transform, false);
         var bgImg = bgGO.AddComponent<Image>();
-        bgImg.color = new Color(1f, 1f, 1f, 0.25f);
+        var bgSprite = Resources.Load<Sprite>("Art/UI/Joystick/joystick_bg");
+        if (bgSprite != null)
+        {
+            bgImg.sprite = bgSprite;
+            bgImg.color = new Color(1f, 1f, 1f, 0.5f);
+        }
+        else
+        {
+            bgImg.color = new Color(1f, 1f, 1f, 0.25f);
+        }
         var bgRT = bgGO.GetComponent<RectTransform>();
         bgRT.anchorMin = new Vector2(0f, 0f);
         bgRT.anchorMax = new Vector2(0f, 0f);
@@ -59,12 +68,21 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
         bgRT.anchoredPosition = new Vector2(180f, 260f);
         bgRT.sizeDelta = new Vector2(bgSize, bgSize);
 
-        // Knob (smaller, more opaque).
+        // Knob — try Kenney mobile control sprite first.
         float knobSize = 100f;
         var knobGO = new GameObject("JoystickKnob");
         knobGO.transform.SetParent(bgGO.transform, false);
         var knobImg = knobGO.AddComponent<Image>();
-        knobImg.color = new Color(1f, 1f, 1f, 0.6f);
+        var knobSprite = Resources.Load<Sprite>("Art/UI/Joystick/joystick_knob");
+        if (knobSprite != null)
+        {
+            knobImg.sprite = knobSprite;
+            knobImg.color = new Color(1f, 1f, 1f, 0.8f);
+        }
+        else
+        {
+            knobImg.color = new Color(1f, 1f, 1f, 0.6f);
+        }
         var knobRT = knobGO.GetComponent<RectTransform>();
         knobRT.anchorMin = new Vector2(0.5f, 0.5f);
         knobRT.anchorMax = new Vector2(0.5f, 0.5f);

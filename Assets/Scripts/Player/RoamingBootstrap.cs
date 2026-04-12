@@ -2,13 +2,13 @@ using UnityEngine;
 using TMPro;
 
 /// <summary>
-/// 3D roaming pivot — runtime bootstrap that spawns the procedural 3D world,
-/// player character, NPCs, buildings, and environment.
+/// 3D roaming pivot — runtime bootstrap that spawns the 3D world using
+/// Kenney FBX models from Resources/Models/, with procedural fallbacks.
 ///
 /// 3D top-down perspective: camera angled ~45° looking down at XZ ground plane.
-/// All characters are procedural primitives (capsule body + sphere head).
-/// Buildings are simple colored cube compositions.
-/// Trees are green spheres on brown cylinders.
+/// Buildings use Castle Kit + Fantasy Town Kit FBX models.
+/// Trees/nature use Nature Kit FBX models.
+/// Characters keep procedural primitives (capsule+sphere) with better colors.
 /// </summary>
 public class RoamingBootstrap : MonoBehaviour
 {
@@ -100,6 +100,40 @@ public class RoamingBootstrap : MonoBehaviour
         renderer.material = new Material(GetSharedMaterial()) { color = color };
     }
 
+    /// <summary>
+    /// Load a Kenney FBX model from Resources/Models/{subPath}.
+    /// Returns instantiated GameObject or null if not found.
+    /// </summary>
+    private static GameObject LoadModel(string subPath, Transform parent = null, string name = null)
+    {
+        var prefab = Resources.Load<GameObject>($"Models/{subPath}");
+        if (prefab == null)
+        {
+            Debug.LogWarning($"[RoamingBootstrap] Model not found: Models/{subPath}");
+            return null;
+        }
+        var instance = Instantiate(prefab);
+        if (name != null) instance.name = name;
+        if (parent != null) instance.transform.SetParent(parent, false);
+        return instance;
+    }
+
+    /// <summary>
+    /// Load a Kenney FBX model, falling back to a colored primitive if the FBX is missing.
+    /// </summary>
+    private static GameObject LoadModelOrPrimitive(string subPath, PrimitiveType fallbackType,
+        Color fallbackColor, Transform parent = null, string name = null)
+    {
+        var model = LoadModel(subPath, parent, name);
+        if (model != null) return model;
+
+        // Fallback to primitive
+        var go = CreateVisualPrimitive(fallbackType, name ?? "Fallback");
+        if (parent != null) go.transform.SetParent(parent, false);
+        ApplyColor(go, fallbackColor);
+        return go;
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInstall()
     {
@@ -154,7 +188,7 @@ public class RoamingBootstrap : MonoBehaviour
         SpawnBuildings();
         SpawnEnvironment();
         _spawned = true;
-        Debug.Log("[RoamingBootstrap] 3D roaming world built (procedural primitives)");
+        Debug.Log("[RoamingBootstrap] 3D roaming world built (Kenney FBX models)");
     }
 
     // ---------------------------------------------------------------
@@ -209,7 +243,7 @@ public class RoamingBootstrap : MonoBehaviour
         _roamingCam.orthographic = false;  // 3D perspective
         _roamingCam.fieldOfView = 40f;
         _roamingCam.clearFlags = CameraClearFlags.SolidColor;
-        _roamingCam.backgroundColor = new Color(0.45f, 0.70f, 0.90f); // Sky blue
+        _roamingCam.backgroundColor = new Color(0.53f, 0.81f, 0.92f); // Sky blue
         _roamingCam.nearClipPlane = 0.3f;
         _roamingCam.farClipPlane = 200f;
         _roamingCam.depth = 10;
@@ -229,11 +263,19 @@ public class RoamingBootstrap : MonoBehaviour
 
     private void BuildGround()
     {
-        // Main ground plane
+        // Main ground plane — large and GREEN
         var ground = CreateVisualPrimitive(PrimitiveType.Plane, "Ground");
         ground.transform.position = Vector3.zero;
         ground.transform.localScale = new Vector3(3f, 1f, 3f); // 30x30 units
         ApplyColor(ground, new Color(0.30f, 0.55f, 0.20f)); // Grass green
+
+        // Try to add Kenney ground_grass tiles for detail in the courtyard
+        var grassTile = LoadModel("Nature/ground_grass", null, "CourtyardGrass");
+        if (grassTile != null)
+        {
+            grassTile.transform.position = new Vector3(0f, 0.005f, 0f);
+            grassTile.transform.localScale = Vector3.one * 2f;
+        }
 
         // Courtyard area — slightly lighter stone ground
         var courtyard = CreateVisualPrimitive(PrimitiveType.Plane, "Courtyard");
@@ -476,32 +518,32 @@ public class RoamingBootstrap : MonoBehaviour
     }
 
     // ---------------------------------------------------------------
-    //  PROCEDURAL BUILDINGS
+    //  BUILDINGS — Kenney FBX models with procedural fallbacks
     // ---------------------------------------------------------------
 
     private void SpawnBuildings()
     {
         var buildRoot = new GameObject("Buildings");
 
-        // Central Keep — the main castle building
+        // Central Keep — stacked tower segments from Castle Kit
         SpawnKeep(buildRoot.transform);
 
-        // Barracks (long low building, east side)
+        // Barracks (east side) — Fantasy Town wall+roof combo
         SpawnBarracks(buildRoot.transform);
 
-        // Farm (small building + fence, west side)
+        // Farm (west side) — Kenney fence pieces + ground
         SpawnFarm(buildRoot.transform);
 
-        // Market stall (canopy shape, northeast)
+        // Market stall (northeast) — Fantasy Town stall model
         SpawnMarketStall(buildRoot.transform);
 
-        // Castle gate (south)
+        // Castle gate (south) — Castle Kit gate.fbx
         SpawnCastleGate(buildRoot.transform);
 
         // Watchtower (northwest corner)
         SpawnWatchtower(buildRoot.transform);
 
-        // Castle walls
+        // Castle walls — Castle Kit wall.fbx repeated + wall-corner at corners
         SpawnCastleWalls(buildRoot.transform);
     }
 
@@ -511,34 +553,65 @@ public class RoamingBootstrap : MonoBehaviour
         keep.transform.SetParent(parent, false);
         keep.transform.localPosition = new Vector3(0f, 0f, 2f);
 
-        var body = CreateVisualPrimitive(PrimitiveType.Cube, "KeepBody");
-        body.transform.SetParent(keep.transform, false);
-        body.transform.localPosition = new Vector3(0f, 1.5f, 0f);
-        body.transform.localScale = new Vector3(3f, 3f, 3f);
-        ApplyColor(body, new Color(0.50f, 0.45f, 0.40f)); // Stone grey
+        // Try Kenney Castle Kit tower stack: base + mid + roof
+        var towerBase = LoadModel("Castle/tower-square-base", keep.transform, "TowerBase");
+        if (towerBase != null)
+        {
+            towerBase.transform.localPosition = Vector3.zero;
+            towerBase.transform.localScale = Vector3.one * 1.5f;
 
-        var roof = CreateVisualPrimitive(PrimitiveType.Cube, "KeepRoof");
-        roof.transform.SetParent(keep.transform, false);
-        roof.transform.localPosition = new Vector3(0f, 3.2f, 0f);
-        roof.transform.localScale = new Vector3(3.2f, 0.4f, 3.2f);
-        ApplyColor(roof, new Color(0.25f, 0.20f, 0.40f)); // Dark purple roof
+            var towerMid = LoadModel("Castle/tower-square-mid", keep.transform, "TowerMid");
+            if (towerMid != null)
+            {
+                towerMid.transform.localPosition = new Vector3(0f, 1.5f, 0f);
+                towerMid.transform.localScale = Vector3.one * 1.5f;
+            }
 
-        // Keep collider — player can't walk through the castle
+            var towerRoof = LoadModel("Castle/tower-square-roof", keep.transform, "TowerRoof");
+            if (towerRoof != null)
+            {
+                towerRoof.transform.localPosition = new Vector3(0f, 3.0f, 0f);
+                towerRoof.transform.localScale = Vector3.one * 1.5f;
+            }
+
+            // Flag on top
+            var flag = LoadModel("Castle/flag", keep.transform, "KeepFlag");
+            if (flag != null)
+            {
+                flag.transform.localPosition = new Vector3(0f, 4.5f, 0f);
+                flag.transform.localScale = Vector3.one * 1.5f;
+            }
+        }
+        else
+        {
+            // Fallback to procedural
+            var body = CreateVisualPrimitive(PrimitiveType.Cube, "KeepBody");
+            body.transform.SetParent(keep.transform, false);
+            body.transform.localPosition = new Vector3(0f, 1.5f, 0f);
+            body.transform.localScale = new Vector3(3f, 3f, 3f);
+            ApplyColor(body, new Color(0.50f, 0.45f, 0.40f));
+
+            var roof = CreateVisualPrimitive(PrimitiveType.Cube, "KeepRoof");
+            roof.transform.SetParent(keep.transform, false);
+            roof.transform.localPosition = new Vector3(0f, 3.2f, 0f);
+            roof.transform.localScale = new Vector3(3.2f, 0.4f, 3.2f);
+            ApplyColor(roof, new Color(0.25f, 0.20f, 0.40f));
+
+            var pole = CreateVisualPrimitive(PrimitiveType.Cylinder, "FlagPole");
+            pole.transform.SetParent(keep.transform, false);
+            pole.transform.localPosition = new Vector3(0f, 4.2f, 0f);
+            pole.transform.localScale = new Vector3(0.05f, 0.8f, 0.05f);
+            ApplyColor(pole, new Color(0.6f, 0.5f, 0.3f));
+
+            var flagFallback = CreateVisualPrimitive(PrimitiveType.Cube, "Flag");
+            flagFallback.transform.SetParent(pole.transform, false);
+            flagFallback.transform.localPosition = new Vector3(0.4f, 0.6f, 0f);
+            flagFallback.transform.localScale = new Vector3(8f, 4f, 0.5f);
+            ApplyColor(flagFallback, new Color(0.70f, 0.15f, 0.15f));
+        }
+
+        // Keep collider
         AddBuildingCollider(keep, new Vector3(3f, 3f, 3f), new Vector3(0f, 1.5f, 0f));
-
-        // Flag pole
-        var pole = CreateVisualPrimitive(PrimitiveType.Cylinder, "FlagPole");
-        pole.transform.SetParent(keep.transform, false);
-        pole.transform.localPosition = new Vector3(0f, 4.2f, 0f);
-        pole.transform.localScale = new Vector3(0.05f, 0.8f, 0.05f);
-        ApplyColor(pole, new Color(0.6f, 0.5f, 0.3f));
-
-        // Flag (small colored cube)
-        var flag = CreateVisualPrimitive(PrimitiveType.Cube, "Flag");
-        flag.transform.SetParent(pole.transform, false);
-        flag.transform.localPosition = new Vector3(0.4f, 0.6f, 0f);
-        flag.transform.localScale = new Vector3(8f, 4f, 0.5f); // Relative to pole scale
-        ApplyColor(flag, new Color(0.70f, 0.15f, 0.15f)); // Red banner
     }
 
     private void SpawnBarracks(Transform parent)
@@ -547,17 +620,52 @@ public class RoamingBootstrap : MonoBehaviour
         barracks.transform.SetParent(parent, false);
         barracks.transform.localPosition = new Vector3(5f, 0f, -3f);
 
-        var body = CreateVisualPrimitive(PrimitiveType.Cube, "BarracksBody");
-        body.transform.SetParent(barracks.transform, false);
-        body.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-        body.transform.localScale = new Vector3(3f, 1.2f, 2f);
-        ApplyColor(body, new Color(0.50f, 0.30f, 0.20f)); // Dark wood
+        // Try Fantasy Town Kit wall + roof for a proper building look
+        var wallModel = LoadModel("Town/wall-window-shutters", barracks.transform, "BarracksWall");
+        if (wallModel != null)
+        {
+            wallModel.transform.localPosition = Vector3.zero;
+            wallModel.transform.localScale = Vector3.one * 1.5f;
 
-        var roof = CreateVisualPrimitive(PrimitiveType.Cube, "BarracksRoof");
-        roof.transform.SetParent(barracks.transform, false);
-        roof.transform.localPosition = new Vector3(0f, 1.35f, 0f);
-        roof.transform.localScale = new Vector3(3.2f, 0.15f, 2.2f);
-        ApplyColor(roof, new Color(0.35f, 0.25f, 0.15f));
+            // Add a second wall beside it for width
+            var wall2 = LoadModel("Town/wall-window-shutters", barracks.transform, "BarracksWall2");
+            if (wall2 != null)
+            {
+                wall2.transform.localPosition = new Vector3(1.5f, 0f, 0f);
+                wall2.transform.localScale = Vector3.one * 1.5f;
+            }
+
+            // Roof
+            var roofModel = LoadModel("Town/roof-gable", barracks.transform, "BarracksRoof");
+            if (roofModel != null)
+            {
+                roofModel.transform.localPosition = new Vector3(0.75f, 1.5f, 0f);
+                roofModel.transform.localScale = Vector3.one * 1.5f;
+            }
+
+            // Door
+            var doorModel = LoadModel("Town/wall-door", barracks.transform, "BarracksDoor");
+            if (doorModel != null)
+            {
+                doorModel.transform.localPosition = new Vector3(-0.75f, 0f, 0f);
+                doorModel.transform.localScale = Vector3.one * 1.5f;
+            }
+        }
+        else
+        {
+            // Fallback
+            var body = CreateVisualPrimitive(PrimitiveType.Cube, "BarracksBody");
+            body.transform.SetParent(barracks.transform, false);
+            body.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+            body.transform.localScale = new Vector3(3f, 1.2f, 2f);
+            ApplyColor(body, new Color(0.50f, 0.30f, 0.20f));
+
+            var roof = CreateVisualPrimitive(PrimitiveType.Cube, "BarracksRoof");
+            roof.transform.SetParent(barracks.transform, false);
+            roof.transform.localPosition = new Vector3(0f, 1.35f, 0f);
+            roof.transform.localScale = new Vector3(3.2f, 0.15f, 2.2f);
+            ApplyColor(roof, new Color(0.35f, 0.25f, 0.15f));
+        }
 
         AddBuildingCollider(barracks, new Vector3(3f, 1.2f, 2f), new Vector3(0f, 0.6f, 0f));
     }
@@ -568,14 +676,51 @@ public class RoamingBootstrap : MonoBehaviour
         farm.transform.SetParent(parent, false);
         farm.transform.localPosition = new Vector3(-5f, 0f, 3f);
 
-        // Small barn
+        // Try Kenney fence pieces
+        bool hasFence = false;
+        for (int i = -2; i <= 2; i++)
+        {
+            var fencePiece = LoadModel("Town/fence", farm.transform, $"Fence_{i}");
+            if (fencePiece != null)
+            {
+                hasFence = true;
+                fencePiece.transform.localPosition = new Vector3(i * 1.0f, 0f, -2f);
+                fencePiece.transform.localScale = Vector3.one * 1.0f;
+            }
+        }
+        // Side fences
+        for (int i = -1; i <= 0; i++)
+        {
+            var fenceL = LoadModel("Town/fence", farm.transform, $"FenceL_{i}");
+            if (fenceL != null)
+            {
+                fenceL.transform.localPosition = new Vector3(-2f, 0f, i * 1.0f);
+                fenceL.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+                fenceL.transform.localScale = Vector3.one * 1.0f;
+            }
+            var fenceR = LoadModel("Town/fence", farm.transform, $"FenceR_{i}");
+            if (fenceR != null)
+            {
+                fenceR.transform.localPosition = new Vector3(2f, 0f, i * 1.0f);
+                fenceR.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+                fenceR.transform.localScale = Vector3.one * 1.0f;
+            }
+        }
+
+        // Fence gate
+        var fenceGate = LoadModel("Town/fence-gate", farm.transform, "FenceGate");
+        if (fenceGate != null)
+        {
+            fenceGate.transform.localPosition = new Vector3(0f, 0f, -2f);
+            fenceGate.transform.localScale = Vector3.one * 1.0f;
+        }
+
+        // Small barn — fallback to primitive since we don't have a barn model
         var barn = CreateVisualPrimitive(PrimitiveType.Cube, "Barn");
         barn.transform.SetParent(farm.transform, false);
         barn.transform.localPosition = new Vector3(0f, 0.5f, 0f);
         barn.transform.localScale = new Vector3(1.5f, 1f, 1.5f);
         ApplyColor(barn, new Color(0.50f, 0.30f, 0.15f));
-
-        AddBuildingCollider(barn, new Vector3(1.5f, 1f, 1.5f), new Vector3(0f, 0.5f, 0f));
 
         var barnRoof = CreateVisualPrimitive(PrimitiveType.Cube, "BarnRoof");
         barnRoof.transform.SetParent(farm.transform, false);
@@ -583,16 +728,21 @@ public class RoamingBootstrap : MonoBehaviour
         barnRoof.transform.localScale = new Vector3(1.7f, 0.15f, 1.7f);
         ApplyColor(barnRoof, new Color(0.60f, 0.25f, 0.10f));
 
-        // Fence posts around plot
-        float[] fenceX = { -2f, -1f, 0f, 1f, 2f, 2f, 2f, -2f, -2f };
-        float[] fenceZ = { -2f, -2f, -2f, -2f, -2f, -1f, 0f, -1f, 0f };
-        for (int i = 0; i < fenceX.Length; i++)
+        AddBuildingCollider(barn, new Vector3(1.5f, 1f, 1.5f), new Vector3(0f, 0.5f, 0f));
+
+        if (!hasFence)
         {
-            var post = CreateVisualPrimitive(PrimitiveType.Cylinder, "FencePost");
-            post.transform.SetParent(farm.transform, false);
-            post.transform.localPosition = new Vector3(fenceX[i], 0.2f, fenceZ[i]);
-            post.transform.localScale = new Vector3(0.06f, 0.2f, 0.06f);
-            ApplyColor(post, new Color(0.45f, 0.35f, 0.20f));
+            // Fallback fence posts
+            float[] fenceX = { -2f, -1f, 0f, 1f, 2f, 2f, 2f, -2f, -2f };
+            float[] fenceZ = { -2f, -2f, -2f, -2f, -2f, -1f, 0f, -1f, 0f };
+            for (int i = 0; i < fenceX.Length; i++)
+            {
+                var post = CreateVisualPrimitive(PrimitiveType.Cylinder, "FencePost");
+                post.transform.SetParent(farm.transform, false);
+                post.transform.localPosition = new Vector3(fenceX[i], 0.2f, fenceZ[i]);
+                post.transform.localScale = new Vector3(0.06f, 0.2f, 0.06f);
+                ApplyColor(post, new Color(0.45f, 0.35f, 0.20f));
+            }
         }
 
         // Crop rows (flat green cubes)
@@ -612,28 +762,47 @@ public class RoamingBootstrap : MonoBehaviour
         market.transform.SetParent(parent, false);
         market.transform.localPosition = new Vector3(2f, 0f, 5f);
 
-        // Counter
-        var counter = CreateVisualPrimitive(PrimitiveType.Cube, "Counter");
-        counter.transform.SetParent(market.transform, false);
-        counter.transform.localPosition = new Vector3(0f, 0.4f, 0f);
-        counter.transform.localScale = new Vector3(2f, 0.8f, 0.8f);
-        ApplyColor(counter, new Color(0.55f, 0.40f, 0.20f));
+        // Try Kenney Fantasy Town stall model
+        var stallModel = LoadModel("Town/stall-red", market.transform, "Stall");
+        if (stallModel == null)
+            stallModel = LoadModel("Town/stall", market.transform, "Stall");
 
-        // Canopy (thin wide cube above)
-        var canopy = CreateVisualPrimitive(PrimitiveType.Cube, "Canopy");
-        canopy.transform.SetParent(market.transform, false);
-        canopy.transform.localPosition = new Vector3(0f, 1.5f, 0f);
-        canopy.transform.localScale = new Vector3(2.5f, 0.08f, 1.5f);
-        ApplyColor(canopy, new Color(0.80f, 0.30f, 0.10f)); // Red awning
-
-        // Support poles
-        for (int i = -1; i <= 1; i += 2)
+        if (stallModel != null)
         {
-            var pole = CreateVisualPrimitive(PrimitiveType.Cylinder, "CanopyPole");
-            pole.transform.SetParent(market.transform, false);
-            pole.transform.localPosition = new Vector3(i * 0.9f, 0.75f, -0.5f);
-            pole.transform.localScale = new Vector3(0.05f, 0.75f, 0.05f);
-            ApplyColor(pole, new Color(0.45f, 0.35f, 0.20f));
+            stallModel.transform.localPosition = Vector3.zero;
+            stallModel.transform.localScale = Vector3.one * 1.2f;
+
+            // Add a cart beside the stall for flavor
+            var cartModel = LoadModel("Town/cart", market.transform, "Cart");
+            if (cartModel != null)
+            {
+                cartModel.transform.localPosition = new Vector3(2f, 0f, 0f);
+                cartModel.transform.localScale = Vector3.one * 1.0f;
+            }
+        }
+        else
+        {
+            // Fallback
+            var counter = CreateVisualPrimitive(PrimitiveType.Cube, "Counter");
+            counter.transform.SetParent(market.transform, false);
+            counter.transform.localPosition = new Vector3(0f, 0.4f, 0f);
+            counter.transform.localScale = new Vector3(2f, 0.8f, 0.8f);
+            ApplyColor(counter, new Color(0.55f, 0.40f, 0.20f));
+
+            var canopy = CreateVisualPrimitive(PrimitiveType.Cube, "Canopy");
+            canopy.transform.SetParent(market.transform, false);
+            canopy.transform.localPosition = new Vector3(0f, 1.5f, 0f);
+            canopy.transform.localScale = new Vector3(2.5f, 0.08f, 1.5f);
+            ApplyColor(canopy, new Color(0.80f, 0.30f, 0.10f));
+
+            for (int i = -1; i <= 1; i += 2)
+            {
+                var pole = CreateVisualPrimitive(PrimitiveType.Cylinder, "CanopyPole");
+                pole.transform.SetParent(market.transform, false);
+                pole.transform.localPosition = new Vector3(i * 0.9f, 0.75f, -0.5f);
+                pole.transform.localScale = new Vector3(0.05f, 0.75f, 0.05f);
+                ApplyColor(pole, new Color(0.45f, 0.35f, 0.20f));
+            }
         }
     }
 
@@ -643,28 +812,45 @@ public class RoamingBootstrap : MonoBehaviour
         gate.transform.SetParent(parent, false);
         gate.transform.localPosition = new Vector3(0f, 0f, -8f);
 
-        // Two gate towers
-        for (int side = -1; side <= 1; side += 2)
+        // Try Kenney Castle Kit gate model
+        var gateModel = LoadModel("Castle/gate", gate.transform, "GateModel");
+        if (gateModel != null)
         {
-            var tower = CreateVisualPrimitive(PrimitiveType.Cylinder, "GateTower");
-            tower.transform.SetParent(gate.transform, false);
-            tower.transform.localPosition = new Vector3(side * 1.5f, 1.2f, 0f);
-            tower.transform.localScale = new Vector3(0.8f, 1.2f, 0.8f);
-            ApplyColor(tower, new Color(0.50f, 0.48f, 0.45f));
+            gateModel.transform.localPosition = Vector3.zero;
+            gateModel.transform.localScale = Vector3.one * 1.5f;
 
-            var top = CreateVisualPrimitive(PrimitiveType.Cube, "GateTowerTop");
-            top.transform.SetParent(tower.transform, false);
-            top.transform.localPosition = new Vector3(0f, 1.1f, 0f);
-            top.transform.localScale = new Vector3(1.3f, 0.15f, 1.3f);
-            ApplyColor(top, new Color(0.45f, 0.43f, 0.40f));
+            // Add door inside the gate
+            var doorModel = LoadModel("Castle/door", gate.transform, "GateDoor");
+            if (doorModel != null)
+            {
+                doorModel.transform.localPosition = new Vector3(0f, 0f, 0.1f);
+                doorModel.transform.localScale = Vector3.one * 1.5f;
+            }
         }
+        else
+        {
+            // Fallback: two gate towers
+            for (int side = -1; side <= 1; side += 2)
+            {
+                var tower = CreateVisualPrimitive(PrimitiveType.Cylinder, "GateTower");
+                tower.transform.SetParent(gate.transform, false);
+                tower.transform.localPosition = new Vector3(side * 1.5f, 1.2f, 0f);
+                tower.transform.localScale = new Vector3(0.8f, 1.2f, 0.8f);
+                ApplyColor(tower, new Color(0.50f, 0.48f, 0.45f));
 
-        // Gate arch (cube spanning the gap)
-        var arch = CreateVisualPrimitive(PrimitiveType.Cube, "GateArch");
-        arch.transform.SetParent(gate.transform, false);
-        arch.transform.localPosition = new Vector3(0f, 2.0f, 0f);
-        arch.transform.localScale = new Vector3(2f, 0.4f, 0.6f);
-        ApplyColor(arch, new Color(0.50f, 0.48f, 0.45f));
+                var top = CreateVisualPrimitive(PrimitiveType.Cube, "GateTowerTop");
+                top.transform.SetParent(tower.transform, false);
+                top.transform.localPosition = new Vector3(0f, 1.1f, 0f);
+                top.transform.localScale = new Vector3(1.3f, 0.15f, 1.3f);
+                ApplyColor(top, new Color(0.45f, 0.43f, 0.40f));
+            }
+
+            var arch = CreateVisualPrimitive(PrimitiveType.Cube, "GateArch");
+            arch.transform.SetParent(gate.transform, false);
+            arch.transform.localPosition = new Vector3(0f, 2.0f, 0f);
+            arch.transform.localScale = new Vector3(2f, 0.4f, 0.6f);
+            ApplyColor(arch, new Color(0.50f, 0.48f, 0.45f));
+        }
     }
 
     private void SpawnWatchtower(Transform parent)
@@ -673,52 +859,172 @@ public class RoamingBootstrap : MonoBehaviour
         tower.transform.SetParent(parent, false);
         tower.transform.localPosition = new Vector3(-7f, 0f, -7f);
 
-        var body = CreateVisualPrimitive(PrimitiveType.Cylinder, "TowerBody");
-        body.transform.SetParent(tower.transform, false);
-        body.transform.localPosition = new Vector3(0f, 1.5f, 0f);
-        body.transform.localScale = new Vector3(1f, 1.5f, 1f);
-        ApplyColor(body, new Color(0.50f, 0.48f, 0.45f));
+        // Try Castle Kit tower stack
+        var towerBase = LoadModel("Castle/tower-square-base", tower.transform, "WatchBase");
+        if (towerBase != null)
+        {
+            towerBase.transform.localPosition = Vector3.zero;
+            towerBase.transform.localScale = Vector3.one * 1.0f;
 
-        var top = CreateVisualPrimitive(PrimitiveType.Cube, "TowerTop");
-        top.transform.SetParent(tower.transform, false);
-        top.transform.localPosition = new Vector3(0f, 3.2f, 0f);
-        top.transform.localScale = new Vector3(1.3f, 0.2f, 1.3f);
-        ApplyColor(top, new Color(0.45f, 0.43f, 0.40f));
+            var towerMid = LoadModel("Castle/tower-square-mid", tower.transform, "WatchMid");
+            if (towerMid != null)
+            {
+                towerMid.transform.localPosition = new Vector3(0f, 1.0f, 0f);
+                towerMid.transform.localScale = Vector3.one * 1.0f;
+            }
+
+            var towerRoof = LoadModel("Castle/tower-square-roof", tower.transform, "WatchRoof");
+            if (towerRoof != null)
+            {
+                towerRoof.transform.localPosition = new Vector3(0f, 2.0f, 0f);
+                towerRoof.transform.localScale = Vector3.one * 1.0f;
+            }
+
+            var flagModel = LoadModel("Castle/flag", tower.transform, "WatchFlag");
+            if (flagModel != null)
+            {
+                flagModel.transform.localPosition = new Vector3(0f, 3.0f, 0f);
+                flagModel.transform.localScale = Vector3.one * 1.0f;
+            }
+        }
+        else
+        {
+            // Fallback
+            var body = CreateVisualPrimitive(PrimitiveType.Cylinder, "TowerBody");
+            body.transform.SetParent(tower.transform, false);
+            body.transform.localPosition = new Vector3(0f, 1.5f, 0f);
+            body.transform.localScale = new Vector3(1f, 1.5f, 1f);
+            ApplyColor(body, new Color(0.50f, 0.48f, 0.45f));
+
+            var top = CreateVisualPrimitive(PrimitiveType.Cube, "TowerTop");
+            top.transform.SetParent(tower.transform, false);
+            top.transform.localPosition = new Vector3(0f, 3.2f, 0f);
+            top.transform.localScale = new Vector3(1.3f, 0.2f, 1.3f);
+            ApplyColor(top, new Color(0.45f, 0.43f, 0.40f));
+        }
     }
 
     private void SpawnCastleWalls(Transform parent)
     {
         float wallSize = 9.5f;
-        float wallH = 1.2f;
-        float wallW = 0.4f;
-        Color wallColor = new Color(0.50f, 0.48f, 0.45f);
 
-        // North wall
-        CreateWallSegment(parent, new Vector3(0f, wallH / 2, wallSize),
-            new Vector3(wallSize * 2, wallH, wallW), wallColor, "WallNorth");
-        // South wall — gap for gate
-        CreateWallSegment(parent, new Vector3(-5.5f, wallH / 2, -wallSize),
-            new Vector3(8f, wallH, wallW), wallColor, "WallSouthL");
-        CreateWallSegment(parent, new Vector3(5.5f, wallH / 2, -wallSize),
-            new Vector3(8f, wallH, wallW), wallColor, "WallSouthR");
-        // West wall
-        CreateWallSegment(parent, new Vector3(-wallSize, wallH / 2, 0f),
-            new Vector3(wallW, wallH, wallSize * 2), wallColor, "WallWest");
-        // East wall
-        CreateWallSegment(parent, new Vector3(wallSize, wallH / 2, 0f),
-            new Vector3(wallW, wallH, wallSize * 2), wallColor, "WallEast");
-
-        // Corner towers
-        float[] cx = { -wallSize, wallSize, -wallSize, wallSize };
-        float[] cz = { -wallSize, -wallSize, wallSize, wallSize };
-        for (int i = 0; i < 4; i++)
+        // Try Kenney Castle Kit wall.fbx segments
+        var testWall = Resources.Load<GameObject>("Models/Castle/wall");
+        if (testWall != null)
         {
-            var ct = CreateVisualPrimitive(PrimitiveType.Cylinder, "CornerTower");
-            ct.transform.SetParent(parent, false);
-            ct.transform.localPosition = new Vector3(cx[i], 1f, cz[i]);
-            ct.transform.localScale = new Vector3(0.9f, 1f, 0.9f);
-            ApplyColor(ct, wallColor * 0.9f);
+            // Use real wall models — repeat along each edge
+            float spacing = 1.5f; // Kenney wall segments are ~1 unit, scale 1.5x
+            Color wallColor = new Color(0.50f, 0.48f, 0.45f);
+
+            // North wall
+            SpawnWallRow(parent, new Vector3(-wallSize, 0f, wallSize),
+                new Vector3(wallSize, 0f, wallSize), spacing, 0f, "WallN");
+            // South wall (gap for gate in middle)
+            SpawnWallRow(parent, new Vector3(-wallSize, 0f, -wallSize),
+                new Vector3(-2f, 0f, -wallSize), spacing, 0f, "WallSL");
+            SpawnWallRow(parent, new Vector3(2f, 0f, -wallSize),
+                new Vector3(wallSize, 0f, -wallSize), spacing, 0f, "WallSR");
+            // West wall
+            SpawnWallRow(parent, new Vector3(-wallSize, 0f, -wallSize),
+                new Vector3(-wallSize, 0f, wallSize), spacing, 90f, "WallW");
+            // East wall
+            SpawnWallRow(parent, new Vector3(wallSize, 0f, -wallSize),
+                new Vector3(wallSize, 0f, wallSize), spacing, 90f, "WallE");
+
+            // Corner towers using wall-corner
+            float[] cx = { -wallSize, wallSize, -wallSize, wallSize };
+            float[] cz = { -wallSize, -wallSize, wallSize, wallSize };
+            float[] cRot = { 0f, 90f, 270f, 180f };
+            for (int i = 0; i < 4; i++)
+            {
+                var corner = LoadModel("Castle/wall-corner", parent, $"Corner_{i}");
+                if (corner != null)
+                {
+                    corner.transform.localPosition = new Vector3(cx[i], 0f, cz[i]);
+                    corner.transform.localRotation = Quaternion.Euler(0f, cRot[i], 0f);
+                    corner.transform.localScale = Vector3.one * 1.5f;
+                }
+                else
+                {
+                    // Fallback corner tower
+                    var ct = CreateVisualPrimitive(PrimitiveType.Cylinder, "CornerTower");
+                    ct.transform.SetParent(parent, false);
+                    ct.transform.localPosition = new Vector3(cx[i], 1f, cz[i]);
+                    ct.transform.localScale = new Vector3(0.9f, 1f, 0.9f);
+                    ApplyColor(ct, wallColor * 0.9f);
+                }
+            }
         }
+        else
+        {
+            // Fallback: procedural walls
+            float wallH = 1.2f;
+            float wallW = 0.4f;
+            Color wallColor = new Color(0.50f, 0.48f, 0.45f);
+
+            CreateWallSegment(parent, new Vector3(0f, wallH / 2, wallSize),
+                new Vector3(wallSize * 2, wallH, wallW), wallColor, "WallNorth");
+            CreateWallSegment(parent, new Vector3(-5.5f, wallH / 2, -wallSize),
+                new Vector3(8f, wallH, wallW), wallColor, "WallSouthL");
+            CreateWallSegment(parent, new Vector3(5.5f, wallH / 2, -wallSize),
+                new Vector3(8f, wallH, wallW), wallColor, "WallSouthR");
+            CreateWallSegment(parent, new Vector3(-wallSize, wallH / 2, 0f),
+                new Vector3(wallW, wallH, wallSize * 2), wallColor, "WallWest");
+            CreateWallSegment(parent, new Vector3(wallSize, wallH / 2, 0f),
+                new Vector3(wallW, wallH, wallSize * 2), wallColor, "WallEast");
+
+            float[] cx = { -wallSize, wallSize, -wallSize, wallSize };
+            float[] cz = { -wallSize, -wallSize, wallSize, wallSize };
+            for (int i = 0; i < 4; i++)
+            {
+                var ct = CreateVisualPrimitive(PrimitiveType.Cylinder, "CornerTower");
+                ct.transform.SetParent(parent, false);
+                ct.transform.localPosition = new Vector3(cx[i], 1f, cz[i]);
+                ct.transform.localScale = new Vector3(0.9f, 1f, 0.9f);
+                ApplyColor(ct, wallColor * 0.9f);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Spawn a row of Kenney wall.fbx segments between two points.
+    /// </summary>
+    private void SpawnWallRow(Transform parent, Vector3 from, Vector3 to, float spacing, float yRot, string prefix)
+    {
+        Vector3 dir = (to - from);
+        float length = dir.magnitude;
+        if (length < 0.1f) return;
+        dir.Normalize();
+
+        int count = Mathf.Max(1, Mathf.RoundToInt(length / spacing));
+        float actualSpacing = length / count;
+
+        for (int i = 0; i <= count; i++)
+        {
+            Vector3 pos = from + dir * (i * actualSpacing);
+            var seg = LoadModel("Castle/wall", parent, $"{prefix}_{i}");
+            if (seg != null)
+            {
+                seg.transform.localPosition = pos;
+                seg.transform.localRotation = Quaternion.Euler(0f, yRot, 0f);
+                seg.transform.localScale = Vector3.one * 1.5f;
+            }
+        }
+
+        // Also add a physics collider spanning the full wall
+        var colliderGO = new GameObject($"{prefix}_Collider");
+        colliderGO.transform.SetParent(parent, false);
+        Vector3 center = (from + to) * 0.5f + Vector3.up * 0.6f;
+        colliderGO.transform.localPosition = center;
+        var box = colliderGO.AddComponent<BoxCollider>();
+        // Determine oriented size
+        float dx = Mathf.Abs(to.x - from.x);
+        float dz = Mathf.Abs(to.z - from.z);
+        box.size = new Vector3(
+            Mathf.Max(dx, 0.4f),
+            1.2f,
+            Mathf.Max(dz, 0.4f)
+        );
     }
 
     private void CreateWallSegment(Transform parent, Vector3 pos, Vector3 scale, Color color, string name)
@@ -733,7 +1039,7 @@ public class RoamingBootstrap : MonoBehaviour
     }
 
     // ---------------------------------------------------------------
-    //  ENVIRONMENT (Trees, decorations)
+    //  ENVIRONMENT — Kenney Nature Kit FBX models
     // ---------------------------------------------------------------
 
     private void SpawnEnvironment()
@@ -772,7 +1078,10 @@ public class RoamingBootstrap : MonoBehaviour
         foreach (var pos in interiorTrees)
             SpawnTree(envRoot.transform, pos, rng);
 
-        // Well (near center-right)
+        // Bushes, rocks, flowers, and grass scattered inside the castle
+        SpawnNatureDetails(envRoot.transform, rng);
+
+        // Well (near center-right) — use fountain model
         SpawnWell(envRoot.transform, new Vector3(2f, 0f, 3f));
 
         // Campfire / gathering area
@@ -785,29 +1094,125 @@ public class RoamingBootstrap : MonoBehaviour
         tree.transform.SetParent(parent, false);
         tree.transform.localPosition = position;
 
-        float trunkHeight = 0.8f + (float)(rng.NextDouble() * 0.4);
-        float canopySize = 0.7f + (float)(rng.NextDouble() * 0.4);
+        // Pick a random Kenney tree model
+        string[] treeModels = { "Nature/tree_default", "Nature/tree_oak", "Nature/tree_pineRoundA" };
+        string modelPath = treeModels[rng.Next(treeModels.Length)];
+        float scale = 0.8f + (float)(rng.NextDouble() * 0.4);
 
-        // Trunk (brown cylinder)
-        var trunk = CreateVisualPrimitive(PrimitiveType.Cylinder, "Trunk");
-        trunk.transform.SetParent(tree.transform, false);
-        trunk.transform.localPosition = new Vector3(0f, trunkHeight / 2f, 0f);
-        trunk.transform.localScale = new Vector3(0.15f, trunkHeight / 2f, 0.15f);
-        ApplyColor(trunk, new Color(0.40f, 0.28f, 0.15f));
+        var model = LoadModel(modelPath, tree.transform, "TreeModel");
+        if (model != null)
+        {
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localScale = Vector3.one * scale;
+            model.transform.localRotation = Quaternion.Euler(0f, rng.Next(360), 0f);
+        }
+        else
+        {
+            // Fallback procedural tree
+            float trunkHeight = 0.8f + (float)(rng.NextDouble() * 0.4);
+            float canopySize = 0.7f + (float)(rng.NextDouble() * 0.4);
 
-        // Canopy (green sphere)
-        var canopy = CreateVisualPrimitive(PrimitiveType.Sphere, "Canopy");
-        canopy.transform.SetParent(tree.transform, false);
-        canopy.transform.localPosition = new Vector3(0f, trunkHeight + canopySize * 0.4f, 0f);
-        canopy.transform.localScale = Vector3.one * canopySize;
-        float greenVar = 0.35f + (float)(rng.NextDouble() * 0.15);
-        ApplyColor(canopy, new Color(0.20f, greenVar, 0.12f));
+            var trunk = CreateVisualPrimitive(PrimitiveType.Cylinder, "Trunk");
+            trunk.transform.SetParent(tree.transform, false);
+            trunk.transform.localPosition = new Vector3(0f, trunkHeight / 2f, 0f);
+            trunk.transform.localScale = new Vector3(0.15f, trunkHeight / 2f, 0.15f);
+            ApplyColor(trunk, new Color(0.40f, 0.28f, 0.15f));
 
-        // Small collider on trunk so player walks around trees
+            var canopy = CreateVisualPrimitive(PrimitiveType.Sphere, "Canopy");
+            canopy.transform.SetParent(tree.transform, false);
+            canopy.transform.localPosition = new Vector3(0f, trunkHeight + canopySize * 0.4f, 0f);
+            canopy.transform.localScale = Vector3.one * canopySize;
+            float greenVar = 0.35f + (float)(rng.NextDouble() * 0.15);
+            ApplyColor(canopy, new Color(0.20f, greenVar, 0.12f));
+        }
+
+        // Collider on trunk so player walks around trees
         var col = tree.AddComponent<CapsuleCollider>();
         col.radius = 0.3f;
-        col.height = trunkHeight + canopySize;
-        col.center = new Vector3(0f, (trunkHeight + canopySize) / 2f, 0f);
+        col.height = 1.5f;
+        col.center = new Vector3(0f, 0.75f, 0f);
+    }
+
+    /// <summary>
+    /// Scatter Kenney bushes, rocks, flowers, and grass patches inside castle grounds.
+    /// </summary>
+    private void SpawnNatureDetails(Transform parent, System.Random rng)
+    {
+        // Bushes
+        Vector3[] bushPositions = {
+            new(-4f, 0f, 0f), new(4f, 0f, 1f), new(-1f, 0f, 5f),
+            new(6f, 0f, -5f), new(-6f, 0f, 5f), new(3f, 0f, -4f),
+            new(-3f, 0f, 6f), new(5f, 0f, 6f),
+        };
+        string[] bushModels = { "Nature/plant_bush", "Nature/plant_bushLarge" };
+        foreach (var pos in bushPositions)
+        {
+            string model = bushModels[rng.Next(bushModels.Length)];
+            var bush = LoadModel(model, parent, "Bush");
+            if (bush != null)
+            {
+                bush.transform.localPosition = pos;
+                float s = 0.8f + (float)(rng.NextDouble() * 0.4);
+                bush.transform.localScale = Vector3.one * s;
+                bush.transform.localRotation = Quaternion.Euler(0f, rng.Next(360), 0f);
+            }
+        }
+
+        // Rocks
+        Vector3[] rockPositions = {
+            new(-7f, 0f, 3f), new(7f, 0f, -3f), new(-3f, 0f, 8f),
+            new(5f, 0f, -7f), new(-8f, 0f, -5f),
+        };
+        foreach (var pos in rockPositions)
+        {
+            string model = rng.Next(2) == 0 ? "Nature/rock_smallA" : "Nature/rock_largeA";
+            var rock = LoadModel(model, parent, "Rock");
+            if (rock != null)
+            {
+                rock.transform.localPosition = pos;
+                float s = 0.6f + (float)(rng.NextDouble() * 0.6);
+                rock.transform.localScale = Vector3.one * s;
+                rock.transform.localRotation = Quaternion.Euler(0f, rng.Next(360), 0f);
+            }
+        }
+
+        // Flowers
+        Vector3[] flowerPositions = {
+            new(-2f, 0f, 1f), new(1f, 0f, -2f), new(-5f, 0f, -4f),
+            new(3f, 0f, 2f), new(-1f, 0f, 6f), new(5f, 0f, 4f),
+            new(-4f, 0f, -6f), new(2f, 0f, 7f),
+        };
+        string[] flowerModels = { "Nature/flower_redA", "Nature/flower_yellowA" };
+        foreach (var pos in flowerPositions)
+        {
+            string model = flowerModels[rng.Next(flowerModels.Length)];
+            var flower = LoadModel(model, parent, "Flower");
+            if (flower != null)
+            {
+                flower.transform.localPosition = pos;
+                flower.transform.localScale = Vector3.one * 0.8f;
+                flower.transform.localRotation = Quaternion.Euler(0f, rng.Next(360), 0f);
+            }
+        }
+
+        // Grass patches
+        Vector3[] grassPositions = {
+            new(-1f, 0f, 0f), new(2f, 0f, -1f), new(-3f, 0f, 2f),
+            new(4f, 0f, 3f), new(0f, 0f, 4f), new(-2f, 0f, -5f),
+            new(6f, 0f, 0f), new(-5f, 0f, 1f),
+        };
+        string[] grassModels = { "Nature/grass", "Nature/grass_large" };
+        foreach (var pos in grassPositions)
+        {
+            string model = grassModels[rng.Next(grassModels.Length)];
+            var grass = LoadModel(model, parent, "Grass");
+            if (grass != null)
+            {
+                grass.transform.localPosition = pos;
+                grass.transform.localScale = Vector3.one * 0.8f;
+                grass.transform.localRotation = Quaternion.Euler(0f, rng.Next(360), 0f);
+            }
+        }
     }
 
     private void SpawnWell(Transform parent, Vector3 position)
@@ -816,19 +1221,28 @@ public class RoamingBootstrap : MonoBehaviour
         well.transform.SetParent(parent, false);
         well.transform.localPosition = position;
 
-        // Base ring (short cylinder)
-        var ring = CreateVisualPrimitive(PrimitiveType.Cylinder, "WellRing");
-        ring.transform.SetParent(well.transform, false);
-        ring.transform.localPosition = new Vector3(0f, 0.2f, 0f);
-        ring.transform.localScale = new Vector3(0.6f, 0.2f, 0.6f);
-        ApplyColor(ring, new Color(0.50f, 0.48f, 0.45f));
+        // Try Kenney fountain model as a well
+        var fountain = LoadModel("Town/fountain-center", well.transform, "Fountain");
+        if (fountain != null)
+        {
+            fountain.transform.localPosition = Vector3.zero;
+            fountain.transform.localScale = Vector3.one * 1.0f;
+        }
+        else
+        {
+            // Fallback
+            var ring = CreateVisualPrimitive(PrimitiveType.Cylinder, "WellRing");
+            ring.transform.SetParent(well.transform, false);
+            ring.transform.localPosition = new Vector3(0f, 0.2f, 0f);
+            ring.transform.localScale = new Vector3(0.6f, 0.2f, 0.6f);
+            ApplyColor(ring, new Color(0.50f, 0.48f, 0.45f));
 
-        // Water (blue disk inside)
-        var water = CreateVisualPrimitive(PrimitiveType.Cylinder, "WellWater");
-        water.transform.SetParent(well.transform, false);
-        water.transform.localPosition = new Vector3(0f, 0.15f, 0f);
-        water.transform.localScale = new Vector3(0.5f, 0.02f, 0.5f);
-        ApplyColor(water, new Color(0.20f, 0.40f, 0.70f));
+            var water = CreateVisualPrimitive(PrimitiveType.Cylinder, "WellWater");
+            water.transform.SetParent(well.transform, false);
+            water.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+            water.transform.localScale = new Vector3(0.5f, 0.02f, 0.5f);
+            ApplyColor(water, new Color(0.20f, 0.40f, 0.70f));
+        }
     }
 
     private void SpawnCampfire(Transform parent, Vector3 position)
