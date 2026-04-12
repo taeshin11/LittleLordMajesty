@@ -83,7 +83,7 @@ public class DialogueBoxUI : MonoBehaviour
 
     private void BuildLayout()
     {
-        // Overlay canvas at a very high sorting order so we're always on top.
+        // Overlay canvas
         var canvasGO = new GameObject("DialogueBoxCanvas");
         canvasGO.transform.SetParent(transform, false);
         var canvas = canvasGO.AddComponent<Canvas>();
@@ -91,109 +91,139 @@ public class DialogueBoxUI : MonoBehaviour
         canvas.sortingOrder = 5000;
         var scaler = canvasGO.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1080, 1920);
-        scaler.matchWidthOrHeight  = 0.5f;
+        scaler.referenceResolution = new Vector2(960, 600);
+        scaler.matchWidthOrHeight  = 1f; // match height for landscape WebGL
         canvasGO.AddComponent<GraphicRaycaster>();
 
-        // Box anchored to bottom-center, 90% width, 320 px tall.
+        // Box: stretch to bottom, 5% margin each side, 40% screen height
         _root = new GameObject("Box");
         _root.transform.SetParent(canvasGO.transform, false);
         var boxImg = _root.AddComponent<Image>();
-        boxImg.color = new Color(1.00f, 0.96f, 0.88f, 0.98f); // Pastel cream
+        boxImg.color = new Color(0.12f, 0.10f, 0.08f, 0.92f); // Dark parchment
         var boxRT = _root.GetComponent<RectTransform>();
-        boxRT.anchorMin = new Vector2(0.5f, 0f);
-        boxRT.anchorMax = new Vector2(0.5f, 0f);
-        boxRT.pivot     = new Vector2(0.5f, 0f);
-        boxRT.anchoredPosition = new Vector2(0f, 24f);
-        boxRT.sizeDelta = new Vector2(980f, 320f);
+        boxRT.anchorMin = new Vector2(0.03f, 0f);
+        boxRT.anchorMax = new Vector2(0.97f, 0.40f);
+        boxRT.offsetMin = new Vector2(0f, 8f);
+        boxRT.offsetMax = new Vector2(0f, 0f);
         var outline = _root.AddComponent<Outline>();
-        outline.effectColor = new Color(0.8f, 0.65f, 0.2f);
+        outline.effectColor = new Color(0.6f, 0.5f, 0.2f);
         outline.effectDistance = new Vector2(2f, -2f);
 
-        // Portrait frame (left).
+        // Portrait: anchored to left, square, with padding
         var portraitGO = new GameObject("Portrait");
         portraitGO.transform.SetParent(_root.transform, false);
         _portrait = portraitGO.AddComponent<Image>();
-        _portrait.color = new Color(0.88f, 0.82f, 0.98f); // Lavender placeholder
-        PinCenter(_portrait.rectTransform, new Vector2(-380f, 0f), new Vector2(220f, 280f));
+        _portrait.color = new Color(0.88f, 0.82f, 0.98f);
+        _portrait.preserveAspect = true;
+        var pRT = _portrait.rectTransform;
+        pRT.anchorMin = new Vector2(0f, 0f);
+        pRT.anchorMax = new Vector2(0f, 1f);
+        pRT.pivot = new Vector2(0f, 0.5f);
+        pRT.anchoredPosition = new Vector2(8f, 0f);
+        pRT.sizeDelta = new Vector2(140f, -16f); // width fixed, height stretches with padding
 
-        // Name label (top-right of portrait).
+        // Right content area starts after portrait (x=156)
+        float contentLeft = 156f;
+
+        // Close button (top-right)
+        _closeBtn = CreateBtn(_root.transform, "CloseButton",
+            LocalizationManager.Instance?.Get("btn_close") ?? "X",
+            new Color(0.6f, 0.2f, 0.2f));
+        var closeRT = _closeBtn.GetComponent<RectTransform>();
+        closeRT.anchorMin = new Vector2(1f, 1f);
+        closeRT.anchorMax = new Vector2(1f, 1f);
+        closeRT.pivot = new Vector2(1f, 1f);
+        closeRT.anchoredPosition = new Vector2(-8f, -8f);
+        closeRT.sizeDelta = new Vector2(50f, 30f);
+        _closeBtn.onClick.AddListener(Hide);
+
+        // Name label (top of content area)
         _nameLabel = CreateTMP(_root.transform, "NameLabel", "NPC Name",
-            36, TextAlignmentOptions.Left, new Color(0.25f, 0.15f, 0.08f), bold: true);
-        PinCenter(_nameLabel.rectTransform, new Vector2(50f, 115f), new Vector2(600f, 50f));
+            20, TextAlignmentOptions.Left, new Color(0.95f, 0.85f, 0.5f), bold: true);
+        var nameRT = _nameLabel.rectTransform;
+        nameRT.anchorMin = new Vector2(0f, 1f);
+        nameRT.anchorMax = new Vector2(1f, 1f);
+        nameRT.pivot = new Vector2(0f, 1f);
+        nameRT.anchoredPosition = new Vector2(contentLeft, -8f);
+        nameRT.sizeDelta = new Vector2(-contentLeft - 70f, 28f);
 
-        // Message text (large, word-wrapped, typewriter).
+        // Message text (below name, fills available space)
         _messageLabel = CreateTMP(_root.transform, "MessageLabel", "",
-            26, TextAlignmentOptions.TopLeft, new Color(0.40f, 0.28f, 0.18f));
+            16, TextAlignmentOptions.TopLeft, new Color(0.85f, 0.80f, 0.70f));
         _messageLabel.overflowMode = TextOverflowModes.Ellipsis;
-        PinCenter(_messageLabel.rectTransform, new Vector2(50f, 30f), new Vector2(700f, 130f));
+        var msgRT = _messageLabel.rectTransform;
+        msgRT.anchorMin = new Vector2(0f, 0.45f);
+        msgRT.anchorMax = new Vector2(1f, 1f);
+        msgRT.offsetMin = new Vector2(contentLeft, 0f);
+        msgRT.offsetMax = new Vector2(-12f, -38f);
 
-        // Quick command row (4 buttons).
+        // Quick command row (bottom-middle area)
         var rowGO = new GameObject("QuickCommands");
         rowGO.transform.SetParent(_root.transform, false);
         var rowRT = rowGO.AddComponent<RectTransform>();
-        rowRT.anchorMin = rowRT.anchorMax = new Vector2(0.5f, 0.5f);
-        rowRT.pivot     = new Vector2(0.5f, 0.5f);
-        rowRT.anchoredPosition = new Vector2(50f, -70f);
-        rowRT.sizeDelta = new Vector2(720f, 60f);
+        rowRT.anchorMin = new Vector2(0f, 0.2f);
+        rowRT.anchorMax = new Vector2(1f, 0.45f);
+        rowRT.offsetMin = new Vector2(contentLeft, 2f);
+        rowRT.offsetMax = new Vector2(-12f, -2f);
         var hlg = rowGO.AddComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 8;
+        hlg.spacing = 6;
         hlg.childForceExpandWidth = true;
         hlg.childForceExpandHeight = true;
         _quickCmdRow = rowGO.transform;
 
-        // Input field (bottom, next to Send).
+        // Input field + Send button row (bottom)
         var inputBgGO = new GameObject("InputBg");
         inputBgGO.transform.SetParent(_root.transform, false);
         var inputBg = inputBgGO.AddComponent<Image>();
-        inputBg.color = new Color(0.94f, 0.88f, 0.78f); // Pale cream field
-        PinCenter(inputBg.rectTransform, new Vector2(0f, -130f), new Vector2(620f, 58f));
+        inputBg.color = new Color(0.25f, 0.22f, 0.18f);
+        var inRT = inputBg.rectTransform;
+        inRT.anchorMin = new Vector2(0f, 0f);
+        inRT.anchorMax = new Vector2(0.82f, 0.2f);
+        inRT.offsetMin = new Vector2(contentLeft, 4f);
+        inRT.offsetMax = new Vector2(-4f, -2f);
 
         _input = inputBgGO.AddComponent<TMP_InputField>();
-        // InputField needs child "Text Area" + "Text" children. Simplest:
-        // create the Text and PlaceholderText children, leave Text Area null
-        // (TMP_InputField supports a flat layout at the cost of clipping,
-        // which is fine for a single-line input).
         var inputTxtGO = new GameObject("Text");
         inputTxtGO.transform.SetParent(inputBgGO.transform, false);
         var inputTMP = inputTxtGO.AddComponent<TextMeshProUGUI>();
-        inputTMP.color = new Color(0.25f, 0.15f, 0.08f);
-        inputTMP.fontSize = 24;
+        inputTMP.color = new Color(0.9f, 0.85f, 0.75f);
+        inputTMP.fontSize = 14;
         inputTMP.richText = false;
         inputTMP.enableWordWrapping = false;
-        var inputTxtRT = inputTxtGO.GetComponent<RectTransform>();
-        inputTxtRT.anchorMin = new Vector2(0, 0); inputTxtRT.anchorMax = new Vector2(1, 1);
-        inputTxtRT.offsetMin = new Vector2(16, 6); inputTxtRT.offsetMax = new Vector2(-16, -6);
+        Stretch(inputTxtGO, 10f, 4f, -10f, -4f);
 
         var phTxtGO = new GameObject("Placeholder");
         phTxtGO.transform.SetParent(inputBgGO.transform, false);
         var phTMP = phTxtGO.AddComponent<TextMeshProUGUI>();
         phTMP.text = LocalizationManager.Instance?.Get("cmd_input_placeholder") ?? "Issue a command...";
-        phTMP.color = new Color(0.55f, 0.45f, 0.35f, 0.7f);
-        phTMP.fontSize = 24;
+        phTMP.color = new Color(0.55f, 0.50f, 0.40f, 0.7f);
+        phTMP.fontSize = 14;
         phTMP.richText = false;
         phTMP.enableWordWrapping = false;
-        var phRT = phTxtGO.GetComponent<RectTransform>();
-        phRT.anchorMin = new Vector2(0, 0); phRT.anchorMax = new Vector2(1, 1);
-        phRT.offsetMin = new Vector2(16, 6); phRT.offsetMax = new Vector2(-16, -6);
+        Stretch(phTxtGO, 10f, 4f, -10f, -4f);
 
         _input.textComponent = inputTMP;
         _input.placeholder   = phTMP;
         _input.onSubmit.AddListener(_ => OnSendClicked());
 
-        // Send button.
+        // Send button
         _sendBtn = CreateBtn(_root.transform, "SendButton",
             LocalizationManager.Instance?.Get("btn_send") ?? "Send",
-            new Color(0.72f, 0.92f, 0.78f));
-        PinCenter(_sendBtn.GetComponent<RectTransform>(), new Vector2(410f, -130f), new Vector2(140f, 58f));
+            new Color(0.25f, 0.50f, 0.30f));
+        var sendRT = _sendBtn.GetComponent<RectTransform>();
+        sendRT.anchorMin = new Vector2(0.82f, 0f);
+        sendRT.anchorMax = new Vector2(1f, 0.2f);
+        sendRT.offsetMin = new Vector2(2f, 4f);
+        sendRT.offsetMax = new Vector2(-8f, -2f);
         _sendBtn.onClick.AddListener(OnSendClicked);
+    }
 
-        // Close button (top-right).
-        _closeBtn = CreateBtn(_root.transform, "CloseButton",
-            LocalizationManager.Instance?.Get("btn_close") ?? "Close",
-            new Color(0.98f, 0.75f, 0.75f));
-        PinCenter(_closeBtn.GetComponent<RectTransform>(), new Vector2(430f, 115f), new Vector2(100f, 50f));
-        _closeBtn.onClick.AddListener(Hide);
+    private static void Stretch(GameObject go, float left, float bottom, float right, float top)
+    {
+        var rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+        rt.offsetMin = new Vector2(left, bottom);
+        rt.offsetMax = new Vector2(right, top);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -226,25 +256,27 @@ public class DialogueBoxUI : MonoBehaviour
         return tmp;
     }
 
-    private static Button CreateBtn(Transform parent, string name, string label, Color bg)
+    private static Button CreateBtn(Transform parent, string name, string label, Color bg, float fontSize = 13f)
     {
         var go = new GameObject(name);
         go.transform.SetParent(parent, false);
         var img = go.AddComponent<Image>();
         img.color = bg;
         var btn = go.AddComponent<Button>();
-        var outline = go.AddComponent<Outline>();
-        outline.effectColor = new Color(0.45f, 0.28f, 0.18f);
-        outline.effectDistance = new Vector2(2f, -2f);
+        // Modern look: no outline, subtle color shift on hover
+        var colors = btn.colors;
+        colors.highlightedColor = new Color(bg.r + 0.1f, bg.g + 0.1f, bg.b + 0.1f);
+        colors.pressedColor = new Color(bg.r - 0.1f, bg.g - 0.1f, bg.b - 0.1f);
+        btn.colors = colors;
         PinCenter(go.GetComponent<RectTransform>(), Vector2.zero, new Vector2(100f, 40f));
 
         var txtGO = new GameObject("Label");
         txtGO.transform.SetParent(go.transform, false);
         var tmp = txtGO.AddComponent<TextMeshProUGUI>();
         tmp.text = label;
-        tmp.fontSize = 22;
+        tmp.fontSize = fontSize;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = new Color(0.25f, 0.15f, 0.08f);
+        tmp.color = Color.white;
         tmp.richText = false;
         tmp.enableWordWrapping = false;
         var txtRT = tmp.rectTransform;
