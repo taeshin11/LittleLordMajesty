@@ -138,40 +138,24 @@ public class RoamingBootstrap : MonoBehaviour
         ground.transform.position = new Vector3(0f, 0f, 1f);
         var sr = ground.AddComponent<SpriteRenderer>();
 
-        // Try SDXL background first, then Anokolisa tileset, then solid color
-        var bg = Resources.Load<Sprite>("Art/Generated/bg_castle_courtyard");
-        if (bg != null)
+        // Use Anokolisa tiled grass ground (pixel art, matches game sprites)
+        var grassTex = Resources.Load<Texture2D>("Art/PixelCrawler/Tilesets/Ground_Grass");
+        if (grassTex != null)
         {
-            sr.sprite = bg;
-            float pixelsPerUnit = bg.pixelsPerUnit;
-            float spriteWorldW = bg.rect.width / pixelsPerUnit;
-            float spriteWorldH = bg.rect.height / pixelsPerUnit;
+            var grassSprite = Sprite.Create(grassTex,
+                new Rect(0, 0, grassTex.width, grassTex.height),
+                new Vector2(0.5f, 0.5f), 16f);
+            sr.sprite = grassSprite;
+            // 192px at 16 PPU = 12 world units. Scale to cover courtyard (~22 units).
+            float spriteW = grassTex.width / 16f;
             float targetSize = 22f;
-            ground.transform.localScale = new Vector3(
-                targetSize / spriteWorldW, targetSize / spriteWorldH, 1f);
+            float scale = targetSize / spriteW;
+            ground.transform.localScale = new Vector3(scale, scale, 1f);
         }
         else
         {
-            // Use Anokolisa floor tileset as ground texture
-            var floorTex = Resources.Load<Texture2D>("Art/PixelCrawler/Tilesets/Floors_Tiles");
-            if (floorTex != null)
-            {
-                // Create a sprite from the tileset (use the whole texture as ground)
-                var floorSprite = Sprite.Create(floorTex,
-                    new Rect(0, 0, floorTex.width, floorTex.height),
-                    new Vector2(0.5f, 0.5f), 16f);
-                sr.sprite = floorSprite;
-                // Scale to cover world area
-                float spriteW = floorTex.width / 16f;
-                float spriteH = floorTex.height / 16f;
-                float targetSize = 22f;
-                ground.transform.localScale = new Vector3(
-                    targetSize / spriteW, targetSize / spriteH, 1f);
-            }
-            else
-            {
-                sr.color = new Color(0.75f, 0.85f, 0.65f);
-            }
+            // Fallback: solid pastel green
+            sr.color = new Color(0.35f, 0.65f, 0.2f);
         }
         sr.sortingOrder = -100;
     }
