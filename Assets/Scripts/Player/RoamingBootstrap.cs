@@ -375,12 +375,13 @@ public class RoamingBootstrap : MonoBehaviour
         houseParent.transform.SetParent(parent, false);
         houseParent.transform.position = Vector3.zero;
 
-        int roofL = grayStyle ? 88 : 52;
-        int roofC = grayStyle ? 89 : 53;
-        int roofR = grayStyle ? 90 : 54;
-        int wallL = grayStyle ? 76 : 72;
-        int wallC = grayStyle ? 77 : 73; // door
-        int wallR = grayStyle ? 78 : 74;
+        // Gray house uses castle wall tiles (from Kenney sample)
+        int roofL = grayStyle ? 48 : 52;
+        int roofC = grayStyle ? 49 : 53;
+        int roofR = grayStyle ? 50 : 54;
+        int wallL = grayStyle ? 61 : 72;
+        int wallC = grayStyle ? 62 : 73; // door/arch
+        int wallR = grayStyle ? 63 : 74;
 
         // Dirt foundation under the house (like official Kenney sample)
         PlaceTile(25, gridX, gridY, houseParent.transform, -999, $"{tag}_DirtT1");
@@ -421,29 +422,11 @@ public class RoamingBootstrap : MonoBehaviour
 
     private void BuildGate(Transform parent)
     {
-        // Simplified gate: 2 stone wall pillars (tile 49) with a gap between for entrance
-        // Left pillar at x=9, right pillar at x=10 — gap at x=10 (NS path)
-        // Actually: pillar at x=8, y=3-4 and pillar at x=11, y=3-4, gap at x=9-10
+        // Simple gate: just a tree on each side of the path opening
+        // Trees at x=9 and x=11, path at x=10
+        PlaceTreeWithCollider(5, 9, 2, parent, "GateTreeL");
+        PlaceTreeWithCollider(5, 11, 2, parent, "GateTreeR");
 
-        // Left pillar (2 tall)
-        var leftPillar = new GameObject("GatePillarL");
-        leftPillar.transform.SetParent(parent, false);
-        PlaceSortedTile(49, 8, 4, leftPillar.transform, 5, "Gate_LT");
-        PlaceSortedTile(62, 8, 3, leftPillar.transform, 5, "Gate_LB");
-        var colL = leftPillar.AddComponent<BoxCollider2D>();
-        colL.size = new Vector2(1f, 2f);
-        colL.offset = new Vector2(8f, 3.5f);
-
-        // Right pillar (2 tall)
-        var rightPillar = new GameObject("GatePillarR");
-        rightPillar.transform.SetParent(parent, false);
-        PlaceSortedTile(49, 11, 4, rightPillar.transform, 5, "Gate_RT");
-        PlaceSortedTile(62, 11, 3, rightPillar.transform, 5, "Gate_RB");
-        var colR = rightPillar.AddComponent<BoxCollider2D>();
-        colR.size = new Vector2(1f, 2f);
-        colR.offset = new Vector2(11f, 3.5f);
-
-        // Gap at x=9-10 is open — player can walk through
     }
 
     // ---------- PROPS ----------
