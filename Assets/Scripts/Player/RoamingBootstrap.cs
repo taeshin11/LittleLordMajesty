@@ -285,7 +285,7 @@ public class RoamingBootstrap : MonoBehaviour
         {
             for (int x = 0; x < GridW; x++)
             {
-                PlaceTile(0, x, y, parent, -1000, $"Grass_{x}_{y}");
+                PlaceTile(0, x, y, parent, -99999, $"Grass_{x}_{y}");
             }
         }
     }
@@ -297,17 +297,17 @@ public class RoamingBootstrap : MonoBehaviour
     {
         // Main north-south spine: x=10, from y=1 up to y=11 (south gate to castle)
         for (int y = 1; y <= 11; y++)
-            PlaceTile(40, 10, y, parent, -999, $"PathNS_{y}");
+            PlaceTile(40, 10, y, parent, -99998, $"PathNS_{y}");
 
         // East-west path at y=8 connecting houses to center
         for (int x = 4; x <= 16; x++)
         {
             if (x == 10) continue; // already placed by NS path
-            PlaceTile(40, x, 8, parent, -999, $"PathEW_{x}");
+            PlaceTile(40, x, 8, parent, -99998, $"PathEW_{x}");
         }
 
         // Path south exit: x=10, y=0
-        PlaceTile(40, 10, 0, parent, -999, "PathOut");
+        PlaceTile(40, 10, 0, parent, -99998, "PathOut");
     }
 
     // ---------- CASTLE ----------
@@ -375,21 +375,21 @@ public class RoamingBootstrap : MonoBehaviour
         houseParent.transform.SetParent(parent, false);
         houseParent.transform.position = Vector3.zero;
 
-        // Gray house uses castle wall tiles (from Kenney sample)
-        int roofL = grayStyle ? 48 : 52;
-        int roofC = grayStyle ? 49 : 53;
-        int roofR = grayStyle ? 50 : 54;
-        int wallL = grayStyle ? 61 : 72;
-        int wallC = grayStyle ? 62 : 73; // door/arch
-        int wallR = grayStyle ? 63 : 74;
+        // All houses use red roof + wood walls (only combo that looks like a house)
+        int roofL = 52;
+        int roofC = 53;
+        int roofR = 54;
+        int wallL = 72;
+        int wallC = 73; // door
+        int wallR = 74;
 
         // Dirt foundation under the house (like official Kenney sample)
-        PlaceTile(25, gridX, gridY, houseParent.transform, -999, $"{tag}_DirtT1");
-        PlaceTile(25, gridX + 1, gridY, houseParent.transform, -999, $"{tag}_DirtT2");
-        PlaceTile(25, gridX + 2, gridY, houseParent.transform, -999, $"{tag}_DirtT3");
-        PlaceTile(37, gridX, gridY - 1, houseParent.transform, -999, $"{tag}_DirtB1");
-        PlaceTile(37, gridX + 1, gridY - 1, houseParent.transform, -999, $"{tag}_DirtB2");
-        PlaceTile(37, gridX + 2, gridY - 1, houseParent.transform, -999, $"{tag}_DirtB3");
+        PlaceTile(25, gridX, gridY, houseParent.transform, -99998, $"{tag}_DirtT1");
+        PlaceTile(25, gridX + 1, gridY, houseParent.transform, -99998, $"{tag}_DirtT2");
+        PlaceTile(25, gridX + 2, gridY, houseParent.transform, -99998, $"{tag}_DirtT3");
+        PlaceTile(37, gridX, gridY - 1, houseParent.transform, -99998, $"{tag}_DirtB1");
+        PlaceTile(37, gridX + 1, gridY - 1, houseParent.transform, -99998, $"{tag}_DirtB2");
+        PlaceTile(37, gridX + 2, gridY - 1, houseParent.transform, -99998, $"{tag}_DirtB3");
 
         // Roof row on top, wall row below
         PlaceSortedTile(roofL, gridX, gridY, houseParent.transform, 10, $"{tag}_RoofL");
