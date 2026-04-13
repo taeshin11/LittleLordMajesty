@@ -382,6 +382,14 @@ public class RoamingBootstrap : MonoBehaviour
         int wallC = grayStyle ? 77 : 73; // door
         int wallR = grayStyle ? 78 : 74;
 
+        // Dirt foundation under the house (like official Kenney sample)
+        PlaceTile(25, gridX, gridY, houseParent.transform, -999, $"{tag}_DirtT1");
+        PlaceTile(25, gridX + 1, gridY, houseParent.transform, -999, $"{tag}_DirtT2");
+        PlaceTile(25, gridX + 2, gridY, houseParent.transform, -999, $"{tag}_DirtT3");
+        PlaceTile(37, gridX, gridY - 1, houseParent.transform, -999, $"{tag}_DirtB1");
+        PlaceTile(37, gridX + 1, gridY - 1, houseParent.transform, -999, $"{tag}_DirtB2");
+        PlaceTile(37, gridX + 2, gridY - 1, houseParent.transform, -999, $"{tag}_DirtB3");
+
         // Roof row on top, wall row below
         PlaceSortedTile(roofL, gridX, gridY, houseParent.transform, 10, $"{tag}_RoofL");
         PlaceSortedTile(roofC, gridX + 1, gridY, houseParent.transform, 10, $"{tag}_RoofC");
@@ -442,19 +450,9 @@ public class RoamingBootstrap : MonoBehaviour
 
     private void BuildProps(Transform parent)
     {
-        // Well — center of courtyard area
-        PlaceSortedTile(107, 10, 5, parent, 5, "Well");
-
-        // Sign post — at path crossing
-        PlaceSortedTile(82, 11, 8, parent, 5, "SignPost");
-
-        // A few mushrooms (tile 29)
-        PlaceSortedTile(29, 2, 5, parent, 0, "Mushroom1");
-        PlaceSortedTile(29, 17, 10, parent, 0, "Mushroom2");
-
-        // A few plants (tile 30)
-        PlaceTile(30, 7, 6, parent, -998, "Plant1");
-        PlaceTile(30, 12, 6, parent, -998, "Plant2");
+        // Minimal props — only verified tiles that look good at game scale
+        PlaceSortedTile(45, 5, 7, parent, 5, "Crate1"); // crate near house1
+        PlaceSortedTile(45, 17, 7, parent, 5, "Crate2"); // crate near house2
     }
 
     // ---------- ENVIRONMENT — trees & nature ----------
