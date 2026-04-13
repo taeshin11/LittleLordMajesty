@@ -121,7 +121,7 @@ public class PlayerController : MonoBehaviour
 
         // Update sorting order based on Y position (lower Y = in front = higher order)
         if (_spriteRenderer != null)
-            _spriteRenderer.sortingOrder = 10000 - Mathf.RoundToInt(transform.position.y * 10f);
+            _spriteRenderer.sortingOrder = 500 - Mathf.RoundToInt(transform.position.y);
     }
 
     private void FixedUpdate()

@@ -200,9 +200,10 @@ public class RoamingBootstrap : MonoBehaviour
     private static GameObject PlaceSortedSprite(string resourcePath, Vector3 position,
         Transform parent, string name = null, int sortingOffset = 0)
     {
-        // Positive base (10000) so everything is above ground (-99999)
+        // Buildings/objects: sortOrder 100..200 range (above ground=0, paths=1)
+        // Lower Y = closer to camera = higher sortOrder
         var go = PlaceSprite(resourcePath, position, parent, name,
-            10000 - Mathf.RoundToInt(position.y * 10f) + sortingOffset);
+            200 - Mathf.RoundToInt(position.y) + sortingOffset);
         return go;
     }
 
@@ -286,7 +287,7 @@ public class RoamingBootstrap : MonoBehaviour
         {
             for (int x = 0; x < GridW; x++)
             {
-                PlaceTile(0, x, y, parent, -99999, $"Grass_{x}_{y}");
+                PlaceTile(0, x, y, parent, 0, $"Grass_{x}_{y}");
             }
         }
     }
@@ -298,17 +299,17 @@ public class RoamingBootstrap : MonoBehaviour
     {
         // Main north-south spine: x=10, from y=1 up to y=11 (south gate to castle)
         for (int y = 1; y <= 11; y++)
-            PlaceTile(40, 10, y, parent, -99998, $"PathNS_{y}");
+            PlaceTile(40, 10, y, parent, 1, $"PathNS_{y}");
 
         // East-west path at y=8 connecting houses to center
         for (int x = 4; x <= 16; x++)
         {
             if (x == 10) continue; // already placed by NS path
-            PlaceTile(40, x, 8, parent, -99998, $"PathEW_{x}");
+            PlaceTile(40, x, 8, parent, 1, $"PathEW_{x}");
         }
 
         // Path south exit: x=10, y=0
-        PlaceTile(40, 10, 0, parent, -99998, "PathOut");
+        PlaceTile(40, 10, 0, parent, 1, "PathOut");
     }
 
     // ---------- CASTLE ----------
