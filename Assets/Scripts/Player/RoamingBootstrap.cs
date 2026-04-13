@@ -443,7 +443,7 @@ public class RoamingBootstrap : MonoBehaviour
     private void BuildProps(Transform parent)
     {
         // Well — center of courtyard area
-        PlaceSortedTile(116, 10, 5, parent, 5, "Well");
+        PlaceSortedTile(107, 10, 5, parent, 5, "Well");
 
         // Sign post — at path crossing
         PlaceSortedTile(82, 11, 8, parent, 5, "SignPost");
