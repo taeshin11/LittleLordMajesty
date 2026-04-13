@@ -200,8 +200,9 @@ public class RoamingBootstrap : MonoBehaviour
     private static GameObject PlaceSortedSprite(string resourcePath, Vector3 position,
         Transform parent, string name = null, int sortingOffset = 0)
     {
+        // Positive base (10000) so everything is above ground (-99999)
         var go = PlaceSprite(resourcePath, position, parent, name,
-            Mathf.RoundToInt(-position.y * 100f) + sortingOffset);
+            10000 - Mathf.RoundToInt(position.y * 10f) + sortingOffset);
         return go;
     }
 
@@ -383,15 +384,7 @@ public class RoamingBootstrap : MonoBehaviour
         int wallC = 73; // door
         int wallR = 74;
 
-        // Dirt foundation under the house (like official Kenney sample)
-        PlaceTile(25, gridX, gridY, houseParent.transform, -99998, $"{tag}_DirtT1");
-        PlaceTile(25, gridX + 1, gridY, houseParent.transform, -99998, $"{tag}_DirtT2");
-        PlaceTile(25, gridX + 2, gridY, houseParent.transform, -99998, $"{tag}_DirtT3");
-        PlaceTile(37, gridX, gridY - 1, houseParent.transform, -99998, $"{tag}_DirtB1");
-        PlaceTile(37, gridX + 1, gridY - 1, houseParent.transform, -99998, $"{tag}_DirtB2");
-        PlaceTile(37, gridX + 2, gridY - 1, houseParent.transform, -99998, $"{tag}_DirtB3");
-
-        // Roof row on top, wall row below
+        // Roof row on top, wall row below (no dirt foundation — it hides the walls)
         PlaceSortedTile(roofL, gridX, gridY, houseParent.transform, 10, $"{tag}_RoofL");
         PlaceSortedTile(roofC, gridX + 1, gridY, houseParent.transform, 10, $"{tag}_RoofC");
         PlaceSortedTile(roofR, gridX + 2, gridY, houseParent.transform, 10, $"{tag}_RoofR");

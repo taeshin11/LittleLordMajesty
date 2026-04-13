@@ -80,7 +80,7 @@ public class NPCBillboard : MonoBehaviour
         if (_spriteRenderer == null) return;
 
         // Update sorting order based on Y position (lower Y = in front)
-        _spriteRenderer.sortingOrder = Mathf.RoundToInt(-transform.position.y * 100f);
+        _spriteRenderer.sortingOrder = 10000 - Mathf.RoundToInt(transform.position.y * 10f);
 
         // Flip sprite based on horizontal movement direction
         if (_isMoving && Mathf.Abs(delta.x) > 0.001f)
