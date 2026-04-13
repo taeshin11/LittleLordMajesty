@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
     [Header("Animation")]
     [SerializeField] private float _runFPS = 10f;
 
+    private Rigidbody2D _rb;
     private SpriteRenderer _spriteRenderer;
     private Sprite[] _runFrames;
     private Sprite _idleSprite;
@@ -30,6 +31,23 @@ public class PlayerController : MonoBehaviour
         _runFrames = runFrames;
         if (_spriteRenderer != null && _idleSprite != null)
             _spriteRenderer.sprite = _idleSprite;
+
+        // Add 2D physics for collision
+        _rb = gameObject.GetComponent<Rigidbody2D>();
+        if (_rb == null)
+        {
+            _rb = gameObject.AddComponent<Rigidbody2D>();
+        }
+        _rb.bodyType = RigidbodyType2D.Kinematic;
+        _rb.gravityScale = 0f;
+        _rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+
+        var col = gameObject.GetComponent<CircleCollider2D>();
+        if (col == null)
+        {
+            col = gameObject.AddComponent<CircleCollider2D>();
+        }
+        col.radius = 0.3f;
     }
 
     private void OnEnable()
@@ -56,9 +74,11 @@ public class PlayerController : MonoBehaviour
                     && gm.CurrentState != GameManager.GameState.WorldMap;
     }
 
+    private Vector2 _moveInput;
+
     private void Update()
     {
-        if (_inputLocked) return;
+        if (_inputLocked) { _moveInput = Vector2.zero; return; }
 
         Vector2 input = new Vector2(
             Input.GetAxisRaw("Horizontal"),
@@ -70,6 +90,8 @@ public class PlayerController : MonoBehaviour
 
         if (input.sqrMagnitude > 1f) input.Normalize();
 
+        _moveInput = input;
+
         if (input.sqrMagnitude < 0.01f)
         {
             // Idle
@@ -79,13 +101,6 @@ public class PlayerController : MonoBehaviour
             _animFrame = 0;
             return;
         }
-
-        // Move on XY plane (screen space = world space for 2D)
-        Vector3 moveDir = new Vector3(input.x, input.y, 0f).normalized;
-        float step = _walkSpeed * Time.deltaTime;
-        Vector3 newPos = transform.position + moveDir * step;
-        newPos.z = 0f;
-        transform.position = newPos;
 
         // Flip sprite based on horizontal movement direction
         if (_spriteRenderer != null && Mathf.Abs(input.x) > 0.1f)
@@ -107,5 +122,14 @@ public class PlayerController : MonoBehaviour
         // Update sorting order based on Y position (lower Y = in front = higher order)
         if (_spriteRenderer != null)
             _spriteRenderer.sortingOrder = Mathf.RoundToInt(-transform.position.y * 100f);
+    }
+
+    private void FixedUpdate()
+    {
+        if (_rb == null || _moveInput.sqrMagnitude < 0.01f) return;
+
+        Vector2 moveDir = _moveInput.normalized;
+        float step = _walkSpeed * Time.fixedDeltaTime;
+        _rb.MovePosition(_rb.position + moveDir * step);
     }
 }

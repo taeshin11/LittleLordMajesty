@@ -280,19 +280,12 @@ public class RoamingBootstrap : MonoBehaviour
 
     private void FillGround(Transform parent)
     {
-        System.Random rng = new System.Random(42);
+        // Use only tile 0 (plain grass) — no sparkle/variant tiles
         for (int y = 0; y < GridH; y++)
         {
             for (int x = 0; x < GridW; x++)
             {
-                // Mostly tile 0 (grass), sprinkle 1/2 for variety
-                int tile;
-                float r = (float)rng.NextDouble();
-                if (r < 0.70f) tile = 0;
-                else if (r < 0.85f) tile = 1;
-                else if (r < 0.95f) tile = 2;
-                else tile = 3; // occasional flower
-                PlaceTile(tile, x, y, parent, -1000, $"Grass_{x}_{y}");
+                PlaceTile(0, x, y, parent, -1000, $"Grass_{x}_{y}");
             }
         }
     }
@@ -302,29 +295,18 @@ public class RoamingBootstrap : MonoBehaviour
 
     private void BuildPaths(Transform parent)
     {
-        // Main north-south spine: x=10, from y=1 (south gate) up to y=11 (castle)
+        // Main north-south spine: x=10, from y=1 up to y=11 (south gate to castle)
         for (int y = 1; y <= 11; y++)
-            PlaceTile(42, 10, y, parent, -999, $"PathNS_{y}");
+            PlaceTile(40, 10, y, parent, -999, $"PathNS_{y}");
 
-        // East-west path at y=8 (courtyard level) from x=4 to x=16
+        // East-west path at y=8 connecting houses to center
         for (int x = 4; x <= 16; x++)
         {
-            if (x == 10) continue; // already placed
+            if (x == 10) continue; // already placed by NS path
             PlaceTile(40, x, 8, parent, -999, $"PathEW_{x}");
         }
 
-        // Cross tile at intersection
-        PlaceTile(42, 10, 8, parent, -998, "PathCross");
-
-        // Path to House 1 (west): x=4..5 at y=6
-        PlaceTile(40, 4, 7, parent, -999, "PathH1a");
-        PlaceTile(40, 5, 7, parent, -999, "PathH1b");
-
-        // Path to House 2 (east): x=14..15 at y=6
-        PlaceTile(40, 14, 7, parent, -999, "PathH2a");
-        PlaceTile(40, 15, 7, parent, -999, "PathH2b");
-
-        // Path south of gate leading out: x=10, y=0
+        // Path south exit: x=10, y=0
         PlaceTile(40, 10, 0, parent, -999, "PathOut");
     }
 
@@ -333,23 +315,51 @@ public class RoamingBootstrap : MonoBehaviour
 
     private void BuildCastle(Transform parent)
     {
-        // Top row (y=11): tiles 48, 49, 49, 50
-        PlaceSortedTile(48, 8, 11, parent, 0, "Castle_TL");
-        PlaceSortedTile(49, 9, 11, parent, 0, "Castle_TC1");
-        PlaceSortedTile(49, 10, 11, parent, 0, "Castle_TC2");
-        PlaceSortedTile(50, 11, 11, parent, 0, "Castle_TR");
+        var castleParent = new GameObject("CastleKeep");
+        castleParent.transform.SetParent(parent, false);
+        castleParent.transform.position = Vector3.zero;
 
-        // Middle row (y=10): tiles 60, interior (52), interior (53), 63
-        PlaceSortedTile(60, 8, 10, parent, 0, "Castle_ML");
-        PlaceSortedTile(52, 9, 10, parent, 0, "Castle_MC1");
-        PlaceSortedTile(53, 10, 10, parent, 0, "Castle_MC2");
-        PlaceSortedTile(63, 11, 10, parent, 0, "Castle_MR");
+        // Top row (y=11): tiles 48, 49, 49, 50
+        PlaceSortedTile(48, 8, 11, castleParent.transform, 0, "Castle_TL");
+        PlaceSortedTile(49, 9, 11, castleParent.transform, 0, "Castle_TC1");
+        PlaceSortedTile(49, 10, 11, castleParent.transform, 0, "Castle_TC2");
+        PlaceSortedTile(50, 11, 11, castleParent.transform, 0, "Castle_TR");
+
+        // Middle row (y=10): tiles 60, -, -, 63 (walls on sides, empty in middle)
+        PlaceSortedTile(60, 8, 10, castleParent.transform, 0, "Castle_ML");
+        PlaceSortedTile(63, 11, 10, castleParent.transform, 0, "Castle_MR");
 
         // Bottom row (y=9): tiles 61, 62, 62, 63
-        PlaceSortedTile(61, 8, 9, parent, 0, "Castle_BL");
-        PlaceSortedTile(62, 9, 9, parent, 0, "Castle_BC1");
-        PlaceSortedTile(62, 10, 9, parent, 0, "Castle_BC2");
-        PlaceSortedTile(63, 11, 9, parent, 0, "Castle_BR");
+        PlaceSortedTile(61, 8, 9, castleParent.transform, 0, "Castle_BL");
+        PlaceSortedTile(62, 9, 9, castleParent.transform, 0, "Castle_BC1");
+        PlaceSortedTile(62, 10, 9, castleParent.transform, 0, "Castle_BC2");
+        PlaceSortedTile(63, 11, 9, castleParent.transform, 0, "Castle_BR");
+
+        // Top wall collider (y=11, 4 tiles wide)
+        var topWallCol = castleParent.AddComponent<BoxCollider2D>();
+        topWallCol.size = new Vector2(4f, 1f);
+        topWallCol.offset = new Vector2(9.5f, 11f);
+
+        // Left wall collider (y=9-10, 1 tile wide, 2 tall)
+        var goLeftWall = new GameObject("CastleLeftWallCol");
+        goLeftWall.transform.SetParent(castleParent.transform, false);
+        var leftWallCol = goLeftWall.AddComponent<BoxCollider2D>();
+        leftWallCol.size = new Vector2(1f, 2f);
+        leftWallCol.offset = new Vector2(8f, 9.5f);
+
+        // Right wall collider (y=9-10, 1 tile wide, 2 tall)
+        var goRightWall = new GameObject("CastleRightWallCol");
+        goRightWall.transform.SetParent(castleParent.transform, false);
+        var rightWallCol = goRightWall.AddComponent<BoxCollider2D>();
+        rightWallCol.size = new Vector2(1f, 2f);
+        rightWallCol.offset = new Vector2(11f, 9.5f);
+
+        // Bottom wall collider (y=9, 4 tiles wide)
+        var goBotWall = new GameObject("CastleBotWallCol");
+        goBotWall.transform.SetParent(castleParent.transform, false);
+        var botWallCol = goBotWall.AddComponent<BoxCollider2D>();
+        botWallCol.size = new Vector2(4f, 1f);
+        botWallCol.offset = new Vector2(9.5f, 9f);
     }
 
     // ---------- HOUSES ----------
@@ -358,9 +368,12 @@ public class RoamingBootstrap : MonoBehaviour
     private void PlaceHouse(int gridX, int gridY, Transform parent, string tag,
         bool grayStyle = false)
     {
-        // Verified tile combos:
-        // Red house: roof 52,53,54 + walls 72,73,74
-        // Gray house: roof 88,89,90 + walls 76,77,78
+        // gridX, gridY = top-left of roof row (top row)
+        // House is 3 wide x 2 tall: roof at gridY, walls at gridY-1
+
+        var houseParent = new GameObject(tag);
+        houseParent.transform.SetParent(parent, false);
+        houseParent.transform.position = Vector3.zero;
 
         int roofL = grayStyle ? 88 : 52;
         int roofC = grayStyle ? 89 : 53;
@@ -370,24 +383,29 @@ public class RoamingBootstrap : MonoBehaviour
         int wallR = grayStyle ? 78 : 74;
 
         // Roof row on top, wall row below
-        PlaceSortedTile(roofL, gridX, gridY, parent, 10, $"{tag}_RoofL");
-        PlaceSortedTile(roofC, gridX + 1, gridY, parent, 10, $"{tag}_RoofC");
-        PlaceSortedTile(roofR, gridX + 2, gridY, parent, 10, $"{tag}_RoofR");
-        PlaceSortedTile(wallL, gridX, gridY - 1, parent, 11, $"{tag}_WallL");
-        PlaceSortedTile(wallC, gridX + 1, gridY - 1, parent, 11, $"{tag}_WallC");
-        PlaceSortedTile(wallR, gridX + 2, gridY - 1, parent, 11, $"{tag}_WallR");
+        PlaceSortedTile(roofL, gridX, gridY, houseParent.transform, 10, $"{tag}_RoofL");
+        PlaceSortedTile(roofC, gridX + 1, gridY, houseParent.transform, 10, $"{tag}_RoofC");
+        PlaceSortedTile(roofR, gridX + 2, gridY, houseParent.transform, 10, $"{tag}_RoofR");
+        PlaceSortedTile(wallL, gridX, gridY - 1, houseParent.transform, 11, $"{tag}_WallL");
+        PlaceSortedTile(wallC, gridX + 1, gridY - 1, houseParent.transform, 11, $"{tag}_WallC");
+        PlaceSortedTile(wallR, gridX + 2, gridY - 1, houseParent.transform, 11, $"{tag}_WallR");
+
+        // Add collider covering the 3x2 house area
+        var col = houseParent.AddComponent<BoxCollider2D>();
+        col.size = new Vector2(3f, 2f);
+        col.offset = new Vector2(gridX + 1f, gridY - 0.5f);
     }
 
     private void BuildHouses(Transform parent)
     {
-        // House 1 (west): roof at y=7, walls at y=6 — x=3..5
-        PlaceHouse(3, 7, parent, "House1", false);
+        // Red house 1 (west): roof at y=8, walls at y=7 — x=3..5
+        PlaceHouse(3, 8, parent, "House1", false);
 
-        // House 2 (east): roof at y=7, walls at y=6 — x=14..16
-        PlaceHouse(14, 7, parent, "House2", true);
+        // Gray house (east): roof at y=8, walls at y=7 — x=14..16
+        PlaceHouse(14, 8, parent, "House2", true);
 
-        // House 3 (north-east of castle): roof at y=11, walls at y=10 — x=14..16
-        PlaceHouse(14, 11, parent, "House3", false);
+        // Red house 2 (near castle): roof at y=12, walls at y=11 — x=14..16
+        PlaceHouse(14, 12, parent, "House3", false);
     }
 
     // ---------- GATE ----------
@@ -395,13 +413,29 @@ public class RoamingBootstrap : MonoBehaviour
 
     private void BuildGate(Transform parent)
     {
-        // Top row (y=4): gate arch top
-        PlaceSortedTile(112, 9, 4, parent, 5, "Gate_TL");
-        PlaceSortedTile(113, 10, 4, parent, 5, "Gate_TR");
+        // Simplified gate: 2 stone wall pillars (tile 49) with a gap between for entrance
+        // Left pillar at x=9, right pillar at x=10 — gap at x=10 (NS path)
+        // Actually: pillar at x=8, y=3-4 and pillar at x=11, y=3-4, gap at x=9-10
 
-        // Bottom row (y=3): gate base / opening
-        PlaceSortedTile(124, 9, 3, parent, 5, "Gate_BL");
-        PlaceSortedTile(125, 10, 3, parent, 5, "Gate_BR");
+        // Left pillar (2 tall)
+        var leftPillar = new GameObject("GatePillarL");
+        leftPillar.transform.SetParent(parent, false);
+        PlaceSortedTile(49, 8, 4, leftPillar.transform, 5, "Gate_LT");
+        PlaceSortedTile(62, 8, 3, leftPillar.transform, 5, "Gate_LB");
+        var colL = leftPillar.AddComponent<BoxCollider2D>();
+        colL.size = new Vector2(1f, 2f);
+        colL.offset = new Vector2(8f, 3.5f);
+
+        // Right pillar (2 tall)
+        var rightPillar = new GameObject("GatePillarR");
+        rightPillar.transform.SetParent(parent, false);
+        PlaceSortedTile(49, 11, 4, rightPillar.transform, 5, "Gate_RT");
+        PlaceSortedTile(62, 11, 3, rightPillar.transform, 5, "Gate_RB");
+        var colR = rightPillar.AddComponent<BoxCollider2D>();
+        colR.size = new Vector2(1f, 2f);
+        colR.offset = new Vector2(11f, 3.5f);
+
+        // Gap at x=9-10 is open — player can walk through
     }
 
     // ---------- PROPS ----------
@@ -411,64 +445,55 @@ public class RoamingBootstrap : MonoBehaviour
         // Well — center of courtyard area
         PlaceSortedTile(116, 10, 5, parent, 5, "Well");
 
-        // Barrel — near House 1
-        PlaceSortedTile(45, 6, 6, parent, 5, "Barrel1");
-
         // Sign post — at path crossing
         PlaceSortedTile(82, 11, 8, parent, 5, "SignPost");
 
-        // Table near House 2
-        PlaceSortedTile(46, 13, 6, parent, 5, "Table1");
-
-        // Another barrel near gate
-        PlaceSortedTile(45, 8, 3, parent, 5, "Barrel2");
-
-        // Flowers scattered in the village
-        PlaceTile(30, 7, 8, parent, -998, "Flower1");
-        PlaceTile(30, 12, 5, parent, -998, "Flower2");
-        PlaceTile(30, 3, 9, parent, -998, "Flower3");
-        PlaceTile(30, 16, 9, parent, -998, "Flower4");
-
-        // Mushrooms
+        // A few mushrooms (tile 29)
         PlaceSortedTile(29, 2, 5, parent, 0, "Mushroom1");
         PlaceSortedTile(29, 17, 10, parent, 0, "Mushroom2");
 
-        // Small bush/shrub decorations
-        PlaceSortedTile(28, 7, 10, parent, 0, "Shrub1");
-        PlaceSortedTile(5, 12, 10, parent, 0, "Tree4"); // round green tree
-        PlaceSortedTile(28, 6, 4, parent, 0, "Shrub2");
+        // A few plants (tile 30)
+        PlaceTile(30, 7, 6, parent, -998, "Plant1");
+        PlaceTile(30, 12, 6, parent, -998, "Plant2");
     }
 
     // ---------- ENVIRONMENT — trees & nature ----------
 
     private void BuildEnvironment(Transform parent)
     {
-        System.Random rng = new System.Random(42);
-
-        // Tree tile indices to choose from
-        // ONLY tile 5 — the one confirmed bright round green tree
-        int[] treeTiles = { 5 };
-
-        // Sparse tree border — every other tile, edges only
+        // North edge trees
         for (int x = 0; x < GridW; x += 2)
-            PlaceSortedTile(5, x, 14, parent, 0, $"TreeN_{x}");
+            PlaceTreeWithCollider(5, x, 14, parent, $"TreeN_{x}");
 
+        // South edge trees (gap at x=9-10 for gate)
         for (int x = 0; x < GridW; x += 2)
         {
-            if (x >= 9 && x <= 11) continue; // gate gap
-            PlaceSortedTile(5, x, 0, parent, 0, $"TreeS_{x}");
+            if (x >= 9 && x <= 11) continue;
+            PlaceTreeWithCollider(5, x, 0, parent, $"TreeS_{x}");
         }
 
+        // West edge trees
         for (int y = 2; y <= 13; y += 2)
-            PlaceSortedTile(5, 0, y, parent, 0, $"TreeW_{y}");
+            PlaceTreeWithCollider(5, 0, y, parent, $"TreeW_{y}");
 
+        // East edge trees
         for (int y = 2; y <= 13; y += 2)
-            PlaceSortedTile(5, 19, y, parent, 0, $"TreeE_{y}");
+            PlaceTreeWithCollider(5, 19, y, parent, $"TreeE_{y}");
 
-        // --- A few interior decorations (tile 5 only) ---
-        PlaceSortedTile(5, 3, 10, parent, 0, "IntTree1");
-        PlaceSortedTile(5, 16, 5, parent, 0, "IntTree2");
-        PlaceSortedTile(5, 17, 10, parent, 0, "IntTree3");
+        // A few interior trees
+        PlaceTreeWithCollider(5, 3, 10, parent, "IntTree1");
+        PlaceTreeWithCollider(5, 16, 5, parent, "IntTree2");
+    }
+
+    private void PlaceTreeWithCollider(int tileIndex, int gridX, int gridY,
+        Transform parent, string name)
+    {
+        var go = PlaceSortedTile(tileIndex, gridX, gridY, parent, 0, name);
+        if (go != null)
+        {
+            var col = go.AddComponent<CircleCollider2D>();
+            col.radius = 0.3f;
+        }
     }
 
     // ---------------------------------------------------------------
